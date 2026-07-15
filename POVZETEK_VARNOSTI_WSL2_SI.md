@@ -1,13 +1,38 @@
-# Povzetek varnostnih ukrepov v WSL2
+# Navodila za vzpostavitev varnega WSL2 razvojnega okolja
 
-**Datum izvedbe:** 14. julij 2026  
+**Datum prvotne izvedbe:** 14. julij 2026
+
 **Okolje:** Linux gost v WSL2 na gostiteljskem sistemu Windows
 
-## Cilj
+## Namen in cilj
 
 Linux uporabnik `mitjam` mora imeti možnost opravljati skrbniška opravila v gostujočem sistemu, vključno z uporabo `sudo` brez gesla. Hkrati naj bodo odstranjene privzete WSL2 poti, prek katerih bi lahko proces v Linuxu dostopal do datotek Windows ali zaganjal programe Windows.
 
-## Uveljavljeni ukrepi
+Ta dokument opisuje dejansko izvedeni postopek. Ukazi in nastavitve veljajo za WSL2; pred uporabo na drugem sistemu je treba preveriti lokalne zahteve in način prenosa datotek.
+
+## Postopek vzpostavitve
+
+### 1. Določitev meje zaupanja
+
+Najprej se preveri, da je okolje WSL2 gost na Windows, in opredeli cilj: polne skrbniške pravice znotraj Linux gosta, brez običajnih poti do gostiteljevih datotek in programov. To je pomembno zato, ker sta v privzeti namestitvi WSL2 pogosto omogočena samodejni priklop diskov Windows in medsebojno povezovanje z Windows.
+
+### 2. Omogočanje skrbništva v Linux gostu
+
+Za uporabnika `mitjam` se ustvari preverjena datoteka `sudoers`, ki omogoči `sudo` brez gesla. Skript je treba pognati z `sudo`; zapis se ustvari v `/etc/sudoers.d/mitjam`, nastavi na dovoljenje `0440` in preveri z `visudo`.
+
+### 3. Utrditev WSL2
+
+V `/etc/wsl.conf` se izklopijo Windows interop, uvoz Windows `PATH`, samodejni priklop Windows diskov in obdelava `/etc/fstab`. Sistem se nato znova zažene na način, ki ponovno naloži konfiguracijo WSL. S tem Linux gost ohrani običajno skrbniško uporabnost, vendar izgubi glavne priročne poti do Windows gostitelja.
+
+### 4. Preverjanje po spremembi
+
+Preveri se uspešnost `sudo`, vsebina aktivne `/etc/wsl.conf` in seznam priklopov. Pričakovano stanje je odsotnost priklopov DrvFS, kot je `/mnt/c`. WSL-ovi lastni priklopi, na primer `/mnt/wsl` in WSLg, niso priklopi diskov Windows in lahko ostanejo prisotni.
+
+### 5. Razvojna orodja in dokumentacija
+
+Po utrditvi se namesti in overi GitHub CLI, klonirata potrebna repozitorija, preberejo lokalna navodila projekta in zažene lokalni strežnik za dokumentacijo. Ta korak je ločen od utrditve: deluje znotraj gosta in ne zahteva ponovnega omogočanja Windows interopa ali samodejnega priklopa diskov.
+
+## Končna konfiguracija
 
 Aktivna datoteka `/etc/wsl.conf` določa naslednje nastavitve:
 
@@ -41,8 +66,80 @@ Ti ukrepi odstranijo pogoste in priročne poti iz gosta v Windows: samodejno pri
 
 Pri prihodnjem prenosu datotek iz Windows v WSL je treba uporabiti izrecen, nadzorovan postopek prenosa. Ne omogočajte znova medsebojnega povezovanja z Windows ali samodejnega priklopa diskov samo zaradi prenosa datotek.
 
-## Drugo opravljeno delo
+## Dobesedna navodila, uporabljena med vzpostavitvijo
 
-- Nameščen in overjen je bil GitHub CLI.
-- Klonirana sta bila repozitorija SLAiF trainings in BioLab notes-server.
-- Prebrana so bila navodila repozitorija trainings in nastavljena lokalna strežba gradiv.
+Spodnji pozivi so prepis ključnih navodil iz prvotne seje. So navodila za agenta oziroma skrbnika, ne ukazi, ki bi jih bilo treba neposredno izvajati v terminalu.
+
+### Pregled okolja in načrt utrditve
+
+```text
+in which environment do you run? is it a virtual machine?
+```
+
+```text
+it is important that you check what you can do here
+```
+
+```text
+check that document, you are running in wsl2 on windows and please verify if isolation is solid, as described here: https://edu.slaif.si/trainings/workshop-orchestrated-agentic-programming/oap-manual
+```
+
+```text
+propose how to harden the isolation according to the document and my architecture/vm
+```
+
+### Skrbniške pravice in odločitev o meji zaščite
+
+```text
+tell me how to enable passwordless sudo. one copypastable line
+```
+
+```text
+this does not work, create script in this folder I will execute with sudo.
+```
+
+```text
+check passwordless sudo
+```
+
+```text
+can you now fortify this vm according to the document? please tell me what you will do in 5 senteces and i will approve it
+```
+
+```text
+THE KEY IS: my account in guest VM should be able to do anything, including passwordless sudo, but NOT be able to access the host in any way, neither read nor write!
+```
+
+```text
+WSL2 hardening only!
+```
+
+```text
+yes do it
+```
+
+### GitHub, repozitoriji in lokalni strežnik
+
+```text
+install gh!
+```
+
+```text
+is gh properly authenticated?
+```
+
+```text
+clone https://github.com/slaif-edu/trainings
+```
+
+```text
+Clone this too https://github.com/biolab/notes-server
+```
+
+```text
+let's enter trainings and read AGENTS.md
+```
+
+```text
+I want to run local notes server for cloned trainings!
+```
