@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1100" viewBox="0 0 1800 1100">
+<rect width="100%" height="100%" fill="white"/>
+<text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">OAP Control Plane</text>
+<text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">The human preserves the goal; the strategic AI preserves context; the agent does disposable implementation work.</text>
+<rect x="80" y="230" width="420" height="240" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="104" y="271" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Domain Expert Manager</text>
+<text x="104" y="311" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Asks high-level questions: Did we</text>
+<text x="104" y="343" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">solve the real problem? Where is</text>
+<text x="104" y="375" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">proof? What risks remain?</text>
+<rect x="640" y="165" width="520" height="370" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3"/>
+<text x="664" y="206" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Strategic AI</text>
+<text x="664" y="246" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Long-context control plane: remembers goals,</text>
+<text x="664" y="278" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">drafts work orders, interrogates evidence,</text>
+<text x="664" y="310" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">reports readiness.</text>
+<rect x="1300" y="185" width="420" height="375" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="1324" y="226" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Rebuildable Execution VM</text>
+<text x="1324" y="266" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">High-privilege coding agent installs</text>
+<text x="1324" y="298" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">tools, runs tests, changes files, and</text>
+<text x="1324" y="330" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">can destroy only disposable state.</text>
+<rect x="590" y="740" width="620" height="190" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="614" y="781" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Durable Project Truth</text>
+<text x="614" y="821" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Remote repo, branch, PR, CI logs, docs, tests, audit</text>
+<text x="614" y="853" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">trail, and handoff notes.</text>
+<line x1="500" y1="350" x2="640" y2="350" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round"/>
+<polygon points="640,350 622,339 622,361" fill="#1d4ed8"/>
+<text x="523" y="320" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#1d4ed8">questions</text>
+<line x1="1160" y1="350" x2="1300" y2="350" stroke="#6d28d9" stroke-width="6" stroke-linecap="round"/>
+<polygon points="1300,350 1282,339 1282,361" fill="#6d28d9"/>
+<text x="1185" y="320" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#6d28d9">work order</text>
+<line x1="1510" y1="560" x2="1030" y2="740" stroke="#047857" stroke-width="6" stroke-linecap="round"/>
+<polygon points="1030,740 1048,729 1048,751" fill="#047857"/>
+<text x="1240" y="665" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#047857">PR + evidence</text>
+<line x1="770" y1="740" x2="880" y2="535" stroke="#374151" stroke-width="6" stroke-linecap="round"/>
+<polygon points="880,535 869,553 891,553" fill="#374151"/>
+<text x="805" y="685" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#374151">reviewable truth</text>
+<line x1="730" y1="740" x2="390" y2="470" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="390,470 408,459 408,481" fill="#374151"/>
+<text x="310" y="610" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#374151">decision support</text>
+<text x="80" y="993" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Do not pilot the human</text>
+<text x="80" y="1019" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#4b5563">Agent installs and tests; it does not assign chores back.</text>
+<text x="655" y="993" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Spend context where it lasts</text>
+<text x="655" y="1019" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#4b5563">Use the strongest long-context model for strategy.</text>
+<text x="1230" y="993" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Prefer rebuildable power</text>
+<text x="1230" y="1019" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#4b5563">Rebuild a broken VM; preserve human hours.</text>
+</svg>

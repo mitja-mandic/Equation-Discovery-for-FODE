@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<ns0:rect width="100%" height="100%" fill="white" />
+<ns0:text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Validacijski dolg</ns0:text>
+<ns0:text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">UI znižuje strošek tipkanja, hkrati pa povečuje potrebo po dokazu.</ns0:text>
+<ns0:rect x="120" y="230" width="500" height="480" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3" />
+<ns0:text x="144" y="271" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Generacijsko delo</ns0:text>
+<ns0:text x="144" y="311" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Tipkanje, boilerplate, mehanska urejanja,</ns0:text>
+<ns0:text x="144" y="343" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">ponavljajoči testi, osnutki dokumentacije</ns0:text>
+<ns0:rect x="980" y="230" width="500" height="480" rx="18" ry="18" fill="#fee2e2" stroke="#b91c1c" stroke-width="3" />
+<ns0:text x="1004" y="271" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Validacijsko delo</ns0:text>
+<ns0:text x="1004" y="311" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Pregled, modeliranje groženj, kakovost testov, CI</ns0:text>
+<ns0:text x="1004" y="343" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">dokazi, poštenost izdaje, načrtovanje rollbacka</ns0:text>
+<ns0:line x1="640" y1="470" x2="960" y2="470" stroke="#374151" stroke-width="7" stroke-linecap="round" />
+<ns0:polygon points="960,470 942,459 942,481" fill="#374151" />
+<ns0:text x="710" y="428" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">breme se premakne</ns0:text>
+<ns0:text x="155" y="798" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#047857">Ceneje</ns0:text>
+<ns0:text x="1060" y="798" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#b91c1c">Pomembneje</ns0:text>
+<ns0:text x="120" y="869" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Pravilo priročnika: poročila agenta nikoli ne obravnavaj kot dokaz. Obravnavaj ga kot trditev, ki potrebuje dokaze.</ns0:text>
+</ns0:svg>

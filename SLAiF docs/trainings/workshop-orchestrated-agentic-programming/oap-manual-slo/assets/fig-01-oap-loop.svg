@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+<ns0:rect width="100%" height="100%" fill="white" />
+<ns0:text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Zanka orkestriranega agentnega programiranja</ns0:text>
+<ns0:text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">Človeška presoja ločuje strategijo od visoko-avtonomne izvedbe.</ns0:text>
+<ns0:rect x="560" y="150" width="480" height="125" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3" />
+<ns0:text x="584" y="191" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Človeški namen</ns0:text>
+<ns0:text x="584" y="231" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Cilji, omejitve, apetit po tveganju,</ns0:text>
+<ns0:text x="584" y="263" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">kriteriji sprejema</ns0:text>
+<ns0:rect x="115" y="420" width="400" height="165" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3" />
+<ns0:text x="139" y="461" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Strateška UI</ns0:text>
+<ns0:text x="139" y="501" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Arhitektura, kritika, rezanje nalog,</ns0:text>
+<ns0:text x="139" y="533" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">naslednji delovni nalog</ns0:text>
+<ns0:rect x="600" y="420" width="400" height="165" rx="18" ry="18" fill="#fef3c7" stroke="#b45309" stroke-width="3" />
+<ns0:text x="624" y="461" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Človeško kontrolno vratce</ns0:text>
+<ns0:text x="624" y="501" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Preberi, presodi, sprejmi, zavrni,</ns0:text>
+<ns0:text x="624" y="533" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">preusmeri, izdaj</ns0:text>
+<ns0:rect x="1085" y="420" width="400" height="165" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3" />
+<ns0:text x="1109" y="461" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Izvajalni agent</ns0:text>
+<ns0:text x="1109" y="501" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Urejaj datoteke, poganjaj ukaze, testiraj,</ns0:text>
+<ns0:text x="1109" y="533" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">commitaj, odpri PR</ns0:text>
+<ns0:rect x="560" y="720" width="480" height="165" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3" />
+<ns0:text x="584" y="761" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Paket dokazov</ns0:text>
+<ns0:text x="584" y="801" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Veja, diff, testi, dokumenti, URL PR-ja, tveganja,</ns0:text>
+<ns0:text x="584" y="833" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">handoff</ns0:text>
+<ns0:line x1="760" y1="275" x2="760" y2="420" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round" />
+<ns0:polygon points="760,420 749,402 771,402" fill="#1d4ed8" />
+<ns0:text x="590" y="350" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#1d4ed8">namen + kriteriji</ns0:text>
+<ns0:line x1="515" y1="502" x2="600" y2="502" stroke="#6d28d9" stroke-width="5" stroke-linecap="round" />
+<ns0:polygon points="600,502 582,491 582,513" fill="#6d28d9" />
+<ns0:line x1="1000" y1="502" x2="1085" y2="502" stroke="#b45309" stroke-width="5" stroke-linecap="round" />
+<ns0:polygon points="1085,502 1067,491 1067,513" fill="#b45309" />
+<ns0:line x1="1285" y1="585" x2="940" y2="720" stroke="#047857" stroke-width="5" stroke-linecap="round" />
+<ns0:polygon points="940,720 958,709 958,731" fill="#047857" />
+<ns0:line x1="800" y1="720" x2="800" y2="585" stroke="#374151" stroke-width="5" stroke-linecap="round" />
+<ns0:polygon points="800,585 789,603 811,603" fill="#374151" />
+<ns0:line x1="840" y1="420" x2="840" y2="275" stroke="#b45309" stroke-width="5" stroke-linecap="round" />
+<ns0:polygon points="840,275 829,293 851,293" fill="#b45309" />
+<ns0:text x="858" y="350" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#b45309">posodobitev odločitve</ns0:text>
+<ns0:text x="74" y="949" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Zanka namerno ni avtonomna UI-na-UI. Človeški vmesni člen jo upočasni ravno dovolj, da ohrani odgovornost.</ns0:text>
+</ns0:svg>

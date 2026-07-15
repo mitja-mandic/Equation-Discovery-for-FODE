@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="900" viewBox="0 0 1800 900">
+<rect width="100%" height="100%" fill="white"/>
+<text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">PR-Sized Delegation Pipeline</text>
+<text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">The atomic work unit is a reviewable evidence package.</text>
+<rect x="70" y="250" width="210" height="190" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="94" y="291" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">1. Scope</text>
+<text x="94" y="331" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">goal +</text>
+<text x="94" y="363" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">non-goals</text>
+<line x1="290" y1="345" x2="315" y2="345" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="315,345 297,334 297,356" fill="#374151"/>
+<rect x="315" y="250" width="210" height="190" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3"/>
+<text x="339" y="291" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">2. Branch</text>
+<text x="339" y="331" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">fresh from main</text>
+<line x1="535" y1="345" x2="560" y2="345" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="560,345 542,334 542,356" fill="#374151"/>
+<rect x="560" y="250" width="210" height="190" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="584" y="291" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">3. Change</text>
+<text x="584" y="331" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">small</text>
+<text x="584" y="363" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">implementation</text>
+<line x1="780" y1="345" x2="805" y2="345" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="805,345 787,334 787,356" fill="#374151"/>
+<rect x="805" y="250" width="210" height="190" rx="18" ry="18" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+<text x="829" y="291" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">4. Verify</text>
+<text x="829" y="331" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">tests + scans</text>
+<line x1="1025" y1="345" x2="1050" y2="345" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="1050,345 1032,334 1032,356" fill="#374151"/>
+<rect x="1050" y="250" width="210" height="190" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="1074" y="291" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">5. Document</text>
+<text x="1074" y="331" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">docs + handoff</text>
+<line x1="1270" y1="345" x2="1295" y2="345" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="1295,345 1277,334 1277,356" fill="#374151"/>
+<rect x="1295" y="250" width="210" height="190" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="1319" y="291" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">6. PR</text>
+<text x="1319" y="331" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">reviewable diff</text>
+<line x1="1515" y1="345" x2="1540" y2="345" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="1540,345 1522,334 1522,356" fill="#374151"/>
+<rect x="1540" y="250" width="210" height="190" rx="18" ry="18" fill="#fee2e2" stroke="#b91c1c" stroke-width="3"/>
+<text x="1564" y="291" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">7. Decide</text>
+<text x="1564" y="331" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">human gate</text>
+<text x="80" y="584" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">If a task cannot be reviewed as a coherent PR, it is too large or too vague for high-autonomy delegation.</text>
+</svg>

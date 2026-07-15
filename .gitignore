@@ -158,6 +158,11 @@ env.bak/
 venv.bak/
 
 # Spyder project settings
+.next/
+node_modules/
+__db/
+.ingest/
+.turbo/
 .spyderproject
 .spyproject
 

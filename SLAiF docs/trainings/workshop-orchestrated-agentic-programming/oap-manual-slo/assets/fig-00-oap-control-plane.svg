@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="1800" height="1100" viewBox="0 0 1800 1100">
+<ns0:rect width="100%" height="100%" fill="white" />
+<ns0:text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Kontrolna ravnina OAP</ns0:text>
+<ns0:text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">Človek ohranja cilj; strateška UI ohranja kontekst; agent opravlja zavržljivo implementacijsko delo.</ns0:text>
+<ns0:rect x="80" y="230" width="420" height="240" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3" />
+<ns0:text x="104" y="271" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Domenski upravljavec</ns0:text>
+<ns0:text x="104" y="311" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Zastavlja vprašanja na visoki ravni:</ns0:text>
+<ns0:text x="104" y="343" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Ali rešujemo pravi problem? Kje so</ns0:text>
+<ns0:text x="104" y="375" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">dokazi? Katera tveganja ostajajo?</ns0:text>
+<ns0:rect x="640" y="165" width="520" height="370" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3" />
+<ns0:text x="664" y="206" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Strateška UI</ns0:text>
+<ns0:text x="664" y="246" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Dolgokontekstna kontrolna ravnina: pomni cilje,</ns0:text>
+<ns0:text x="664" y="278" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">pripravlja delovne naloge, zaslišuje dokaze,</ns0:text>
+<ns0:text x="664" y="310" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">poroča o pripravljenosti.</ns0:text>
+<ns0:rect x="1300" y="185" width="420" height="375" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3" />
+<ns0:text x="1324" y="226" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Obnovljiva izvajalna VM</ns0:text>
+<ns0:text x="1324" y="266" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Kodirni agent z visokimi privilegiji namešča</ns0:text>
+<ns0:text x="1324" y="298" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">orodja, poganja teste, spreminja datoteke in</ns0:text>
+<ns0:text x="1324" y="330" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">lahko uniči samo zavržljivo stanje.</ns0:text>
+<ns0:rect x="590" y="740" width="620" height="190" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3" />
+<ns0:text x="614" y="781" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Trajna resnica projekta</ns0:text>
+<ns0:text x="614" y="821" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Oddaljeni repo, veja, PR, dnevniki CI, dokumenti, testi, revizijska</ns0:text>
+<ns0:text x="614" y="853" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">sled in zapiski handoffov.</ns0:text>
+<ns0:line x1="500" y1="350" x2="640" y2="350" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round" />
+<ns0:polygon points="640,350 622,339 622,361" fill="#1d4ed8" />
+<ns0:text x="523" y="320" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#1d4ed8">vprašanja</ns0:text>
+<ns0:line x1="1160" y1="350" x2="1300" y2="350" stroke="#6d28d9" stroke-width="6" stroke-linecap="round" />
+<ns0:polygon points="1300,350 1282,339 1282,361" fill="#6d28d9" />
+<ns0:text x="1185" y="320" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#6d28d9">delovni nalog</ns0:text>
+<ns0:line x1="1510" y1="560" x2="1030" y2="740" stroke="#047857" stroke-width="6" stroke-linecap="round" />
+<ns0:polygon points="1030,740 1048,729 1048,751" fill="#047857" />
+<ns0:text x="1240" y="665" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#047857">PR + dokazi</ns0:text>
+<ns0:line x1="770" y1="740" x2="880" y2="535" stroke="#374151" stroke-width="6" stroke-linecap="round" />
+<ns0:polygon points="880,535 869,553 891,553" fill="#374151" />
+<ns0:text x="805" y="685" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#374151">pregledljiva resnica</ns0:text>
+<ns0:line x1="730" y1="740" x2="390" y2="470" stroke="#374151" stroke-width="5" stroke-linecap="round" />
+<ns0:polygon points="390,470 408,459 408,481" fill="#374151" />
+<ns0:text x="310" y="610" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#374151">podpora odločanju</ns0:text>
+<ns0:text x="80" y="993" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Ne dovoli, da agent vodi človeka</ns0:text>
+<ns0:text x="80" y="1019" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#4b5563">Agent namešča in testira; opravil ne vrača človeku nazaj.</ns0:text>
+<ns0:text x="655" y="993" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Kontekst porabi tam, kjer traja</ns0:text>
+<ns0:text x="655" y="1019" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#4b5563">Za strategijo uporabi najmočnejši dolgokontekstni model.</ns0:text>
+<ns0:text x="1230" y="993" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Daj prednost obnovljivi moči</ns0:text>
+<ns0:text x="1230" y="1019" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#4b5563">Pokvarjeno VM obnovi; ohrani človeške ure.</ns0:text>
+</ns0:svg>

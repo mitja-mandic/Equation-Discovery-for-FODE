@@ -1,0 +1,69 @@
+digraph G {
+  graph [
+    rankdir=TB,
+    bgcolor="white",
+    pad="0.25",
+    nodesep="0.45",
+    ranksep="0.55"
+  ];
+  node [
+    shape=box,
+    style="rounded,filled",
+    fontname="DejaVu Sans",
+    fontsize=15,
+    color="#334155",
+    penwidth=1.6,
+    margin="0.16,0.12"
+  ];
+  edge [
+    fontname="DejaVu Sans",
+    fontsize=12,
+    color="#334155",
+    arrowsize=0.8
+  ];
+
+  human [
+    label="Domain Expert Manager\nstates operational problem,\nrisk, release criteria",
+    fillcolor="#dbeafe",
+    color="#2563eb"
+  ];
+  strategic [
+    label="Strategic Model\nasks architecture, tools,\nboundaries, non-goals",
+    fillcolor="#ede9fe",
+    color="#7c3aed"
+  ];
+  decisions [
+    label="Discovery Decisions\nproduct category, stack,\ndata model, test strategy",
+    fillcolor="#fef3c7",
+    color="#b45309"
+  ];
+  constitution [
+    label="Project Constitution\nAGENTS.md, schema docs,\ncompatibility matrix",
+    fillcolor="#dcfce7",
+    color="#15803d"
+  ];
+  workorders [
+    label="PR-Sized Work Orders\ncurrent state, goal,\nnon-goals, tests, report",
+    fillcolor="#e0f2fe",
+    color="#0369a1"
+  ];
+  executor [
+    label="Execution Agent\nimplements inside bounded VM\nand reports evidence",
+    fillcolor="#fee2e2",
+    color="#b91c1c"
+  ];
+  repo [
+    label="Repository Truth\ncommits, PRs, docs,\nCI, review evidence",
+    fillcolor="#f8fafc",
+    color="#475569"
+  ];
+
+  human -> strategic [label="domain questions"];
+  strategic -> decisions [label="technical translation"];
+  decisions -> constitution [label="make durable"];
+  constitution -> workorders [label="slice"];
+  workorders -> executor [label="delegate"];
+  executor -> repo [label="code + evidence"];
+  repo -> strategic [label="review truth", style=dashed, constraint=false];
+  strategic -> human [label="decision brief", style=dashed, constraint=false];
+}

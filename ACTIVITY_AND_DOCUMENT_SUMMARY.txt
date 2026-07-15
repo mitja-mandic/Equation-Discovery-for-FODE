@@ -1,0 +1,15 @@
+SUMMARY OF UPLOADED DOCUMENT AND WORK COMPLETED
+
+Uploaded document: "MacroPCA: An All-in-One PCA Method Allowing for Missing Values as Well as Cellwise and Rowwise Outliers" (Hubert, Rousseeuw, and Van den Bossche, 2019).
+
+Document summary:
+MacroPCA is a robust principal component analysis method for data containing missing values, cellwise outliers, and rowwise outliers simultaneously. It first uses DetectDeviatingCells to identify suspicious cells and form initial imputations. It then combines iterative PCA-style imputation with ROBPCA-based robust subspace estimation, selects an appropriate number of components, reweights non-outlying rows, and uses robust estimation within the selected subspace. The method produces diagnostics, including outlier and residual maps, to identify problematic rows, cells, and variables. The paper demonstrates that it remains useful when classical PCA and methods designed for only one type of contamination fail.
+
+Work completed before 13:00 on 14 July 2026 (from the saved chat history):
+- Assessed the local environment as a WSL2 guest VM and reviewed the requested WSL2 isolation posture.
+- Planned and applied WSL2-focused hardening so the guest account could retain administrative capability while reducing host access paths.
+- Created and verified a passwordless-sudo setup.
+- Installed and authenticated the GitHub CLI.
+- Cloned the SLAiF trainings and BioLab notes-server repositories.
+- Read the trainings repository guidance and configured the notes server to serve the training materials locally.
+- Imported the MacroPCA source document, selected Slovenian and expert-level settings, planned a MacroPCA book, drafted its content, and arranged for the local notes server to display it.

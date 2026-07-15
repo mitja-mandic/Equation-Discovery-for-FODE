@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1000" viewBox="0 0 1700 1000">
+<rect width="100%" height="100%" fill="white"/>
+<text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Release Readiness Is Not Feature Completion</text>
+<text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">A completed patch can still be unsafe to ship.</text>
+<rect x="250" y="180" width="1200" height="105" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="274" y="221" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Feature implemented</text>
+<text x="274" y="261" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Does the code path exist?</text>
+<line x1="850" y1="291" x2="850" y2="323" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="850,323 839,305 861,305" fill="#374151"/>
+<rect x="250" y="325" width="1200" height="105" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="274" y="366" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Behavior verified</text>
+<text x="274" y="406" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Do tests prove the intended contract?</text>
+<line x1="850" y1="436" x2="850" y2="468" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="850,468 839,450 861,450" fill="#374151"/>
+<rect x="250" y="470" width="1200" height="105" rx="18" ry="18" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+<text x="274" y="511" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Operationally documented</text>
+<text x="274" y="551" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Can another operator run and recover it?</text>
+<line x1="850" y1="581" x2="850" y2="613" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="850,613 839,595 861,595" fill="#374151"/>
+<rect x="250" y="615" width="1200" height="105" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3"/>
+<text x="274" y="656" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Risks acknowledged</text>
+<text x="274" y="696" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Are limitations explicit and current?</text>
+<line x1="850" y1="726" x2="850" y2="758" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="850,758 839,740 861,740" fill="#374151"/>
+<rect x="250" y="760" width="1200" height="105" rx="18" ry="18" fill="#fee2e2" stroke="#b91c1c" stroke-width="3"/>
+<text x="274" y="801" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Release decision</text>
+<text x="274" y="841" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Has the accountable human accepted the evidence?</text>
+</svg>

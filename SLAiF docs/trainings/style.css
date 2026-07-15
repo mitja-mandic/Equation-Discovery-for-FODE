@@ -1,0 +1,118 @@
+@font-face {
+    font-family: 'DistrictPro';
+    src: url('fonts/DistrictPro-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'NewOrder';
+    src: url('fonts/NewOrder-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'NewOrder';
+    src: url('fonts/NewOrder-Semibold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+  --slaif-green: #87a73e;
+  --slaif-blue: #2591b2;
+  --slaif-light: #f4f7f6;
+}
+
+body {
+  font-family: 'NewOrder', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  background: white;
+  color: #111;
+}
+
+body div div.mt-14 {
+	margin-top: 0px;
+}
+
+main.container {
+	padding-top: 70px;
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: 80px;
+	border-left: 80px solid #87A73E;
+}
+
+header.main-header {
+	background-color: rgba(37, 145, 178, 0.6);
+	color: white;
+	height: 70px;
+}
+
+header.main-header span.page-title {
+	color: white;
+}
+
+header.main-header .dropdown-content {
+    color: black;
+}
+
+.home-icon {
+  fill: white;
+}
+.book h1, .collection h1, .chapter h2.chapter-title {
+	font-family: 'NewOrder', 'Inter', sans-serif;
+    color: var(--slaif-blue);
+    font-weight: 600;
+    line-height: 1.05;
+    margin-top: 18px;
+}
+
+
+ol [data-float-aside] + p, ol [data-float-aside] + div, ol div.float-aside, ol div.expanding-side-img:not(:hover) {
+    transform: translate(calc(-100% - 32px - 40px));
+    margin-top: 12px;
+}
+
+ol {
+    margin-top: 32px;
+}
+
+ol > li {
+    position:relative;
+    font-size:16px;
+    padding-left: 16px;
+    margin: 20px 0 12px 0;
+    list-style-type: none;
+}
+
+ol > li:not(.continue) {
+    clear: both;
+}
+
+ol > li::marker, ol > li::-webkit-details-marker {
+    content: "";
+    display: none;
+}
+
+ol > li:before {
+    content: counter(list-item);
+    text-align: center;
+    font-weight: 500;
+
+    position:absolute;
+    left:-24px;
+    z-index:-1;
+    display:inline-block;
+    width: 1.5em;
+    height:1.5em;
+    line-height: 1.13em;
+    border-radius: 15px;
+    background-color: rgb(247, 146, 17);
+    padding-top: 3px;
+    color: white;
+}

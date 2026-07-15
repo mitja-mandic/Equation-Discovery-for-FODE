@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<rect width="100%" height="100%" fill="white"/>
+<text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Role Separation</text>
+<text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">The human moves up: management and release discipline, not line-by-line labor.</text>
+<rect x="80" y="170" width="410" height="630" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="104" y="211" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Domain Expert Manager</text>
+<text x="104" y="251" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Owns goals, domain meaning, risk,</text>
+<text x="104" y="283" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">acceptance criteria, release</text>
+<text x="104" y="315" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">decisions, and responsibility for the</text>
+<text x="104" y="347" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">artifact.</text>
+<rect x="595" y="170" width="410" height="630" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3"/>
+<text x="619" y="211" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Strategic AI</text>
+<text x="619" y="251" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Long-context control plane: work</text>
+<text x="619" y="283" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">orders, critique, evidence briefs,</text>
+<text x="619" y="315" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">drift detection, next decisions.</text>
+<rect x="1110" y="170" width="410" height="630" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="1134" y="211" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Execution Agent</text>
+<text x="1134" y="251" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Disposable implementation labor:</text>
+<text x="1134" y="283" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">edits, installs tools, runs tests,</text>
+<text x="1134" y="315" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">commits, pushes branches, opens</text>
+<text x="1134" y="347" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">PRs.</text>
+<text x="130" y="868" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#b91c1c">Cannot delegate:</text>
+<text x="130" y="904" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">goals, risk, release authority</text>
+<text x="642" y="868" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#6d28d9">Should delegate:</text>
+<text x="642" y="904" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">memory, critique, evidence compression</text>
+<text x="1160" y="868" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#047857">Can delegate:</text>
+<text x="1160" y="904" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">setup and coding inside rebuildable VM</text>
+</svg>

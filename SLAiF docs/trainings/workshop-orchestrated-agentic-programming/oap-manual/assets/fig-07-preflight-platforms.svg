@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1250" viewBox="0 0 1700 1250">
+<rect width="100%" height="100%" fill="white"/>
+<text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Operational Preflight Platform Choices</text>
+<text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">Choose the weakest setup that protects host data while letting the agent work.</text>
+<rect x="500" y="135" width="700" height="110" rx="18" ry="18" fill="#dbeafe" stroke="#0e7490" stroke-width="3"/>
+<text x="524" y="176" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Operational Preflight</text>
+<text x="524" y="216" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">protect host data; keep agent useful</text>
+<rect x="90" y="360" width="420" height="110" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="114" y="401" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Linux-oriented work</text>
+<text x="114" y="441" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">default: per-project Linux guest</text>
+<rect x="640" y="360" width="420" height="110" rx="18" ry="18" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+<text x="664" y="401" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Native Windows work</text>
+<text x="664" y="441" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">only when the toolchain requires it</text>
+<rect x="1190" y="360" width="420" height="110" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3"/>
+<text x="1214" y="401" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">macOS host</text>
+<text x="1214" y="441" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Linux guest; no writable host home</text>
+<rect x="70" y="545" width="460" height="110" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="94" y="586" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">WSL2 Ubuntu</text>
+<text x="94" y="626" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">convenient; isolate distro; avoid /mnt/c</text>
+<rect x="70" y="700" width="460" height="110" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="94" y="741" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">KVM/libvirt or Multipass</text>
+<text x="94" y="781" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">clear VM boundary; SSH in</text>
+<rect x="620" y="545" width="460" height="110" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="644" y="586" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Windows Sandbox</text>
+<text x="644" y="626" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">ephemeral; bootstrap every run</text>
+<rect x="620" y="700" width="460" height="135" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="644" y="741" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Persistent Windows VM</text>
+<text x="644" y="781" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">OpenSSH + Build Tools; license</text>
+<text x="644" y="813" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">separately</text>
+<rect x="1170" y="585" width="460" height="135" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="1194" y="626" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Lima or Multipass</text>
+<text x="1194" y="666" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">read-only host home by</text>
+<text x="1194" y="698" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">default/preferred</text>
+<rect x="360" y="965" width="980" height="135" rx="18" ry="18" fill="#fee2e2" stroke="#b91c1c" stroke-width="3"/>
+<text x="384" y="1006" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Common Rule</text>
+<text x="384" y="1046" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">no host secrets, no writable host home; checkpoint/reset; Git is truth</text>
+<line x1="675" y1="245" x2="300" y2="360" stroke="#047857" stroke-width="5" stroke-linecap="round"/>
+<polygon points="300,360 318,349 318,371" fill="#047857"/>
+<line x1="850" y1="245" x2="850" y2="360" stroke="#b45309" stroke-width="5" stroke-linecap="round"/>
+<polygon points="850,360 839,342 861,342" fill="#b45309"/>
+<line x1="1025" y1="245" x2="1400" y2="360" stroke="#6d28d9" stroke-width="5" stroke-linecap="round"/>
+<polygon points="1400,360 1382,349 1382,371" fill="#6d28d9"/>
+<line x1="240" y1="470" x2="240" y2="545" stroke="#047857" stroke-width="5" stroke-linecap="round"/>
+<polygon points="240,545 229,527 251,527" fill="#047857"/>
+<line x1="360" y1="470" x2="360" y2="700" stroke="#047857" stroke-width="5" stroke-linecap="round"/>
+<polygon points="360,700 349,682 371,682" fill="#047857"/>
+<line x1="760" y1="470" x2="760" y2="545" stroke="#b45309" stroke-width="5" stroke-linecap="round"/>
+<polygon points="760,545 749,527 771,527" fill="#b45309"/>
+<text x="715" y="520" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#b45309">one-off</text>
+<line x1="940" y1="470" x2="940" y2="700" stroke="#b45309" stroke-width="5" stroke-linecap="round"/>
+<polygon points="940,700 929,682 951,682" fill="#b45309"/>
+<text x="958" y="570" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#b45309">repeated</text>
+<line x1="1400" y1="470" x2="1400" y2="585" stroke="#6d28d9" stroke-width="5" stroke-linecap="round"/>
+<polygon points="1400,585 1389,567 1411,567" fill="#6d28d9"/>
+<text x="680" y="918" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">all selected environments must satisfy</text>
+<line x1="850" y1="925" x2="850" y2="965" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="850,965 839,947 861,947" fill="#374151"/>
+<text x="167" y="1159" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">The SSH connection is a convenience path. The guest boundary, mounted filesystems, and credentials policy are the safety boundary.</text>
+</svg>

@@ -1,0 +1,13 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  call-deploy:
+    uses: biolab/notes-deploy-ci/.github/workflows/deploy.yml@master
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_NOTES_DEPLOY_PRIVATE_KEY }}

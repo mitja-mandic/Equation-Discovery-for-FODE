@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1050" viewBox="0 0 1700 1050">
+<rect width="100%" height="100%" fill="white"/>
+<text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Bounded High-Autonomy Runtime</text>
+<text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">The agent may be powerful inside the box; the box must be designed.</text>
+<rect x="340" y="190" width="1020" height="630" rx="26" ry="26" fill="#f3f4f6" stroke="#374151" stroke-width="4"/>
+<text x="385" y="248" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Dedicated VM / sandbox</text>
+<rect x="410" y="310" width="350" height="155" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="434" y="351" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Allowed</text>
+<text x="434" y="391" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">repo edits, shell commands,</text>
+<text x="434" y="423" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">tests, local services</text>
+<rect x="930" y="310" width="350" height="155" rx="18" ry="18" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+<text x="954" y="351" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Controlled</text>
+<text x="954" y="391" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">network, package installs,</text>
+<text x="954" y="423" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Docker, database fixtures</text>
+<rect x="410" y="570" width="350" height="155" rx="18" ry="18" fill="#fee2e2" stroke="#b91c1c" stroke-width="3"/>
+<text x="434" y="611" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Forbidden</text>
+<text x="434" y="651" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">production secrets, prod</text>
+<text x="434" y="683" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">databases, unsafe</text>
+<text x="434" y="715" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">destructive targets</text>
+<rect x="930" y="570" width="350" height="155" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="954" y="611" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Reported</text>
+<text x="954" y="651" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">commands, failures, skipped</text>
+<text x="954" y="683" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">tests, risks, diffs</text>
+<text x="80" y="924" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">High autonomy is a deployment decision, not a philosophy. It is acceptable only when the runtime boundary is explicit.</text>
+</svg>

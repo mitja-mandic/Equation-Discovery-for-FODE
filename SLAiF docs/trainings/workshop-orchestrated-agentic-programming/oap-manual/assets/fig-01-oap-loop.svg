@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+<rect width="100%" height="100%" fill="white"/>
+<text x="50" y="67" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="42" font-weight="700" fill="#111827">Orchestrated Agentic Programming Loop</text>
+<text x="54" y="104" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" fill="#4b5563">Human judgment separates strategy from high-autonomy execution.</text>
+<rect x="560" y="150" width="480" height="125" rx="18" ry="18" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="584" y="191" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Human Intent</text>
+<text x="584" y="231" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Goals, constraints, risk appetite,</text>
+<text x="584" y="263" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">acceptance criteria</text>
+<rect x="115" y="420" width="400" height="165" rx="18" ry="18" fill="#ede9fe" stroke="#6d28d9" stroke-width="3"/>
+<text x="139" y="461" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Strategic AI</text>
+<text x="139" y="501" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Architecture, critique, task slicing,</text>
+<text x="139" y="533" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">next work order</text>
+<rect x="600" y="420" width="400" height="165" rx="18" ry="18" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+<text x="624" y="461" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Human Control Gate</text>
+<text x="624" y="501" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Read, judge, accept, reject,</text>
+<text x="624" y="533" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">redirect, release</text>
+<rect x="1085" y="420" width="400" height="165" rx="18" ry="18" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="1109" y="461" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Execution Agent</text>
+<text x="1109" y="501" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Edit files, run commands, test,</text>
+<text x="1109" y="533" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">commit, open PR</text>
+<rect x="560" y="720" width="480" height="165" rx="18" ry="18" fill="#f3f4f6" stroke="#374151" stroke-width="3"/>
+<text x="584" y="761" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Evidence Package</text>
+<text x="584" y="801" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">Branch, diff, tests, docs, PR URL, risks,</text>
+<text x="584" y="833" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">handoff</text>
+<line x1="760" y1="275" x2="760" y2="420" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>
+<polygon points="760,420 749,402 771,402" fill="#1d4ed8"/>
+<text x="590" y="350" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#1d4ed8">intent + criteria</text>
+<line x1="515" y1="502" x2="600" y2="502" stroke="#6d28d9" stroke-width="5" stroke-linecap="round"/>
+<polygon points="600,502 582,491 582,513" fill="#6d28d9"/>
+<line x1="1000" y1="502" x2="1085" y2="502" stroke="#b45309" stroke-width="5" stroke-linecap="round"/>
+<polygon points="1085,502 1067,491 1067,513" fill="#b45309"/>
+<line x1="1285" y1="585" x2="940" y2="720" stroke="#047857" stroke-width="5" stroke-linecap="round"/>
+<polygon points="940,720 958,709 958,731" fill="#047857"/>
+<line x1="800" y1="720" x2="800" y2="585" stroke="#374151" stroke-width="5" stroke-linecap="round"/>
+<polygon points="800,585 789,603 811,603" fill="#374151"/>
+<line x1="840" y1="420" x2="840" y2="275" stroke="#b45309" stroke-width="5" stroke-linecap="round"/>
+<polygon points="840,275 829,293 851,293" fill="#b45309"/>
+<text x="858" y="350" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" fill="#b45309">decision update</text>
+<text x="74" y="949" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" fill="#4b5563">The loop is intentionally not AI-to-AI autonomous. The human relay slows the system enough to preserve accountability.</text>
+</svg>
