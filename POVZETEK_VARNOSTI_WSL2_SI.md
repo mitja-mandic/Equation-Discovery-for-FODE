@@ -4,6 +4,88 @@
 
 **Okolje:** Linux gost v WSL2 na gostiteljskem sistemu Windows
 
+## 0. Namestitev WSL2 in Codexa
+
+### Predpogoji
+
+Potrebujete podprt Windows 10 ali Windows 11, skrbniški dostop v Windows in internetno povezavo. Ukaze PowerShell v tem poglavju zaženite v oknu **PowerShell** ali **Windows Terminal**, odprtem z možnostjo **Run as administrator**.
+
+### Namestitev WSL2
+
+V skrbniškem PowerShellu namestite WSL in privzeto distribucijo Ubuntu:
+
+```powershell
+wsl --install
+```
+
+Če je WSL že nameščen ali želite distribucijo izbrati izrecno, uporabite:
+
+```powershell
+wsl --list --online
+wsl --install -d Ubuntu
+```
+
+Po pozivu znova zaženite Windows. Nato v meniju Start odprite **Ubuntu**. Ob prvem zagonu ustvarite uporabnika Linux; v nadaljevanju priročnika je zanj uporabljeno splošno ime `wsluser`.
+
+V Ubuntu posodobite pakete:
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
+
+V PowerShellu preverite, da distribucija uporablja WSL2:
+
+```powershell
+wsl --status
+wsl --list --verbose
+```
+
+Če stolpec `VERSION` kaže `1`, distribucijo pretvorite v WSL2 in WSL2 nastavite kot privzeto različico za nove distribucije:
+
+```powershell
+wsl --set-version Ubuntu 2
+wsl --set-default-version 2
+```
+
+### Namestitev Codex CLI v WSL2
+
+Naslednje ukaze izvedite v terminalu Ubuntu, ne v PowerShellu:
+
+```bash
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+codex --version
+```
+
+Prijavite se z računom ChatGPT in dokončajte prijavo v brskalniku:
+
+```bash
+codex login
+```
+
+Po prijavi preverite stanje:
+
+```bash
+codex login status
+```
+
+Če se brskalnik ne odpre ali povratna povezava do WSL ne deluje, uporabite prijavo s kodo naprave. Prikazani naslov odprite v brskalniku Windows in vnesite kodo:
+
+```bash
+codex login --device-auth
+```
+
+Za običajno delo zaženite Codex s privzetimi varnostnimi nastavitvami ali jih določite izrecno:
+
+```bash
+codex
+codex --sandbox workspace-write --ask-for-approval on-request
+```
+
+> **[OPOZORILO: NAČIN YOLO]**
+>
+> `codex --yolo` je drugo ime za `--dangerously-bypass-approvals-and-sandbox`. Izklopi potrditve in peskovnik, zato lahko Codex brez vprašanja izvaja ukaze z vsemi pravicami trenutnega uporabnika, dostopa do dosegljivih datotek in uporablja razpoložljivo omrežje. Uporabljajte ga samo v namenskem, zunanjem utrjenem in pogrešljivem okolju brez skrivnosti ali pomembnih podatkov. Tudi po utrditvi iz tega priročnika WSL2 ni popoln peskovnik, zato ta konfiguracija sama po sebi ni zadostna zaščita za način YOLO.
+
 ## Namen in cilj
 
 Uporabnik `wsluser` mora imeti polne skrbniške pravice v Linux gostu, vključno z uporabo `sudo` brez gesla, vendar brez privzetih WSL2 poti do datotek in programov Windows.
@@ -104,3 +186,5 @@ Aktivna datoteka `/etc/wsl.conf` določa naslednje nastavitve:
 Ti ukrepi odstranijo pogoste in priročne poti iz gosta v Windows: samodejno priklopljene diske, uvoženo pot Windows in neposredno zaganjanje programov Windows. WSL2 pa ni popoln peskovnik za nezaupanja vredno kodo. Gostiteljski Windows in njegova WSL upravljalna plast sta še vedno privilegiranejša od Linux gosta.
 
 Pri prihodnjem prenosu datotek iz Windows v WSL je treba uporabiti izrecen, nadzorovan postopek prenosa. Ne omogočajte znova medsebojnega povezovanja z Windows ali samodejnega priklopa diskov samo zaradi prenosa datotek.
+
+**Viri:** [Microsoft WSL](https://learn.microsoft.com/windows/wsl/install); [OpenAI WSL](https://learn.chatgpt.com/docs/windows/wsl); [OpenAI security](https://learn.chatgpt.com/docs/agent-approvals-security).
