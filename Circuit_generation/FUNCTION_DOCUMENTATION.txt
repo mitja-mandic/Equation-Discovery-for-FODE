@@ -1,0 +1,630 @@
+FUNCTION DOCUMENTATION IN main() CALL ORDER
+===========================================
+
+This document describes the functions in:
+
+  1. main.py
+  2. generate_trees.py
+  3. circuit_from_tree.py
+
+The functions are ordered according to the execution path that begins when
+main.py is run directly. Indentation in the call-flow summary represents one
+function calling another.
+
+
+MAIN EXECUTION FLOW
+===================
+
+main.py
+  main()
+    generate_trees()
+      get_grammar()
+      possible_circuit_trees()
+        canonical_circuit_tree()           [once per generated token sequence]
+          parse_expression()               [recursive]
+          normalize()                      [recursive]
+    build_equation_listing()
+      format_tree()                        [recursive sorting key]
+      circuit_from_tree()                  [once per normalized tree]
+        Circuit.from_tree()
+          _CircuitFactory.__init__()
+          _CircuitFactory.build()          [recursive]
+            _CircuitFactory._build_element()
+            Series.__post_init__()         [when a Series is constructed]
+            Parallel.__post_init__()       [when a Parallel is constructed]
+      Circuit.parameter_names
+        component parameter_names
+          _unique_parameter_names()        [for compound connections]
+      Circuit.__str__()
+        component __str__()                [recursive]
+      Circuit.impedance_expression()
+        component impedance_expression()   [recursive]
+        component admittance_expression()  [for parallel calculations]
+
+
+1. STARTING THE WORKFLOW
+========================
+
+main.py: main() -> None
+-----------------------
+This is the main entry point when main.py is run directly.
+
+It:
+
+  1. Reads the module settings GRAMMAR_NAME and TREE_DEPTH.
+  2. Calls generate_trees(GRAMMAR_NAME, TREE_DEPTH).
+  3. Prints a heading showing the selected grammar and depth.
+  4. Calls build_equation_listing(trees).
+  5. Prints the completed circuit and equation listing.
+
+The current settings are intended to be edited directly in main.py, so this
+entry point does not read command-line arguments.
+
+
+2. GENERATING AND NORMALIZING TREES
+===================================
+
+generate_trees.py: generate_trees(grammar_name="relaxed", depth=5)
+------------------------------------------------------------------
+This is the first function called by main().
+
+It coordinates tree generation by:
+
+  1. Calling get_grammar(grammar_name).
+  2. Calling possible_circuit_trees(grammar, depth).
+  3. Returning the resulting set of unique normalized trees.
+
+
+generate_trees.py: get_grammar(name) -> Any
+-------------------------------------------
+Builds and returns an NLTK context-free grammar from the text in
+GRAMMAR_SOURCES.
+
+Available grammar names:
+
+  * "redone": generates Rs alone or Rs followed by zarc/randles blocks.
+  * "relaxed": generates networks made from R, L, CPE, W, and G elements
+    connected in series or parallel.
+
+NLTK is imported inside this function. Raises ValueError if name is unknown;
+the error message lists the accepted choices.
+
+
+generate_trees.py: possible_circuit_trees(grammar, depth) -> set[Tree]
+----------------------------------------------------------------------
+Uses nltk.parse.generate.generate to enumerate token sequences from grammar up
+to the requested NLTK derivation-depth limit.
+
+For each generated token sequence, it calls canonical_circuit_tree(). The
+normalized trees are collected in a set, which removes duplicate topologies.
+
+Raises ValueError if depth is less than 1.
+
+
+generate_trees.py: canonical_circuit_tree(tokens) -> Tree
+---------------------------------------------------------
+Converts one grammar-generated token sequence into the normalized public tree
+representation.
+
+Processing:
+
+  1. If tokens is only ("Rs",), returns "Rs".
+  2. Otherwise verifies that tokens begins with ("Rs", "+").
+  3. Calls parse_expression() on the remaining network tokens.
+  4. Verifies that parse_expression() consumed all tokens.
+  5. Adds Rs as the first series branch.
+  6. Calls normalize() and returns its result.
+
+Raises ValueError for an invalid circuit prefix or unexpected trailing tokens.
+
+
+generate_trees.py: parse_expression(tokens, position=0)
+-------------------------------------------------------
+Recursively parses a fully parenthesized token sequence into a binary
+ParsedTree.
+
+If the current token is an element rather than "(", it returns:
+
+  (element_token, next_position)
+
+For a parenthesized expression, it recursively parses:
+
+  (left_branch operator right_branch)
+
+where operator must be "+" or "||". It returns the parsed binary tree and the
+position of the first unread token.
+
+Raises ValueError for unexpected end of input, a missing or unsupported
+operator, or a missing closing parenthesis.
+
+
+generate_trees.py: normalize(node) -> Tree
+------------------------------------------
+Recursively converts a binary ParsedTree into the normalized public Tree
+representation.
+
+It:
+
+  * Flattens nested connections that use the same operator. For example,
+    A + (B + C) becomes one series connection containing A, B, and C.
+  * Removes duplicate free-standing "R" or "L" elements within the same
+    connection.
+  * Removes a free-standing "R" from a series connection that already
+    contains "Rs", because that resistance is topologically redundant.
+  * Sorts children deterministically, placing "Rs" first and then ordering
+    the remaining children by their Python representation.
+
+An element string is returned unchanged. A connection is returned as:
+
+  (operator, tuple_of_normalized_children)
+
+
+3. BUILDING THE PRINTED EQUATION LIST
+=====================================
+
+main.py: build_equation_listing(trees) -> str
+---------------------------------------------
+Receives the normalized trees produced by generate_trees().
+
+It:
+
+  1. Sorts trees using format_tree() as the key.
+  2. Raises ValueError if there are no trees.
+  3. Calls circuit_from_tree() for each tree.
+  4. Reads the resulting Circuit's parameter_names.
+  5. Calls str(circuit), which invokes Circuit.__str__().
+  6. Calls Circuit.impedance_expression().
+  7. Formats the topology, equation, and parameters as a numbered entry.
+  8. Joins all entries with blank lines and returns the completed string.
+
+
+generate_trees.py: format_tree(tree, parent_operator=None) -> str
+----------------------------------------------------------------
+Called recursively by the sorting step in build_equation_listing().
+
+It creates a compact, unnumbered tree description. Series children are joined
+with " + " and parallel children with " || ". Parentheses are added if a
+nested connection uses a different operator from its parent.
+
+Element strings are returned directly. Because equivalent normalized trees
+always receive consistent descriptions, this function provides a deterministic
+sorting key.
+
+
+4. CONVERTING EACH TREE INTO A CIRCUIT
+======================================
+
+circuit_from_tree.py: circuit_from_tree(tree) -> Circuit
+--------------------------------------------------------
+Public convenience function called once for each normalized tree in
+build_equation_listing().
+
+It calls Circuit.from_tree(tree) and returns the resulting executable Circuit.
+
+
+Circuit.from_tree(tree) -> Circuit
+----------------------------------
+Class method that:
+
+  1. Creates a new _CircuitFactory.
+  2. Calls the factory's build(tree) method.
+  3. Stores the returned component hierarchy as the Circuit's root.
+
+Using a new factory for every tree makes element numbering restart at 1 for
+each circuit.
+
+
+_CircuitFactory.__init__() -> None
+---------------------------------
+Creates a counter that starts at 1. The counter supplies consistent parameter
+indices while the factory traverses a tree from left to right.
+
+
+_CircuitFactory.build(tree) -> Component
+----------------------------------------
+Recursively converts a normalized tree into Component objects.
+
+For an element string, it calls _build_element().
+
+For a connection tree, it recursively builds every child and then:
+
+  * Constructs Series(children) for "+".
+  * Constructs Parallel(children) for "||".
+
+Raises ValueError for an unsupported connection operator.
+
+
+_CircuitFactory._build_element(kind) -> Component
+-------------------------------------------------
+Creates a primitive or predefined compound component and assigns its parameter
+names.
+
+Mappings:
+
+  * "Rs"      -> Resistor("Rs"); does not consume a numeric index.
+  * "R"       -> Resistor("R<n>").
+  * "L"       -> Inductor("L<n>").
+  * "CPE"     -> CPE("Q<n>", "alpha<n>").
+  * "W"       -> Warburg("sigma<n>").
+  * "G"       -> Gerischer("Rg<n>", "tauG<n>").
+  * "zarc"    -> Parallel Resistor and CPE sharing index <n>.
+  * "randles" -> Parallel Resistor and a Series CPE-Warburg branch, with all
+                 three elements sharing index <n>.
+
+For every element except Rs, <n> is the next counter value. Raises ValueError
+for an unsupported element name.
+
+
+Series.__post_init__() -> None
+------------------------------
+Runs automatically whenever the factory constructs a Series dataclass.
+
+It raises ValueError if components is empty because a series connection must
+contain at least one component.
+
+
+Parallel.__post_init__() -> None
+--------------------------------
+Runs automatically whenever the factory constructs a Parallel dataclass.
+
+It raises ValueError if components is empty because a parallel connection must
+contain at least one component.
+
+
+5. COLLECTING PARAMETER NAMES
+=============================
+
+Circuit.parameter_names -> tuple[str, ...]
+------------------------------------------
+Accessed by build_equation_listing() after constructing each circuit.
+
+It delegates to the root component's parameter_names property.
+
+
+Series.parameter_names -> tuple[str, ...]
+-----------------------------------------
+Calls _unique_parameter_names() on the Series children and returns the result.
+
+
+Parallel.parameter_names -> tuple[str, ...]
+-------------------------------------------
+Calls _unique_parameter_names() on the Parallel children and returns the
+result.
+
+
+_unique_parameter_names(components) -> tuple[str, ...]
+------------------------------------------------------
+Iterates through the child components and their parameter_names properties.
+It removes duplicates while preserving the order in which each name first
+appears.
+
+
+Resistor.parameter_names -> tuple[str, ...]
+-------------------------------------------
+Returns a one-item tuple containing the resistance parameter name.
+
+
+Inductor.parameter_names -> tuple[str, ...]
+-------------------------------------------
+Returns a one-item tuple containing the inductance parameter name.
+
+
+CPE.parameter_names -> tuple[str, ...]
+--------------------------------------
+Returns the coefficient and exponent parameter names, in that order.
+
+
+Warburg.parameter_names -> tuple[str, ...]
+------------------------------------------
+Returns a one-item tuple containing the Warburg coefficient parameter name.
+
+
+Gerischer.parameter_names -> tuple[str, ...]
+--------------------------------------------
+Returns the resistance and time-constant parameter names, in that order.
+
+
+6. FORMATTING THE CIRCUIT TOPOLOGY
+==================================
+
+Circuit.__str__() -> str
+------------------------
+Called by str(circuit) inside build_equation_listing().
+
+It delegates to the root component's __str__() method.
+
+
+Series.__str__() -> str
+-----------------------
+Recursively converts each child component to text and joins the descriptions
+with " + ". A Parallel child is enclosed in parentheses so the topology is
+unambiguous.
+
+
+Parallel.__str__() -> str
+-------------------------
+Recursively converts each child component to text and joins the descriptions
+with " || ". A Series child is enclosed in parentheses so the topology is
+unambiguous.
+
+
+Resistor.__str__() -> str
+-------------------------
+Returns the resistance parameter name, such as "Rs" or "R1".
+
+
+Inductor.__str__() -> str
+-------------------------
+Returns a description such as "L(L1)".
+
+
+CPE.__str__() -> str
+--------------------
+Returns a description such as "CPE(Q1, alpha1)".
+
+
+Warburg.__str__() -> str
+------------------------
+Returns a description such as "W(sigma1)".
+
+
+Gerischer.__str__() -> str
+--------------------------
+Returns a description such as "G(Rg1, tauG1)".
+
+
+7. BUILDING THE PRINTED IMPEDANCE EXPRESSION
+============================================
+
+Circuit.impedance_expression() -> str
+-------------------------------------
+Called by build_equation_listing().
+
+It delegates to the root component's impedance_expression() method, which
+recursively builds an executable Python expression for Z(omega).
+
+
+Series.impedance_expression() -> str
+------------------------------------
+Calls impedance_expression() on each child and joins the results with " + ".
+This represents:
+
+  Z_series = Z1 + Z2 + ... + Zn
+
+
+Parallel.impedance_expression() -> str
+--------------------------------------
+Calls Parallel.admittance_expression() and returns its reciprocal in the form:
+
+  1 / (total_admittance_expression)
+
+
+Parallel.admittance_expression() -> str
+---------------------------------------
+Calls admittance_expression() on every child and joins the results with " + ".
+This represents:
+
+  Y_parallel = Y1 + Y2 + ... + Yn
+
+
+Series.admittance_expression() -> str
+-------------------------------------
+Calls Series.impedance_expression() and returns its reciprocal in the form:
+
+  1 / (series_impedance_expression)
+
+This method is used when an entire Series connection is a child of a Parallel
+connection.
+
+
+Resistor.impedance_expression() -> str
+--------------------------------------
+Returns the resistance parameter name, for example "R1".
+
+
+Resistor.admittance_expression() -> str
+---------------------------------------
+Returns:
+
+  1 / resistance_parameter
+
+
+Inductor.impedance_expression() -> str
+--------------------------------------
+Returns:
+
+  1j * omega * inductance_parameter
+
+
+Inductor.admittance_expression() -> str
+---------------------------------------
+Returns:
+
+  1 / (1j * omega * inductance_parameter)
+
+
+CPE.impedance_expression() -> str
+---------------------------------
+Returns:
+
+  1 / (coefficient * (1j * omega) ** exponent)
+
+
+CPE.admittance_expression() -> str
+----------------------------------
+Returns:
+
+  coefficient * (1j * omega) ** exponent
+
+
+Warburg.impedance_expression() -> str
+-------------------------------------
+Returns:
+
+  coefficient / (1j * omega) ** 0.5
+
+
+Warburg.admittance_expression() -> str
+--------------------------------------
+Returns:
+
+  (1j * omega) ** 0.5 / coefficient
+
+
+Gerischer.impedance_expression() -> str
+---------------------------------------
+Returns:
+
+  resistance / (1 + 1j * omega * time_constant) ** 0.5
+
+
+Gerischer.admittance_expression() -> str
+----------------------------------------
+Returns:
+
+  (1 + 1j * omega * time_constant) ** 0.5 / resistance
+
+
+8. FUNCTIONS NOT CALLED BY main.py: NUMERICAL EVALUATION
+=========================================================
+
+The following methods are part of the executable Circuit API, but
+build_equation_listing() only prints equations and therefore does not call
+them.
+
+
+Circuit.impedance(omega, parameters) -> Any
+-------------------------------------------
+Evaluates the complete circuit's complex impedance at one angular frequency or
+multiple angular frequencies.
+
+It first compares Circuit.parameter_names with the supplied parameter mapping.
+If any names are absent, it raises one ValueError listing all missing
+parameters. Otherwise, it delegates to the root component's impedance().
+
+
+Series.impedance(omega, parameters) -> Any
+------------------------------------------
+Calls impedance() on every child and adds the results:
+
+  Z_series = Z1 + Z2 + ... + Zn
+
+The calculation starts with the first component instead of numeric zero to
+help preserve the scalar, NumPy array, or tensor type.
+
+
+Parallel.impedance(omega, parameters) -> Any
+--------------------------------------------
+Calls impedance() on every child, adds their reciprocals, and returns the
+reciprocal of the sum:
+
+  Z_parallel = 1 / (1 / Z1 + 1 / Z2 + ... + 1 / Zn)
+
+
+Resistor.impedance(omega, parameters) -> Any
+--------------------------------------------
+Looks up the resistance and returns:
+
+  resistance + 0 * omega
+
+The zero-times-omega term makes the result match the shape and compatible
+numeric container of omega.
+
+
+Inductor.impedance(omega, parameters) -> Any
+--------------------------------------------
+Evaluates:
+
+  Z = 1j * omega * L
+
+
+CPE.impedance(omega, parameters) -> Any
+---------------------------------------
+Evaluates:
+
+  Z = 1 / (Q * (1j * omega) ** alpha)
+
+
+Warburg.impedance(omega, parameters) -> Any
+-------------------------------------------
+Evaluates:
+
+  Z = sigma / (1j * omega) ** 0.5
+
+
+Gerischer.impedance(omega, parameters) -> Any
+---------------------------------------------
+Evaluates:
+
+  Z = Rg / (1 + 1j * omega * tauG) ** 0.5
+
+
+_parameter(parameters, name) -> Any
+-----------------------------------
+Called by primitive impedance() methods to look up one named parameter.
+
+It returns parameters[name]. If the name is absent, it converts the mapping's
+KeyError into a ValueError identifying the missing parameter.
+
+
+9. ALTERNATIVE ENTRY POINT NOT CALLED BY main.py
+================================================
+
+generate_trees.py: main() -> None
+---------------------------------
+This is a separate command-line entry point used only when generate_trees.py
+itself is run directly. It is not called by main.py.
+
+It:
+
+  1. Reads --grammar and --depth with argparse.
+  2. Calls generate_trees().
+  3. Sorts the results with format_tree().
+  4. Prints each normalized tree's Python representation with a one-based
+     index.
+
+A ValueError from generation is reported through argparse as a command-line
+usage error.
+
+
+10. TYPING-ONLY COMPONENT PROTOCOL
+==================================
+
+Component is a typing Protocol. Its declarations describe the interface that
+all primitive elements and compound connections provide. The protocol methods
+themselves contain no runtime implementation and are not called by main().
+
+
+Component.parameter_names -> tuple[str, ...]
+--------------------------------------------
+Declares that every component provides its ordered parameter names.
+
+
+Component.impedance(omega, parameters) -> Any
+---------------------------------------------
+Declares that every component can evaluate its complex impedance.
+
+
+Component.impedance_expression() -> str
+---------------------------------------
+Declares that every component can return an executable Python impedance
+expression.
+
+
+Component.admittance_expression() -> str
+----------------------------------------
+Declares that every component can return an executable Python admittance
+expression.
+
+
+DIRECT-EXECUTION GUARDS
+=======================
+
+main.py and generate_trees.py both end with:
+
+  if __name__ == "__main__":
+      main()
+
+Running main.py directly starts the full workflow described in Sections 1-7.
+Running generate_trees.py directly starts the alternative command-line workflow
+in Section 9. Importing either module does not automatically call main().

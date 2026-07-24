@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ECM Nyquist Explorer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f3f6f8;
+      --surface: #ffffff;
+      --surface-soft: #f7fafb;
+      --foreground: #172126;
+      --muted: #607079;
+      --border: #d8e0e4;
+      --grid: #e5eaed;
+      --axis: #7d8b92;
+      --focus: #0f766e;
+      --series-1: #0f766e;
+      --series-2: #c2410c;
+      --series-3: #2563eb;
+      --series-4: #a21caf;
+      --series-5: #4d7c0f;
+      --series-6: #be123c;
+      --shadow: 0 16px 40px rgba(32, 48, 56, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --background: #101619;
+        --surface: #182125;
+        --surface-soft: #1d282d;
+        --foreground: #edf3f5;
+        --muted: #a2b1b8;
+        --border: #334147;
+        --grid: #2b383e;
+        --axis: #82939b;
+        --focus: #5eead4;
+        --series-1: #5eead4;
+        --series-2: #fb923c;
+        --series-3: #60a5fa;
+        --series-4: #e879f9;
+        --series-5: #a3e635;
+        --series-6: #fb7185;
+        --shadow: 0 16px 40px rgba(0, 0, 0, 0.26);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+    }
+
+    main {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: 32px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    h1 {
+      font-size: clamp(1.55rem, 3vw, 2.25rem);
+    }
+
+    h2 {
+      font-size: 1.05rem;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: var(--muted);
+      max-width: 68ch;
+    }
+
+    .frequency-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(130px, 1fr)) auto auto;
+      align-items: end;
+      gap: 14px;
+      padding: 18px;
+      margin-bottom: 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .field {
+      min-width: 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    label .unit {
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    input,
+    button {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font: inherit;
+    }
+
+    input {
+      padding: 8px 10px;
+      background: var(--surface-soft);
+      color: var(--foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input:focus,
+    button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--focus) 28%, transparent);
+      border-color: var(--focus);
+    }
+
+    button {
+      padding: 8px 15px;
+      background: var(--foreground);
+      color: var(--surface);
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      opacity: 0.88;
+    }
+
+    .axis-lock {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 9px;
+      min-height: 40px;
+      margin: 0;
+      padding: 8px 11px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--foreground);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .axis-lock input {
+      width: 17px;
+      min-height: 17px;
+      height: 17px;
+      margin: 0;
+      padding: 0;
+      accent-color: var(--focus);
+    }
+
+    .plots {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+      align-items: start;
+    }
+
+    .circuit-card {
+      min-width: 0;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-heading {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 18px 13px;
+    }
+
+    .formula {
+      margin-top: 7px;
+      overflow-x: auto;
+      color: var(--muted);
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.83rem;
+      white-space: nowrap;
+    }
+
+    .reset-circuit {
+      width: auto;
+      min-height: 34px;
+      padding: 6px 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .parameter-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 18px 17px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-wrap {
+      position: relative;
+      padding: 8px 10px 7px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 350px;
+      border-radius: 8px;
+      touch-action: none;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 2;
+      display: none;
+      pointer-events: none;
+      min-width: 148px;
+      padding: 8px 10px;
+      background: var(--foreground);
+      color: var(--surface);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .plot-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 18px 15px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .marker-key {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .marker {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border: 2px solid currentColor;
+    }
+
+    .marker.low {
+      border-radius: 50%;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .wide .parameter-controls {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    @media (max-width: 980px) {
+      main {
+        padding: 22px;
+      }
+
+      .plots {
+        grid-template-columns: 1fr;
+      }
+
+      .wide {
+        grid-column: auto;
+      }
+
+      .wide .parameter-controls {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      main {
+        padding: 15px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .frequency-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .frequency-controls button {
+        grid-column: 1 / -1;
+      }
+
+      .parameter-controls,
+      .wide .parameter-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      canvas {
+        height: 300px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .frequency-controls,
+      .parameter-controls,
+      .wide .parameter-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>ECM Nyquist Explorer</h1>
+        <p class="subtitle">Change the circuit parameters to update the Nyquist curves. The vertical axis follows the electrochemical convention −Im(Z).</p>
+      </div>
+    </header>
+
+    <section class="frequency-controls" aria-label="Shared frequency controls">
+      <div class="field">
+        <label for="f-min">Minimum frequency <span class="unit">Hz</span></label>
+        <input id="f-min" type="number" min="1e-12" step="any" value="0.01">
+      </div>
+      <div class="field">
+        <label for="f-max">Maximum frequency <span class="unit">Hz</span></label>
+        <input id="f-max" type="number" min="1e-12" step="any" value="100000">
+      </div>
+      <div class="field">
+        <label for="point-count">Frequency points</label>
+        <input id="point-count" type="number" min="50" max="1500" step="10" value="360">
+      </div>
+      <label class="axis-lock" for="lock-y">
+        <input id="lock-y" type="checkbox">
+        Lock current Y range
+      </label>
+      <button id="reset-all" type="button">Reset all</button>
+    </section>
+
+    <section id="plots" class="plots" aria-label="Nyquist plots"></section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const defaults = {
+      fMin: 0.01,
+      fMax: 100000,
+      points: 360
+    };
+
+    const circuits = [
+      {
+        id: "gerischer",
+        number: 4,
+        name: "Rs + G",
+        formula: "Z₄(ω) = Rs + Rg₁ / (1 + jωτG₁)⁰·⁵",
+        color: "--series-1",
+        parameters: [
+          { key: "Rs", label: "Rs", unit: "Ω", value: 10, min: 0 },
+          { key: "Rg1", label: "Rg₁", unit: "Ω", value: 100, min: 0 },
+          { key: "tauG1", label: "τG₁", unit: "s", value: 0.01, min: 0 }
+        ],
+        impedance(omega, p) {
+          const x = omega * p.tauG1;
+          const denominatorMagnitude = Math.hypot(1, x);
+          const magnitude = p.Rg1 / Math.sqrt(denominatorMagnitude);
+          const angle = -0.5 * Math.atan2(x, 1);
+          return {
+            re: p.Rs + magnitude * Math.cos(angle),
+            im: magnitude * Math.sin(angle)
+          };
+        }
+      },
+      {
+        id: "inductor",
+        number: 5,
+        name: "Rs + L",
+        formula: "Z₅(ω) = Rs + jωL₁",
+        color: "--series-2",
+        parameters: [
+          { key: "Rs", label: "Rs", unit: "Ω", value: 10, min: 0 },
+          { key: "L1", label: "L₁", unit: "H", value: 0.001, min: 0 }
+        ],
+        impedance(omega, p) {
+          return { re: p.Rs, im: omega * p.L1 };
+        }
+      },
+      {
+        id: "warburg",
+        number: 6,
+        name: "Rs + W",
+        formula: "Z₆(ω) = Rs + σ₁ / (jω)⁰·⁵",
+        color: "--series-3",
+        parameters: [
+          { key: "Rs", label: "Rs", unit: "Ω", value: 10, min: 0 },
+          { key: "sigma1", label: "σ₁", unit: "Ω·s⁻½", value: 10, min: 0 }
+        ],
+        impedance(omega, p) {
+          const magnitude = p.sigma1 / Math.sqrt(omega);
+          return {
+            re: p.Rs + magnitude / Math.SQRT2,
+            im: -magnitude / Math.SQRT2
+          };
+        }
+      },
+      {
+        id: "cpe-warburg",
+        number: 7,
+        name: "Rs + (R ∥ CPE) + W",
+        formula: "Z₇(ω) = Rs + 1/[1/R₁ + Q₁(jω)^α₁] + σ₁/(jω)⁰·⁵",
+        color: "--series-4",
+        parameters: [
+          { key: "Rs", label: "Rs", unit: "Ω", value: 10, min: 0 },
+          { key: "R1", label: "R₁", unit: "Ω", value: 100, min: 0 },
+          { key: "Q1", label: "Q₁", unit: "S·s^α", value: 0.01, min: 1e-15 },
+          { key: "alpha1", label: "α₁", unit: "0–1", value: 0.8, min: 0, max: 1 },
+          { key: "sigma1", label: "σ₁", unit: "Ω·s⁻½", value: 10, min: 0 }
+        ],
+        impedance(omega, p) {
+          const zarc = zarcImpedance(omega, p.R1, p.Q1, p.alpha1);
+          const warburgMagnitude = p.sigma1 / Math.sqrt(omega);
+          return {
+            re: p.Rs + zarc.re + warburgMagnitude / Math.SQRT2,
+            im: zarc.im - warburgMagnitude / Math.SQRT2
+          };
+        }
+      },
+      {
+        id: "cpe-gerischer",
+        number: 8,
+        name: "Rs + (R ∥ CPE) + G",
+        formula: "Z₈(ω) = Rs + 1/[1/R₁ + Q₁(jω)^α₁] + Rg₁/(1 + jωτG₁)⁰·⁵",
+        color: "--series-5",
+        parameters: [
+          { key: "Rs", label: "Rs", unit: "Ω", value: 10, min: 0 },
+          { key: "R1", label: "R₁", unit: "Ω", value: 100, min: 0 },
+          { key: "Q1", label: "Q₁", unit: "S·s^α", value: 0.01, min: 1e-15 },
+          { key: "alpha1", label: "α₁", unit: "0–1", value: 0.8, min: 0, max: 1 },
+          { key: "Rg1", label: "Rg₁", unit: "Ω", value: 100, min: 0 },
+          { key: "tauG1", label: "τG₁", unit: "s", value: 0.01, min: 0 }
+        ],
+        impedance(omega, p) {
+          const zarc = zarcImpedance(omega, p.R1, p.Q1, p.alpha1);
+          const x = omega * p.tauG1;
+          const denominatorMagnitude = Math.hypot(1, x);
+          const gerischerMagnitude = p.Rg1 / Math.sqrt(denominatorMagnitude);
+          const gerischerAngle = -0.5 * Math.atan2(x, 1);
+          return {
+            re: p.Rs + zarc.re + gerischerMagnitude * Math.cos(gerischerAngle),
+            im: zarc.im + gerischerMagnitude * Math.sin(gerischerAngle)
+          };
+        }
+      },
+      {
+        id: "cpe",
+        number: 9,
+        name: "Rs + (R ∥ CPE)",
+        formula: "Z₉(ω) = Rs + 1/[1/R₁ + Q₁(jω)^α₁]",
+        color: "--series-6",
+        parameters: [
+          { key: "Rs", label: "Rs", unit: "Ω", value: 10, min: 0 },
+          { key: "R1", label: "R₁", unit: "Ω", value: 100, min: 0 },
+          { key: "Q1", label: "Q₁", unit: "S·s^α", value: 0.01, min: 1e-15 },
+          { key: "alpha1", label: "α₁", unit: "0–1", value: 0.8, min: 0, max: 1 }
+        ],
+        impedance(omega, p) {
+          const zarc = zarcImpedance(omega, p.R1, p.Q1, p.alpha1);
+          return {
+            re: p.Rs + zarc.re,
+            im: zarc.im
+          };
+        }
+      }
+    ];
+
+    const plotContainer = document.getElementById("plots");
+    const fMinInput = document.getElementById("f-min");
+    const fMaxInput = document.getElementById("f-max");
+    const pointCountInput = document.getElementById("point-count");
+    const lockYInput = document.getElementById("lock-y");
+    const lockedYDomains = new Map();
+
+    function zarcImpedance(omega, resistance, q, alpha) {
+      const safeResistance = Math.max(resistance, Number.EPSILON);
+      const safeQ = Math.max(q, Number.EPSILON);
+      const angle = -alpha * Math.PI / 2;
+      const cpeMagnitude = safeQ * Math.pow(omega, alpha);
+      const admittanceReal = 1 / safeResistance + cpeMagnitude * Math.cos(-angle);
+      const admittanceImaginary = cpeMagnitude * Math.sin(-angle);
+      const denominator = admittanceReal ** 2 + admittanceImaginary ** 2;
+      return {
+        re: admittanceReal / denominator,
+        im: -admittanceImaginary / denominator
+      };
+    }
+
+    function makeCards() {
+      circuits.forEach((circuit) => {
+        const article = document.createElement("article");
+        article.className = `circuit-card${circuit.wide ? " wide" : ""}`;
+        article.dataset.circuit = circuit.id;
+
+        const parameterMarkup = circuit.parameters.map((parameter) => {
+          const min = parameter.min !== undefined ? ` min="${parameter.min}"` : "";
+          const max = parameter.max !== undefined ? ` max="${parameter.max}"` : "";
+          return `
+            <div class="field">
+              <label for="${circuit.id}-${parameter.key}">
+                ${parameter.label}
+                <span class="unit">${parameter.unit}</span>
+              </label>
+              <input
+                id="${circuit.id}-${parameter.key}"
+                data-parameter="${parameter.key}"
+                type="number"
+                step="any"
+                value="${parameter.value}"
+                ${min}${max}
+              >
+            </div>
+          `;
+        }).join("");
+
+        article.innerHTML = `
+          <div class="card-heading">
+            <div>
+              <h2>${circuit.number}. ${circuit.name}</h2>
+              <p class="formula">${circuit.formula}</p>
+            </div>
+            <button class="reset-circuit" type="button">Reset</button>
+          </div>
+          <div class="parameter-controls">${parameterMarkup}</div>
+          <div class="chart-wrap">
+            <canvas
+              role="img"
+              aria-label="Nyquist plot for ${circuit.name}"
+            ></canvas>
+            <div class="tooltip" aria-hidden="true"></div>
+          </div>
+          <div class="plot-footer">
+            <span class="marker-key"><span class="marker low"></span> Low frequency</span>
+            <span class="marker-key"><span class="marker high"></span> High frequency</span>
+          </div>
+        `;
+
+        plotContainer.appendChild(article);
+        attachCardEvents(circuit, article);
+      });
+    }
+
+    function attachCardEvents(circuit, card) {
+      card.querySelectorAll("input").forEach((input) => {
+        input.addEventListener("input", () => drawCircuit(circuit, card));
+      });
+
+      card.querySelector(".reset-circuit").addEventListener("click", () => {
+        circuit.parameters.forEach((parameter) => {
+          card.querySelector(`[data-parameter="${parameter.key}"]`).value = parameter.value;
+        });
+        drawCircuit(circuit, card);
+      });
+
+      const canvas = card.querySelector("canvas");
+      const tooltip = card.querySelector(".tooltip");
+
+      canvas.addEventListener("pointermove", (event) => {
+        showNearestPoint(event, canvas, tooltip);
+      });
+
+      canvas.addEventListener("pointerleave", () => {
+        tooltip.style.display = "none";
+        tooltip.setAttribute("aria-hidden", "true");
+      });
+    }
+
+    function readFrequencySettings() {
+      let fMin = positiveNumber(fMinInput.value, defaults.fMin);
+      let fMax = positiveNumber(fMaxInput.value, defaults.fMax);
+      const points = clamp(
+        Math.round(positiveNumber(pointCountInput.value, defaults.points)),
+        50,
+        1500
+      );
+
+      if (fMin >= fMax) {
+        fMax = fMin * 10;
+      }
+
+      return { fMin, fMax, points };
+    }
+
+    function readParameters(circuit, card) {
+      const values = {};
+      circuit.parameters.forEach((parameter) => {
+        const input = card.querySelector(`[data-parameter="${parameter.key}"]`);
+        let value = finiteNumber(input.value, parameter.value);
+
+        if (parameter.min !== undefined) {
+          value = Math.max(parameter.min, value);
+        }
+        if (parameter.max !== undefined) {
+          value = Math.min(parameter.max, value);
+        }
+
+        values[parameter.key] = value;
+      });
+      return values;
+    }
+
+    function logFrequencies(fMin, fMax, count) {
+      const frequencies = [];
+      const low = Math.log10(fMin);
+      const high = Math.log10(fMax);
+      const denominator = Math.max(1, count - 1);
+
+      for (let index = 0; index < count; index += 1) {
+        frequencies.push(Math.pow(10, low + (high - low) * index / denominator));
+      }
+      return frequencies;
+    }
+
+    function drawAll() {
+      circuits.forEach((circuit) => {
+        const card = plotContainer.querySelector(`[data-circuit="${circuit.id}"]`);
+        drawCircuit(circuit, card);
+      });
+    }
+
+    function drawCircuit(circuit, card) {
+      const canvas = card.querySelector("canvas");
+      const context = canvas.getContext("2d");
+      const bounds = canvas.getBoundingClientRect();
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.max(300, Math.round(bounds.width));
+      const height = Math.max(260, Math.round(bounds.height));
+
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+      const settings = readFrequencySettings();
+      const parameters = readParameters(circuit, card);
+      const frequencies = logFrequencies(settings.fMin, settings.fMax, settings.points);
+      const data = frequencies.map((frequency) => {
+        const impedance = circuit.impedance(2 * Math.PI * frequency, parameters);
+        return {
+          frequency,
+          x: impedance.re,
+          y: -impedance.im
+        };
+      }).filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
+
+      context.clearRect(0, 0, width, height);
+
+      if (data.length < 2) {
+        drawEmptyState(context, width, height);
+        return;
+      }
+
+      const theme = getComputedStyle(document.documentElement);
+      const colors = {
+        foreground: theme.getPropertyValue("--foreground").trim(),
+        muted: theme.getPropertyValue("--muted").trim(),
+        grid: theme.getPropertyValue("--grid").trim(),
+        axis: theme.getPropertyValue("--axis").trim(),
+        border: theme.getPropertyValue("--border").trim(),
+        series: theme.getPropertyValue(circuit.color).trim(),
+        surface: theme.getPropertyValue("--surface").trim()
+      };
+
+      const margin = { top: 19, right: 20, bottom: 53, left: 70 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const xValues = data.map((point) => point.x);
+      const yValues = data.map((point) => point.y);
+      const xDomain = paddedDomain(Math.min(0, ...xValues), Math.max(0, ...xValues));
+      const automaticYDomain = paddedDomain(Math.min(0, ...yValues), Math.max(0, ...yValues));
+      let yDomain = automaticYDomain;
+
+      if (lockYInput.checked) {
+        if (!lockedYDomains.has(circuit.id)) {
+          lockedYDomains.set(circuit.id, { ...automaticYDomain });
+        }
+        yDomain = lockedYDomains.get(circuit.id);
+      } else {
+        lockedYDomains.delete(circuit.id);
+      }
+
+      const xScale = (value) => {
+        return margin.left + (value - xDomain.min) / (xDomain.max - xDomain.min) * plotWidth;
+      };
+      const yScale = (value) => {
+        return margin.top + (yDomain.max - value) / (yDomain.max - yDomain.min) * plotHeight;
+      };
+
+      drawGridAndAxes(
+        context,
+        { width, height, margin, plotWidth, plotHeight, xDomain, yDomain, xScale, yScale },
+        colors
+      );
+
+      context.save();
+      context.beginPath();
+      context.rect(margin.left, margin.top, plotWidth, plotHeight);
+      context.clip();
+      context.beginPath();
+      data.forEach((point, index) => {
+        const px = xScale(point.x);
+        const py = yScale(point.y);
+        if (index === 0) {
+          context.moveTo(px, py);
+        } else {
+          context.lineTo(px, py);
+        }
+      });
+      context.strokeStyle = colors.series;
+      context.lineWidth = 2.4;
+      context.lineJoin = "round";
+      context.lineCap = "round";
+      context.stroke();
+
+      drawEndpoint(context, xScale(data[0].x), yScale(data[0].y), colors.series, colors.surface, true);
+      const finalPoint = data[data.length - 1];
+      drawEndpoint(context, xScale(finalPoint.x), yScale(finalPoint.y), colors.series, colors.surface, false);
+      context.restore();
+
+      canvas._plotState = {
+        data,
+        xScale,
+        yScale,
+        width,
+        height,
+        margin,
+        plotWidth,
+        plotHeight
+      };
+
+      canvas.setAttribute(
+        "aria-label",
+        `${circuit.name} Nyquist plot from ${formatNumber(settings.fMin)} to ${formatNumber(settings.fMax)} hertz`
+      );
+    }
+
+    function drawGridAndAxes(context, layout, colors) {
+      const {
+        width,
+        height,
+        margin,
+        plotWidth,
+        plotHeight,
+        xDomain,
+        yDomain,
+        xScale,
+        yScale
+      } = layout;
+
+      context.font = '12px Inter, ui-sans-serif, system-ui, sans-serif';
+      context.textBaseline = "middle";
+      context.lineWidth = 1;
+
+      const xTicks = tickValues(xDomain.min, xDomain.max, 5);
+      const yTicks = tickValues(yDomain.min, yDomain.max, 5);
+
+      xTicks.forEach((tick) => {
+        const x = xScale(tick);
+        context.beginPath();
+        context.moveTo(x, margin.top);
+        context.lineTo(x, margin.top + plotHeight);
+        context.strokeStyle = colors.grid;
+        context.stroke();
+
+        context.fillStyle = colors.muted;
+        context.textAlign = "center";
+        context.fillText(formatTick(tick), x, margin.top + plotHeight + 19);
+      });
+
+      yTicks.forEach((tick) => {
+        const y = yScale(tick);
+        context.beginPath();
+        context.moveTo(margin.left, y);
+        context.lineTo(margin.left + plotWidth, y);
+        context.strokeStyle = colors.grid;
+        context.stroke();
+
+        context.fillStyle = colors.muted;
+        context.textAlign = "right";
+        context.fillText(formatTick(tick), margin.left - 9, y);
+      });
+
+      if (xDomain.min <= 0 && xDomain.max >= 0) {
+        context.beginPath();
+        context.moveTo(xScale(0), margin.top);
+        context.lineTo(xScale(0), margin.top + plotHeight);
+        context.strokeStyle = colors.axis;
+        context.stroke();
+      }
+
+      if (yDomain.min <= 0 && yDomain.max >= 0) {
+        context.beginPath();
+        context.moveTo(margin.left, yScale(0));
+        context.lineTo(margin.left + plotWidth, yScale(0));
+        context.strokeStyle = colors.axis;
+        context.stroke();
+      }
+
+      context.fillStyle = colors.foreground;
+      context.font = '600 12px Inter, ui-sans-serif, system-ui, sans-serif';
+      context.textAlign = "center";
+      context.fillText("Re(Z) / Ω", margin.left + plotWidth / 2, height - 12);
+
+      context.save();
+      context.translate(15, margin.top + plotHeight / 2);
+      context.rotate(-Math.PI / 2);
+      context.fillText("−Im(Z) / Ω", 0, 0);
+      context.restore();
+
+      context.strokeStyle = colors.border;
+      context.strokeRect(margin.left, margin.top, plotWidth, plotHeight);
+    }
+
+    function drawEndpoint(context, x, y, seriesColor, surfaceColor, isLowFrequency) {
+      context.beginPath();
+      if (isLowFrequency) {
+        context.arc(x, y, 4.4, 0, 2 * Math.PI);
+      } else {
+        context.rect(x - 4, y - 4, 8, 8);
+      }
+      context.fillStyle = surfaceColor;
+      context.fill();
+      context.lineWidth = 2;
+      context.strokeStyle = seriesColor;
+      context.stroke();
+    }
+
+    function drawEmptyState(context, width, height) {
+      const theme = getComputedStyle(document.documentElement);
+      context.fillStyle = theme.getPropertyValue("--muted").trim();
+      context.font = '14px Inter, ui-sans-serif, system-ui, sans-serif';
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText("Enter valid parameters to draw the curve.", width / 2, height / 2);
+    }
+
+    function showNearestPoint(event, canvas, tooltip) {
+      const state = canvas._plotState;
+      if (!state) {
+        return;
+      }
+
+      const rect = canvas.getBoundingClientRect();
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
+      let nearest = null;
+      let nearestDistance = Infinity;
+
+      state.data.forEach((point) => {
+        const x = state.xScale(point.x);
+        const y = state.yScale(point.y);
+        const distance = Math.hypot(pointerX - x, pointerY - y);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = { point, x, y };
+        }
+      });
+
+      if (!nearest || nearestDistance > 34) {
+        tooltip.style.display = "none";
+        tooltip.setAttribute("aria-hidden", "true");
+        return;
+      }
+
+      tooltip.innerHTML = `
+        <strong>f = ${formatNumber(nearest.point.frequency)} Hz</strong><br>
+        Re(Z) = ${formatNumber(nearest.point.x)} Ω<br>
+        −Im(Z) = ${formatNumber(nearest.point.y)} Ω
+      `;
+      tooltip.style.display = "block";
+      tooltip.setAttribute("aria-hidden", "false");
+
+      const wrap = tooltip.parentElement;
+      const wrapWidth = wrap.clientWidth;
+      const wrapHeight = wrap.clientHeight;
+      const tooltipWidth = tooltip.offsetWidth;
+      const tooltipHeight = tooltip.offsetHeight;
+      const preferredLeft = nearest.x + 18;
+      const preferredTop = nearest.y - tooltipHeight / 2;
+
+      tooltip.style.left = `${clamp(preferredLeft, 8, wrapWidth - tooltipWidth - 8)}px`;
+      tooltip.style.top = `${clamp(preferredTop, 8, wrapHeight - tooltipHeight - 8)}px`;
+    }
+
+    function paddedDomain(minimum, maximum) {
+      let min = minimum;
+      let max = maximum;
+      let span = max - min;
+
+      if (!Number.isFinite(span) || span <= Number.EPSILON) {
+        const center = Number.isFinite(min) ? min : 0;
+        const expansion = Math.max(1, Math.abs(center) * 0.2);
+        min = center - expansion;
+        max = center + expansion;
+        span = max - min;
+      }
+
+      const padding = span * 0.08;
+      return { min: min - padding, max: max + padding };
+    }
+
+    function tickValues(minimum, maximum, targetCount) {
+      const step = niceStep(maximum - minimum, targetCount);
+      const start = Math.ceil(minimum / step) * step;
+      const values = [];
+
+      for (let value = start; value <= maximum + step * 0.25; value += step) {
+        values.push(Math.abs(value) < step * 1e-10 ? 0 : value);
+        if (values.length > 12) {
+          break;
+        }
+      }
+      return values;
+    }
+
+    function niceStep(span, targetCount) {
+      const rough = Math.max(span, Number.EPSILON) / targetCount;
+      const power = Math.pow(10, Math.floor(Math.log10(rough)));
+      const normalized = rough / power;
+      let factor;
+
+      if (normalized >= 5) {
+        factor = 10;
+      } else if (normalized >= 2) {
+        factor = 5;
+      } else if (normalized >= 1) {
+        factor = 2;
+      } else {
+        factor = 1;
+      }
+
+      return factor * power;
+    }
+
+    function formatTick(value) {
+      const absolute = Math.abs(value);
+      if (absolute === 0) {
+        return "0";
+      }
+      if (absolute >= 10000 || absolute < 0.01) {
+        return value.toExponential(1);
+      }
+      return Number(value.toPrecision(4)).toString();
+    }
+
+    function formatNumber(value) {
+      const absolute = Math.abs(value);
+      if (absolute !== 0 && (absolute >= 10000 || absolute < 0.001)) {
+        return value.toExponential(3);
+      }
+      return Number(value.toPrecision(5)).toString();
+    }
+
+    function finiteNumber(value, fallback) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function positiveNumber(value, fallback) {
+      const parsed = finiteNumber(value, fallback);
+      return parsed > 0 ? parsed : fallback;
+    }
+
+    function clamp(value, minimum, maximum) {
+      return Math.min(maximum, Math.max(minimum, value));
+    }
+
+    function resetAll() {
+      fMinInput.value = defaults.fMin;
+      fMaxInput.value = defaults.fMax;
+      pointCountInput.value = defaults.points;
+      lockYInput.checked = false;
+      lockedYDomains.clear();
+
+      circuits.forEach((circuit) => {
+        const card = plotContainer.querySelector(`[data-circuit="${circuit.id}"]`);
+        circuit.parameters.forEach((parameter) => {
+          card.querySelector(`[data-parameter="${parameter.key}"]`).value = parameter.value;
+        });
+      });
+
+      drawAll();
+    }
+
+    [fMinInput, fMaxInput, pointCountInput].forEach((input) => {
+      input.addEventListener("input", drawAll);
+    });
+
+    lockYInput.addEventListener("change", () => {
+      lockedYDomains.clear();
+      drawAll();
+    });
+
+    document.getElementById("reset-all").addEventListener("click", resetAll);
+
+    let resizeFrame = 0;
+    window.addEventListener("resize", () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(drawAll);
+    });
+
+    makeCards();
+    drawAll();
+  </script>
+</body>
+</html>

@@ -19,6 +19,13 @@ w = 2 * np.pi * f
 
 # Complex impedance
 Z_true = R_true / (1 + 1j * w * R_true * C_true) + R_1_true / (1 + 1j * w * R_1_true * C_1_true) + R_2_true / (1 + 1j * w * R_2_true * C_2_true)
+
+# Z_4 = Rs + Rg1 / (1 + 1j * w * tauG1) ** 0.5
+# Z_5 = Rs + 1j * w * L1
+# Z_6 = Rs + sigma1 / (1j * w) ** 0.5
+# Z_7 = Rs + 1 / (1 / R1 + Q1 * (1j * w) ** alpha1) + sigma1 / (1j * w) ** 0.5
+# Z_8 = Rs + 1 / (1 / R1 + Q1 * (1j * w) ** alpha1) + Rg1 / (1 + 1j * w * tauG1) ** 0.5
+# Z_9 = Rs + 1 / (1 / R1 + Q1 * (1j * w) ** alpha1)
 #plt.plot(np.real(Z), np.imag(Z))
 
 #plt.show()
