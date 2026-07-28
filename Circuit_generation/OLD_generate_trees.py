@@ -153,7 +153,7 @@ def get_grammar(name: str) -> Any:
 
     from nltk import CFG
 
-    return CFG.fromstring(source)
+    return CFG.fromstring(source) #builds grammar
 
 
 def possible_circuit_trees(grammar: Any, depth: int) -> set[Tree]:

@@ -12,9 +12,9 @@ from itertools import count
 from typing import Any, Mapping, Protocol
 
 if __package__:
-    from .generate_trees import Tree
+    from .OLD_generate_trees import Tree
 else:
-    from generate_trees import Tree
+    from Circuit_generation.OLD_generate_trees import Tree
 
 
 ParameterValues = Mapping[str, Any]
@@ -252,7 +252,7 @@ class Circuit:
     root: Component
 
     @classmethod
-    def from_tree(cls, tree: Tree) -> "Circuit":
+    def from_tree(cls, tree) -> "Circuit":
         """Build and consistently number a circuit from a normalized tree."""
         return cls(_CircuitFactory().build(tree))
 
@@ -279,7 +279,7 @@ class _CircuitFactory:
     def __init__(self) -> None:
         self._indices = count(start=1)
 
-    def build(self, tree: Tree) -> Component:
+    def build(self, tree) -> Component:
         if isinstance(tree, str):
             return self._build_element(tree)
 
@@ -328,6 +328,6 @@ class _CircuitFactory:
         raise ValueError(f"Unsupported circuit element: {kind!r}")
 
 
-def circuit_from_tree(tree: Tree) -> Circuit:
+def circuit_from_tree(tree) -> Circuit:
     """Return an executable circuit object for a normalized tree."""
     return Circuit.from_tree(tree)

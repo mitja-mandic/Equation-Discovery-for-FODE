@@ -9,12 +9,12 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 if __package__:
-    from .circuit_from_tree import circuit_from_tree
-    from .generate_trees import Tree, format_tree, generate_trees
+    from .OLD_circuit_from_tree import circuit_from_tree
+    from .OLD_generate_trees import Tree, format_tree, generate_trees
 else:
     # Used when main.py is run directly instead of imported as a package.
-    from circuit_from_tree import circuit_from_tree
-    from generate_trees import Tree, format_tree, generate_trees
+    from Circuit_generation.OLD_circuit_from_tree import circuit_from_tree
+    from Circuit_generation.OLD_generate_trees import Tree, format_tree, generate_trees
 
 
 # ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ else:
 # ---------------------------------------------------------------------------
 
 GRAMMAR_NAME = "relaxed"  # "redone" uses zarc/randles; "relaxed" uses primitives.
-TREE_DEPTH = 4
+TREE_DEPTH = 6
 
 
 def build_equation_listing(trees: Iterable[Tree]) -> str:
@@ -51,7 +51,8 @@ def main() -> None:
     """Generate all trees and print their executable impedance equations."""
     trees = generate_trees(GRAMMAR_NAME, TREE_DEPTH)
     print(f"IMPEDANCE EQUATIONS ({GRAMMAR_NAME}, depth={TREE_DEPTH})\n")
-    print(build_equation_listing(trees))
+    eqs = build_equation_listing(trees)
+    print(eqs)
 
 
 if __name__ == "__main__":
