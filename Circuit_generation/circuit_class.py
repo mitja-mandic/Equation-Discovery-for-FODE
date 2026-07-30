@@ -1,15 +1,15 @@
 from typing import Any, Mapping, Protocol
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
 #simplifying old versions
 
 class CircuitNode:
     '''anything that can appear in a circuit, either elements (resistors, capacitors...) or 
     connections (parallel, series)'''
-    pass
-
+    
 class Element(CircuitNode):
     pass
+
 
 @dataclass(frozen=True)
 class Resistor(Element):

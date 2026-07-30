@@ -75,7 +75,7 @@ def parse_expression(
     return (operator, left, right), position + 1
 
 
-def normalize(node: ParsedTree) -> Tree:
+def normalize(node) -> Tree:
     """Flatten, simplify, and deterministically order a parsed circuit tree."""
     if isinstance(node, str):
         return node

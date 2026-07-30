@@ -5,7 +5,8 @@ from nltk.parse.generate import generate
 import argparse
 from typing import Any, Sequence
 
-from circuit_class import Resistor, SeriesResistance, CPE, Warburg, Inductor, Gerischer, Series, Parallel, CircuitNode
+from circuit_class import Element, Resistor, SeriesResistance, CPE, Warburg, Inductor, Gerischer, Series, Parallel, CircuitNode
+from OLD_generate_trees import parse_expression
 
 Tree = str | tuple[str, tuple["Tree", ...]]
 ParsedTree = str | tuple[str, "ParsedTree", "ParsedTree"]
@@ -33,17 +34,17 @@ GRAMMAR_SOURCES = {
         Element -> 'CPE'
         Element -> 'W'
         Element -> 'G'
-    """,
+    """
 }
 
-gramatika = CFG.fromstring(GRAMMAR_SOURCES['relaxed'])
+#gramatika = CFG.fromstring(GRAMMAR_SOURCES['relaxed'])
 
 
-with open('Circuit_generation/vezja.txt', 'w') as f:
-    y = 1
-    for x in generate(gramatika, depth=4):
-        f.write(f"{y}: {x}\n")
-        y += 1
+#with open('Circuit_generation/vezja.txt', 'w') as f:
+#    y = 1
+#    for x in generate(gramatika, depth=4):
+#        f.write(f"{y}: {x}\n")
+#        y += 1
 #rezultat:
 #['Rs']
 #['Rs', '+', 'R']
@@ -53,8 +54,8 @@ with open('Circuit_generation/vezja.txt', 'w') as f:
 #['Rs', '+', 'G']
 #PATTERN = r'''(?<=\()[^()]*(?=\))'''
 
-COLLAPSIBLE_PATTERNS = {'R+R':'R','(R+R)':'R','(L+L)':'L','Rs+R':'Rs','R||R':'R','(L||L)':'L'}
-
+#COLLAPSIBLE_PATTERNS = {'R+R':'R','(R+R)':'R','(L+L)':'L','Rs+R':'Rs','R||R':'R','(L||L)':'L'}
+COLLAPSIBLE_ELEMENTS = {"R", "L"}
 #circuit=['Rs', '+', '(', '(', 'L', '+', 'W', ')', '+', '(', 'G', '||', 'G', ')', ')']
 #circuit = ['Rs', '+', '(', '(', 'R', '+', 'L', ')', '+', 'R', ')']
 
@@ -106,7 +107,10 @@ CONNECTION_TYPES = {
     "+": Series,
     "||": Parallel
     }
-circuit = ['Rs', '+', '(', '(', 'R', '+', 'L', ')', '+', 'R', ')']
+circuit = ['Rs', '+', '(', '(', 'R', '+', 'L', ')', '+', '(', 'R', '||', 'L', ')', ')']
+COLLAPSIBLE_ELEMENTS = {"R", "L"}
+
+
 
 def circuit_list_to_objects(tokens):
     if tokens == ["Rs"]:
@@ -176,4 +180,70 @@ def parse_inner_expression(tokens: Sequence[str],position: int = 0):# -> tuple[P
     #    return connection((left,right)), position + 1
     #return (operator, left, right), position + 1
 
-print(circuit_list_to_objects(tuple(circuit)))
+def normalize(node) -> Tree:
+    """Flatten, simplify, and deterministically order a parsed circuit tree."""
+    if isinstance(node, str):
+        return node
+
+    operator, left, right = node
+    children: list[Tree] = []
+    for child in (normalize(left), normalize(right)):
+        if isinstance(child, tuple) and child[0] == operator:
+            children.extend(child[1])
+        else:
+            children.append(child)
+
+    seen: set[str] = set()
+    simplified_children: list[Tree] = []
+    for child in children:
+        if isinstance(child, str) and child in COLLAPSIBLE_ELEMENTS:
+            if child in seen:
+                continue
+            seen.add(child)
+        simplified_children.append(child)
+
+    # A free series R is topologically redundant with the existing Rs.
+    if operator == "+" and "Rs" in simplified_children:
+        try:
+            simplified_children.remove("R")
+        except ValueError:
+            pass
+
+    simplified_children.sort(
+        key=lambda child: (
+            child != "Rs",
+            repr(child),
+        )
+    )
+    return operator, tuple(simplified_children)
+
+
+def canonical_circuit_tree(tokens: Sequence[str]) -> Tree:
+    """Convert one generated token sequence into a normalized circuit tree."""
+    if tuple(tokens) == ("Rs",):
+        return "Rs"
+
+    if tuple(tokens[:2]) != ("Rs", "+"):
+        raise ValueError(f"Invalid circuit: {tuple(tokens)}")
+
+    network, final_position = parse_expression(tokens, position=2)
+    if final_position != len(tokens):
+        raise ValueError("Unexpected tokens after the circuit expression")
+
+    complete_tree: ParsedTree = ("+", "Rs", network)
+    return normalize(complete_tree)
+
+def is_connection(node: CircuitNode):
+    return type(node).__name__ in ['Parallel', 'Series']
+
+c = Series((Resistor(),Resistor()))
+d = Series((Inductor(),Inductor()))
+connection_type = type(c)
+if type(d) is connection_type:
+    print('x')
+
+
+#print(canonical_circuit_tree(tuple(circuit)))
+l = [('a','b')]
+l.append(('x','y'))
+print(l)

@@ -1,16 +1,10 @@
 from nltk import CFG
 from nltk.parse.generate import generate
-from circuit_class import Resistor, SeriesResistance, CPE, Warburg, Inductor, Series, Parallel, CircuitNode
+
+from circuit_class import CircuitNode, Element, Resistor, SeriesResistance, CPE, Warburg, Inductor, Series, Parallel, Gerischer
+from typing import Any, Sequence
 
 GRAMMAR_SOURCES = {
-    "redone": """
-        Circuit -> 'Rs' | 'Rs' '+' Block
-
-        Block -> Element | '(' Element '+' Block ')'
-
-        Element -> 'zarc'
-        Element -> 'randles'
-    """,
     "relaxed": """
         Circuit -> 'Rs'
         Circuit -> 'Rs' '+' Network
@@ -27,11 +21,41 @@ GRAMMAR_SOURCES = {
     """,
 }
 
+ELEMENT_TYPES = {
+    "Rs": SeriesResistance,
+    "R": Resistor,
+    "L": Inductor,
+    "CPE": CPE,
+    "W": Warburg,
+    "G": Gerischer,
+}
+
+CONNECTION_TYPES = {
+    "+": Series,
+    "||": Parallel
+    }
+
+SORT_RANK = {
+    SeriesResistance: 0,
+    Resistor: 10,
+    Inductor: 20,
+    CPE: 30,
+    Warburg: 40,
+    Gerischer: 50,
+    Series: 100,
+    Parallel: 110,
+}
+
+
+def circuit_sort_key(node: CircuitNode):
+    return SORT_RANK[type(node)], repr(node)
+
+
 #PART 1: Generate the NLTK grammar and all productions up to certain depth:
 
 def generate_trees(grammar_name: str = "relaxed", depth: int = 5):# -> set[Tree]:
     """Generate normalized trees from a named grammar. Function to call to generate all trees"""
-    return possible_circuit_trees(get_grammar(grammar_name), depth)
+    return {normalize(tree) for tree in possible_circuit_trees(get_grammar(grammar_name), depth)}
 
 
 def get_grammar(name: str):# -> Any:
@@ -49,14 +73,187 @@ def possible_circuit_trees(grammar: Any, depth: int):# -> set[Tree]:
     """Generate all unique normalized trees up to an NLTK depth limit."""
     if depth < 1:
         raise ValueError("depth must be at least 1")
-    return {parse_circuit_list(tuple(generated_list)) for generated_list in generate(grammar, depth=depth)
+    return {circuit_list_to_objects(generated_list) for generated_list in generate(grammar, depth=depth)
     }
+
+###
+def circuit_list_to_string(circuit: list, already_done = ''):
+    '''String representation of a circuit'''
+    if not circuit:
+        return already_done
+
+    for index, element in enumerate(circuit):
+        if element == '(':
+            already_done += element
+            remainder = circuit[index+1:]
+            return circuit_list_to_string(remainder, already_done)
+        else:
+            already_done += element
+
+    return already_done
 
 
 #PART 2: translate the lists to python structures defined in circuit_class.py
 
-def parse_circuit_list(circuit_list):
-    initial_resistance = SeriesResistance("Rs")
-    circuit_list = circuit_list[2:]
-    
+def circuit_list_to_objects(tokens):
+    if tokens == ["Rs"]:
+        return SeriesResistance()
 
+    if tuple(tokens[:2]) != ("Rs", "+") and len(tokens) > 2:
+        raise ValueError(f"Invalid circuit: {tuple(tokens)}")
+
+    operator = CONNECTION_TYPES[tokens[1]]
+    if len(tokens) == 3:
+        left = SeriesResistance()
+        right = ELEMENT_TYPES[tokens[2]]()
+        return operator((left,right))
+
+    inner_circuit, final_position = parse_inner_expression(tokens, 2)
+
+    if final_position != len(tokens):
+        raise ValueError(
+            f"Unexpected trailing tokens: {tokens[final_position:]}"
+        )
+
+    return operator((SeriesResistance(),inner_circuit))
+    
+        #return operator((SeriesResistance(),parse_inner_expression(tokens, 2)))
+
+def parse_inner_expression(tokens: Sequence[str],position: int = 0):# -> tuple[ParsedTree, int]:
+    """Convert a fully parenthesized token sequence into a binary tree."""
+    if position >= len(tokens):
+        raise ValueError("Unexpected end of circuit expression")
+
+    token = tokens[position]
+    if token != "(":
+        return token, position + 1
+
+    left, position = parse_inner_expression(tokens, position + 1)
+
+    
+    if position >= len(tokens):
+        raise ValueError("Expected an operator after the left branch")
+    #print(left)
+    operator = tokens[position]
+    if operator not in {"+", "||"}:
+        raise ValueError(f"Unexpected operator: {operator}")
+
+    right, position = parse_inner_expression(tokens, position + 1)
+    
+    if position >= len(tokens) or tokens[position] != ")":
+        raise ValueError("Expected closing parenthesis")
+
+    connection = CONNECTION_TYPES[operator]
+
+    
+    #check if element needs to be converted to object (is still string) or not
+    if isinstance(left, str):
+        left = ELEMENT_TYPES[left]()
+
+    if isinstance(right, str):
+        right = ELEMENT_TYPES[right]()
+
+    return connection((left,right)), position + 1
+
+# STEP 3: NORMALIZE THE TREE, REMOVE UNNECESSARY ELEMENTS AND CONNECTIONS
+
+def is_connection(node: CircuitNode):
+    return type(node).__name__ in ['Parallel', 'Series']
+
+def normalize(node):
+    """Flatten, simplify, and deterministically order a parsed circuit tree."""
+    if isinstance(node, Element):
+        return node
+    
+    operator, node_children = type(node), node.children
+    children = []
+    
+    for child in node_children:
+        x = normalize(child)
+        
+        if type(x) is operator:
+            #children += x
+            children.extend(x.children) # type: ignore
+        else:
+            children.append(x)
+
+    simplified_children = simplify(operator, children)
+    simplified_children.sort(key=circuit_sort_key)
+
+    if len(simplified_children) == 1:
+        return simplified_children[0]
+
+    return operator(tuple(simplified_children))
+
+def find_series_resistance(connection_type, lst):
+    if connection_type is Series:
+        for index, x in enumerate(lst):
+            if type(x) is SeriesResistance:
+                return index, True
+    return -1, False
+
+
+def simplify(connection_type: type[Series] | type[Parallel], children: list[CircuitNode]) -> list[CircuitNode]:
+    #has_series_resistance = any(type(x) is SeriesResistance for x in children) and connection_type is Series
+    loc, has_series_resistance = find_series_resistance(connection_type, children)
+    collapsible_types = [Inductor, Resistor]
+    seen = set()
+    simplified_list = []
+
+    if has_series_resistance:
+        simplified_list.append(children[loc])
+        children.pop(loc)
+        seen.add(Resistor)
+    for element in children:
+        if type(element) not in collapsible_types:
+            simplified_list.append(element)
+        elif type(element) not in seen:
+            simplified_list.append(element)
+            seen.add(element.__class__)
+            
+    return simplified_list
+
+
+            
+    
+#    if connection_type is Series:
+#        resistor_present = False
+#        inductor_present = False
+#        for element in children:
+#            if isinstance(element, Element):
+#                if isinstance(element, Resistor) and not resistor_present:
+#                        simplified_list.append(element)
+#                        resistor_present = True
+#                if isinstance(element, Inductor) and not inductor_present:
+#                        simplified_list.append(element)
+#                        inductor_present = True
+#                else:
+#                    simplified_list.append(element)
+#            else:
+#                simplified_list.append(element)
+#
+#    if connection_type is Parallel:
+#        if all(isinstance(x, Resistor) for x in children) or all(isinstance(x, Inductor) for x in children):
+#            simplified_list.append(children[0])
+#        else:
+#            simplified_list = children
+#    return simplified_list
+
+
+
+
+
+#r = SeriesResistance()
+#t = Series((SeriesResistance(),
+#            Series(
+#                    (Resistor(),
+#                     Parallel(
+#                            (Resistor(),CPE()))
+#                            )
+#                            )
+#                            )
+#                            )
+#
+##print(generate_trees('relaxed',4))
+#print(normalize(t))
+##print(isinstance(SeriesResistance(), Resistor))
