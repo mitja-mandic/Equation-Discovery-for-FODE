@@ -37,27 +37,19 @@ GRAMMAR_SOURCES = {
     """
 }
 
-#gramatika = CFG.fromstring(GRAMMAR_SOURCES['relaxed'])
+#W je za baterije
 
+
+
+#gramatika = CFG.fromstring(GRAMMAR_SOURCES['relaxed'])
 
 #with open('Circuit_generation/vezja.txt', 'w') as f:
 #    y = 1
 #    for x in generate(gramatika, depth=4):
 #        f.write(f"{y}: {x}\n")
 #        y += 1
-#rezultat:
-#['Rs']
-#['Rs', '+', 'R']
-#['Rs', '+', 'L']
-#['Rs', '+', 'CPE']
-#['Rs', '+', 'W']
-#['Rs', '+', 'G']
-#PATTERN = r'''(?<=\()[^()]*(?=\))'''
 
-#COLLAPSIBLE_PATTERNS = {'R+R':'R','(R+R)':'R','(L+L)':'L','Rs+R':'Rs','R||R':'R','(L||L)':'L'}
 COLLAPSIBLE_ELEMENTS = {"R", "L"}
-#circuit=['Rs', '+', '(', '(', 'L', '+', 'W', ')', '+', '(', 'G', '||', 'G', ')', ')']
-#circuit = ['Rs', '+', '(', '(', 'R', '+', 'L', ')', '+', 'R', ')']
 
 
 def get_grammar(name: str):

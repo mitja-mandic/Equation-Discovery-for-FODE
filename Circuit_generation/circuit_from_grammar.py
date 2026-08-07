@@ -3,6 +3,7 @@ from nltk.parse.generate import generate
 
 from circuit_class import CircuitNode, Element, Resistor, SeriesResistance, CPE, Warburg, Inductor, Series, Parallel, Gerischer
 from typing import Any, Sequence
+from itertools import count
 
 GRAMMAR_SOURCES = {
     "relaxed": """
@@ -215,45 +216,31 @@ def simplify(connection_type: type[Series] | type[Parallel], children: list[Circ
 
 
             
-    
-#    if connection_type is Series:
-#        resistor_present = False
-#        inductor_present = False
-#        for element in children:
-#            if isinstance(element, Element):
-#                if isinstance(element, Resistor) and not resistor_present:
-#                        simplified_list.append(element)
-#                        resistor_present = True
-#                if isinstance(element, Inductor) and not inductor_present:
-#                        simplified_list.append(element)
-#                        inductor_present = True
-#                else:
-#                    simplified_list.append(element)
-#            else:
-#                simplified_list.append(element)
-#
-#    if connection_type is Parallel:
-#        if all(isinstance(x, Resistor) for x in children) or all(isinstance(x, Inductor) for x in children):
-#            simplified_list.append(children[0])
-#        else:
-#            simplified_list = children
-#    return simplified_list
+def add_indexes(circuit: CircuitNode) -> CircuitNode:
+    i = count(start=1)
+    def visit(node):
+        if isinstance(node, SeriesResistance):
+            return node
 
+        if isinstance(node, Element):
+            return node.number_parameters(next(i)) #type: ignore
 
+        return type(node)(
+            tuple(visit(child) for child in node.children)
+        )
+    return visit(circuit)
 
+tokens = ["Rs", "+", "(", "R", "||", "CPE", ")"]
 
+topology = circuit_list_to_objects(tokens)
+normalized = normalize(topology)
+circuit = add_indexes(normalized)
 
-#r = SeriesResistance()
-#t = Series((SeriesResistance(),
-#            Series(
-#                    (Resistor(),
-#                     Parallel(
-#                            (Resistor(),CPE()))
-#                            )
-#                            )
-#                            )
-#                            )
-#
-##print(generate_trees('relaxed',4))
-#print(normalize(t))
-##print(isinstance(SeriesResistance(), Resistor))
+parameters = {
+    "Rs": 0.1,
+    "R1": 2.5,
+    "Q2": 0.03,
+    "alpha2": 0.87,
+}
+
+print(circuit.impedance(3,parameters))

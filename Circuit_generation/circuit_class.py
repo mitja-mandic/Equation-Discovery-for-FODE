@@ -14,11 +14,19 @@ class Element(CircuitNode):
 @dataclass(frozen=True)
 class Resistor(Element):
     resistance: str = "R"
+    def parameter_names(self):
+        return (self.resistance,)
 
+    
     def impedance(self, omega, parameters):
+        #v = vars(self)
+        #resistance_name = v['resistance']
         resistance = parameters[self.resistance]
         return resistance + 0 * omega
 
+    def number_parameters(self, number):
+        return Resistor(resistance=f'{self.resistance}{number}')
+    
     def __str__(self) -> str:
         return self.resistance
 
@@ -47,7 +55,7 @@ class SeriesResistance(Resistor):
     def impedance(self, omega, parameters):
         resistance = parameters[self.resistance]
         return resistance + 0 * omega
-
+    
 @dataclass(frozen=True)
 class CPE(Element):
     coefficient: str = "Q"
@@ -57,6 +65,12 @@ class CPE(Element):
         q = parameters[self.coefficient]
         alpha = parameters[self.exponent]
         return 1 / (q * (1j * omega) ** alpha)
+
+    def number_parameters(self, number):
+        return CPE(
+            coefficient=f'{self.coefficient}{number}',
+            exponent = f'{self.exponent}{number}'
+            )
 
     def __str__(self) -> str:
         return f"CPE({self.coefficient}, {self.exponent})"
@@ -69,7 +83,12 @@ class Warburg(Element):
     def impedance(self, omega, parameters):
         sigma = parameters[self.coefficient]
         return sigma / (1j * omega) ** 0.5
-
+    
+    def number_parameters(self, number):
+        return Warburg(
+            coefficient=f'{self.coefficient}{number}'
+            )
+    
     def __str__(self) -> str:
         return f"W({self.coefficient})"
 
@@ -81,7 +100,11 @@ class Inductor(Element):
     def impedance(self, omega, parameters):
         inductance = parameters[self.inductance]
         return 1j * omega * inductance
-
+    
+    def number_parameters(self, number):
+        return Inductor(
+            inductance=f'{self.inductance}{number}'
+            )
     def __str__(self) -> str:
         return f"L({self.inductance})"
 
@@ -95,7 +118,13 @@ class Gerischer(Element):
         resistance = parameters[self.resistance]
         tau = parameters[self.time_constant]
         return resistance / (1 + 1j * omega * tau) ** 0.5
-
+    
+    def number_parameters(self, number):
+        return Gerischer(
+            resistance=f'{self.resistance}{number}',
+            time_constant = f'{self.time_constant}{number}'
+            )
+    
     def __str__(self) -> str:
         return f"G({self.resistance}, {self.time_constant})"
 

@@ -51,3 +51,24 @@ The current element conventions are:
 - `G`: `Z = Rg/sqrt(1 + j*omega*tauG)`;
 - `zarc`: expanded as `R || CPE`;
 - `randles`: expanded as `R || (CPE + W)`.
+
+## Fit generated circuits to an NPZ recording
+
+The fitter reduces one raw recording to a robust median impedance at each
+frequency, generates candidate circuits, tunes their parameters with bounded
+multi-start least squares, and ranks the fitted models using BIC. To avoid
+over-interpreting tiny score improvements, it prefers the simplest topology
+within six BIC units of the minimum by default.
+
+Install the dependencies and run the learning example from the repository root:
+
+```powershell
+python -m pip install -r requirements.txt
+python "fitting parameters/fit_example.py" `
+  --plot fit_diagnostic.png `
+  --output-json fit_results.json
+```
+
+The default example uses `data/eis_20200224_190006.npz` and the constrained
+`redone` grammar. Use `--help` to change the file, grammar depth, number of
+candidates, multi-start count, or residual weighting.
