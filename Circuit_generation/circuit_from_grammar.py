@@ -1,7 +1,10 @@
 from nltk import CFG
 from nltk.parse.generate import generate
+if __package__:
+    from .circuit_class import CircuitNode, Element, Resistor, SeriesResistance, CPE, Warburg, Inductor, Series, Parallel, Gerischer
+else:
+    from circuit_class import CircuitNode, Element, Resistor, SeriesResistance, CPE, Warburg, Inductor, Series, Parallel, Gerischer
 
-from circuit_class import CircuitNode, Element, Resistor, SeriesResistance, CPE, Warburg, Inductor, Series, Parallel, Gerischer
 from typing import Any, Sequence
 from itertools import count
 
@@ -230,17 +233,17 @@ def add_indexes(circuit: CircuitNode) -> CircuitNode:
         )
     return visit(circuit)
 
-tokens = ["Rs", "+", "(", "R", "||", "CPE", ")"]
-
-topology = circuit_list_to_objects(tokens)
-normalized = normalize(topology)
-circuit = add_indexes(normalized)
-
-parameters = {
-    "Rs": 0.1,
-    "R1": 2.5,
-    "Q2": 0.03,
-    "alpha2": 0.87,
-}
-
-print(circuit.impedance(3,parameters))
+#tokens = ["Rs", "+", "(", "R", "||", "CPE", ")"]
+#
+#topology = circuit_list_to_objects(tokens)
+#normalized = normalize(topology)
+#circuit = add_indexes(normalized)
+#
+#parameters = {
+#    "Rs": 0.1,
+#    "R1": 2.5,
+#    "Q2": 0.03,
+#    "alpha2": 0.87,
+#}
+#
+#print(circuit.impedance(3,parameters))
