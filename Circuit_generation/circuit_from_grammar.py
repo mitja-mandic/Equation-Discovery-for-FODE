@@ -23,6 +23,19 @@ GRAMMAR_SOURCES = {
         Element -> 'W'
         Element -> 'G'
     """,
+    "relaxed_no_G": """
+        Circuit -> 'Rs'
+        Circuit -> 'Rs' '+' Network
+
+        Network -> Element
+        Network -> '(' Network '+' Network ')'
+        Network -> '(' Network '||' Network ')'
+
+        Element -> 'R'
+        Element -> 'L'
+        Element -> 'CPE'
+        Element -> 'W'
+    """,
 }
 
 ELEMENT_TYPES = {
@@ -59,7 +72,7 @@ def circuit_sort_key(node: CircuitNode):
 
 def generate_trees(grammar_name: str = "relaxed", depth: int = 5):# -> set[Tree]:
     """Generate normalized trees from a named grammar. Function to call to generate all trees"""
-    return {normalize(tree) for tree in possible_circuit_trees(get_grammar(grammar_name), depth)}
+    return {add_indexes(normalize(tree)) for tree in possible_circuit_trees(get_grammar(grammar_name), depth)}
 
 
 def get_grammar(name: str):# -> Any:

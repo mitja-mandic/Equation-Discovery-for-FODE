@@ -88,6 +88,7 @@ class Warburg(Element):
         return Warburg(
             coefficient=f'{self.coefficient}{number}'
             )
+
     
     def __str__(self) -> str:
         return f"W({self.coefficient})"

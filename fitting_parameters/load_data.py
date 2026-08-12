@@ -54,3 +54,14 @@ def load_spectrum(file_path):
 #
 #y = [[1],[2]]
 #print(np.asarray(y).shape, x[1].shape)
+
+#import numpy as np
+#
+#data = np.load(r'C:\Users\Mitja\Work\ijs\baterije\FODE for SOFC\Equation-Discovery-for-FODE\data\bank4_20260208-184533_1.npz', allow_pickle=True)
+#lst = data.files
+#
+##for item in lst:
+##    print(item)
+##    print(data[item])
+#
+#print(np.asarray(data['curr']).shape)
