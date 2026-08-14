@@ -62,3 +62,6 @@ def fit_circuit_parameters(
 
     fitted_parameters = dict(zip(names, result.x))
     return fitted_parameters, result
+
+
+print("gell")

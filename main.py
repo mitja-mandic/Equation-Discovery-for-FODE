@@ -9,6 +9,11 @@ import matplotlib.pyplot as plt
 
 from fitting_parameters.import_freq_data import raw_impedance
 
+
+from Circuit_generation.custom_generation import GeneratorConfig, LimitedCircuitGenerator
+
+import time
+
 #t = Series((SeriesResistance(), Series((Inductor(),CPE()))))
 #
 #u = add_indexes(t)
@@ -68,7 +73,7 @@ import matplotlib.pyplot as plt
 
 
 def plot_circuit_fits(measured_impedance, results):
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(16, 9))
 
     plt.scatter(
         measured_impedance.real,
@@ -96,38 +101,42 @@ def plot_circuit_fits(measured_impedance, results):
     plt.title("Nyquist plot")
     plt.grid(True)
     plt.legend()
-    plt.tight_layout()
+    #plt.tight_layout()    
+    #plt.savefig(f'Plots/Nyquists/{grammar}_{depth}.png', bbox_inches = 'tight', dpi = 300, pad_inches=2)
     plt.show()
-
-circuits = generate_trees('relaxed_no_G', 7)
-
-freq, imp = load_spectrum(r"data\eis_20200226_190006.npz")
+grammars = [('compact_hybrid',6), ('relaxed',6), ('compact_only_blocks',6)]
 
 
-#results, fitted_parameters = compare_circuits(
-#    circuits,
-#    freq,
-#    imp,
-#)
 
+st = time.time()
+config = GeneratorConfig(max_elements = 5)
+trees = LimitedCircuitGenerator(config).generate()
 
-frequency, impedance, coherence = raw_impedance(
-    "data/bank4_20260208-184533_1.npz",
-    channel="batt_2",
-)
+freq, imp = load_spectrum(r"data\eis_20200224_190006.npz")
+
 
 results, fitted_parameters = compare_circuits(
-    circuits,
+    trees,
     freq,
     imp,
 )
+plot_circuit_fits(imp, results[:10])
+
+
+et = time.time()
+
+# get the execution time
+elapsed_time = et - st
+print('Execution time:', elapsed_time, 'seconds')
+
+#circuits, impedance, coherence = raw_impedance(
+#    "data/bank4_20260208-184533_1.npz",
+#    channel="batt_2",
+#)
+
+
 #
 #print(results)
 #
 #top10_imp = imp[:10]
-top10_results = results[:10]
 #
-plot_circuit_fits(
-    imp,
-    top10_results,
-)

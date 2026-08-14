@@ -1,5 +1,3 @@
-from nltk import CFG
-from nltk.parse.generate import generate
 if __package__:
     from .circuit_class import CircuitNode, Element, Resistor, SeriesResistance, CPE, Warburg, Inductor, Series, Parallel, Gerischer
 else:
@@ -16,7 +14,6 @@ GRAMMAR_SOURCES = {
         Network -> Element
         Network -> '(' Network '+' Network ')'
         Network -> '(' Network '||' Network ')'
-
         Element -> 'R'
         Element -> 'L'
         Element -> 'CPE'
@@ -35,6 +32,42 @@ GRAMMAR_SOURCES = {
         Element -> 'L'
         Element -> 'CPE'
         Element -> 'W'
+    """,
+    "compact_hybrid": """
+        Circuit -> 'Rs'
+        Circuit -> 'Rs' '+' Network
+
+        Network -> Element
+        Network -> '(' Network '+' Network ')'
+        Network -> '(' Network '||' Network ')'
+
+        Element -> Randles
+        Element -> Zarc
+        Element -> InductorElement
+        Element -> WarburgElement
+
+        Randles -> '(' 'CPE' '||' '(' 'R' '+' 'W' ')' ')'
+        Zarc -> '(' 'CPE' '||' 'R' ')'
+        InductorElement -> 'L'
+        WarburgElement -> 'W'
+    """,
+    "compact_only_blocks": """
+        Circuit -> 'Rs'
+        Circuit -> 'Rs' '+' Network
+
+        Network -> Element
+        Network -> '(' Network '+' Network ')'
+        Network -> '(' Network '||' Network ')'
+
+        Element -> Randles
+        Element -> Zarc
+        Element -> Diffusion
+        Element -> Inductive
+
+        Randles -> '(' 'CPE' '||' '(' 'R' '+' 'W' ')' ')'
+        Zarc -> '(' 'CPE' '||' 'R' ')'
+        Diffusion -> '(' 'R' '+' 'W' ')'
+        Inductive -> '(' 'R' '+' 'L' ')'
     """,
 }
 
@@ -71,12 +104,14 @@ def circuit_sort_key(node: CircuitNode):
 #PART 1: Generate the NLTK grammar and all productions up to certain depth:
 
 def generate_trees(grammar_name: str = "relaxed", depth: int = 5):# -> set[Tree]:
-    """Generate normalized trees from a named grammar. Function to call to generate all trees"""
+    """Generate normalized, parameterized circuits from a named grammar."""
     return {add_indexes(normalize(tree)) for tree in possible_circuit_trees(get_grammar(grammar_name), depth)}
 
 
 def get_grammar(name: str):# -> Any:
     """Build one of the configured NLTK grammars by name."""
+    from nltk import CFG
+
     try:
         source = GRAMMAR_SOURCES[name]
     except KeyError as error:
@@ -88,6 +123,8 @@ def get_grammar(name: str):# -> Any:
 
 def possible_circuit_trees(grammar: Any, depth: int):# -> set[Tree]:
     """Generate all unique normalized trees up to an NLTK depth limit."""
+    from nltk.parse.generate import generate
+
     if depth < 1:
         raise ValueError("depth must be at least 1")
     return {circuit_list_to_objects(generated_list) for generated_list in generate(grammar, depth=depth)
@@ -260,3 +297,5 @@ def add_indexes(circuit: CircuitNode) -> CircuitNode:
 #}
 #
 #print(circuit.impedance(3,parameters))
+#circuits = generate_trees('compact_only_blocks', 7)
+#print(len(circuits))
