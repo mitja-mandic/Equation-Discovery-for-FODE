@@ -54,6 +54,24 @@ The current element conventions are:
 
 ## Fit generated circuits to an NPZ recording
 
+Generate cumulative circuit collections before fitting:
+
+```powershell
+python circuit_export.py --grammar relaxed --element-range 3 5
+```
+
+Each `*_elements_N.json` file contains all valid circuits with **up to** `N`
+physical elements, including the mandatory series resistance `Rs`. Loading
+`relaxed_elements_5.json` therefore compares the 1-, 2-, 3-, 4-, and 5-element
+models in one BIC ranking.
+
+Each completed run of `main.py` writes two matching, dataset-specific outputs:
+
+- `Results/Plots/Nyquists/<dataset>_<grammar>_<N>_best_5.png`, containing the five
+  highest-ranked fits;
+- `Results/fit_results/<dataset>_<grammar>_<N>_fit_summary.json`, containing the fit
+  settings, circuit counts, plot reference, and ten highest-ranked circuits.
+
 The fitter reduces one raw recording to a robust median impedance at each
 frequency, generates candidate circuits, tunes their parameters with bounded
 multi-start least squares, and ranks the fitted models using BIC. To avoid

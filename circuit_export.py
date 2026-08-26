@@ -1,8 +1,9 @@
 """Export generated circuit objects to reusable JSON files.
 
-Each output file represents one grammar/depth combination and is written to
-``data/circuits`` by default.  Besides the circuit topologies, the file records
-the grammar source and the element types that occur in the generated circuits.
+Each output file represents either one grammar/depth combination or all circuits
+up to a physical-element limit, and is written to ``data/circuits`` by default.
+Besides the circuit topologies, the file records the grammar source and the
+element types that occur in the generated circuits.
 """
 
 from __future__ import annotations
@@ -27,7 +28,8 @@ from Circuit_generation.circuit_class import (
     SeriesResistance,
     Warburg,
 )
-EXPORT_FORMAT_VERSION = 2
+
+EXPORT_FORMAT_VERSION = 3
 DEFAULT_OUTPUT_DIRECTORY = Path(__file__).resolve().parent / "data" / "circuits"
 
 
@@ -35,7 +37,7 @@ def export_large_relaxed_count(
     element_count: int,
     output_directory: str | Path = DEFAULT_OUTPUT_DIRECTORY,
 ) -> Path:
-    """Export a large exact-size relaxed set using an integer DAG.
+    """Export a large relaxed set up to ``element_count`` using an integer DAG.
 
     This representation interns every normalized network once and uses shallow
     integer keys during generation. It produces the same compact JSON topology
@@ -44,8 +46,8 @@ def export_large_relaxed_count(
     """
     from Circuit_generation.circuit_from_grammar import GRAMMAR_SOURCES
 
-    if element_count < 2:
-        raise ValueError("element_count must be at least 2")
+    if element_count < 1:
+        raise ValueError("element_count must be at least 1")
 
     # Fixed IDs for primitive nodes. Connection nodes are appended afterward.
     # Counts use six four-bit fields in this order: Rs, R, L, CPE, W, G.
@@ -125,24 +127,28 @@ def export_large_relaxed_count(
         buckets[size] = bucket
         print(f"Built relaxed network size {size}: {len(bucket)} topologies", flush=True)
 
-    final_networks = buckets[maximum_network_size]
-
     # Adding Rs to a root Series removes an immediate primitive R according to
-    # the existing normalizer. Such a circuit has one fewer physical element
-    # and therefore does not belong in this exact-size export.
-    def belongs_to_final_set(node_id: int) -> bool:
+    # the existing normalizer. The resulting circuit is already represented in
+    # a smaller bucket, so omit it to keep the cumulative export duplicate-free.
+    def belongs_to_export(node_id: int) -> bool:
         key = node_keys[node_id]
-        return key[0] != SERIES_KIND or RESISTOR_ID not in key[1:]
+        return node_id != RESISTOR_ID and (
+            key[0] != SERIES_KIND or RESISTOR_ID not in key[1:]
+        )
 
-    circuit_count = 0
-    aggregate_counts = [0] * 6
-    for node_id in final_networks:
-        if not belongs_to_final_set(node_id):
-            continue
-        circuit_count += 1
-        packed = packed_counts[node_id] + 1  # Add the mandatory Rs field.
-        for kind in range(6):
-            aggregate_counts[kind] += (packed >> (4 * kind)) & 0xF
+    # Rs on its own is the one-element circuit. Each accepted network bucket
+    # then contributes circuits with one additional element for the attached
+    # series resistance.
+    circuit_count = 1
+    aggregate_counts = [1, 0, 0, 0, 0, 0]
+    for network_size in range(1, maximum_network_size + 1):
+        for node_id in buckets[network_size]:
+            if not belongs_to_export(node_id):
+                continue
+            circuit_count += 1
+            packed = packed_counts[node_id] + 1
+            for kind in range(6):
+                aggregate_counts[kind] += (packed >> (4 * kind)) & 0xF
 
     element_names = ("Rs", "R", "L", "CPE", "W", "G")
     totals = {
@@ -157,8 +163,9 @@ def export_large_relaxed_count(
             "source": GRAMMAR_SOURCES["relaxed"].strip(),
         },
         "element_constraint": {
-            "comparison": "exact",
+            "comparison": "at_most",
             "count": element_count,
+            "minimum_count": 1,
             "includes_series_resistance": True,
         },
         "elements_used": sorted(totals),
@@ -181,14 +188,13 @@ def export_large_relaxed_count(
             json.dump(value, stream, separators=(",", ":"))
         stream.write(',"circuits":[')
 
-        written = 0
-        for node_id in final_networks:
-            if not belongs_to_final_set(node_id):
-                continue
-            if written:
+        stream.write('["Rs","Rs"]')
+        for network_size in range(1, maximum_network_size + 1):
+            for node_id in buckets[network_size]:
+                if not belongs_to_export(node_id):
+                    continue
                 stream.write(",")
-            stream.write(_serialize_dag_circuit(node_id, node_keys))
-            written += 1
+                stream.write(_serialize_dag_circuit(node_id, node_keys))
 
         stream.write("]}\n")
 
@@ -331,11 +337,15 @@ def export_element_range(
     minimum_elements: int,
     maximum_elements: int,
     output_directory: str | Path = DEFAULT_OUTPUT_DIRECTORY,
+    output_name: str | None = None,
 ) -> list[Path]:
-    """Export one JSON file per exact physical-element count.
+    """Export cumulative JSON files for a range of maximum element counts.
 
-    Unlike NLTK derivation depth, these limits count actual circuit elements,
-    including the mandatory series resistance ``Rs``.
+    For example, the file ending in ``elements_5.json`` contains every valid
+    circuit with one through five physical elements. Unlike NLTK derivation
+    depth, these limits include the mandatory series resistance ``Rs``.
+    ``output_name`` may give the collection a filename distinct from the
+    internal grammar key while the JSON metadata retains the true grammar.
     """
     from Circuit_generation.circuit_from_grammar import GRAMMAR_SOURCES
     from Circuit_generation.custom_generation import (
@@ -364,19 +374,20 @@ def export_element_range(
 
     output_directory = Path(output_directory)
     output_directory.mkdir(parents=True, exist_ok=True)
+    output_name = output_name or grammar_name
     paths = []
 
     for element_count in range(minimum_elements, maximum_elements + 1):
         matching_circuits = {
             circuit
             for circuit in circuits
-            if generator.count_elements(circuit) == element_count
+            if generator.count_elements(circuit) <= element_count
         }
         output_path = (
             output_directory
-            / f"{grammar_name}_elements_{element_count}.json"
+            / f"{output_name}_elements_{element_count}.json"
         )
-        _write_element_count_export(
+        _write_element_limit_export(
             circuits=matching_circuits,
             grammar_name=grammar_name,
             grammar_source=GRAMMAR_SOURCES[grammar_name],
@@ -388,14 +399,14 @@ def export_element_range(
     return paths
 
 
-def _write_element_count_export(
+def _write_element_limit_export(
     circuits: set[CircuitNode],
     grammar_name: str,
     grammar_source: str,
     element_count: int,
     output_path: Path,
 ) -> None:
-    """Write one exact-element-count collection using streaming JSON."""
+    """Write one cumulative element-count collection using streaming JSON."""
     from Circuit_generation.circuit_from_grammar import add_indexes
 
     ordered_circuits = sorted(circuits, key=lambda node: (str(node), repr(node)))
@@ -411,8 +422,9 @@ def _write_element_count_export(
             "source": grammar_source.strip(),
         },
         "element_constraint": {
-            "comparison": "exact",
+            "comparison": "at_most",
             "count": element_count,
+            "minimum_count": 1,
             "includes_series_resistance": True,
         },
         "elements_used": sorted(total_element_counts),
@@ -449,7 +461,7 @@ def load_circuits(path: str | Path) -> set[CircuitNode]:
     """Reconstruct circuit objects from a JSON file created by this module."""
     document = json.loads(Path(path).read_text(encoding="utf-8"))
 
-    if document.get("format_version") not in (1, EXPORT_FORMAT_VERSION):
+    if document.get("format_version") not in (1, 2, EXPORT_FORMAT_VERSION):
         raise ValueError(
             "Unsupported circuit export format; regenerate the JSON file"
         )
@@ -604,8 +616,8 @@ def _parse_arguments() -> argparse.Namespace:
         "--element-range",
         nargs=2,
         type=int,
-        metavar=("MIN", "MAX"),
-        help="Export one file per exact physical-element count.",
+        metavar=("FIRST_MAX", "LAST_MAX"),
+        help="Export cumulative files for each maximum physical-element count.",
     )
     parser.add_argument(
         "--output-directory",

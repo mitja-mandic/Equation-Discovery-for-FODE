@@ -65,6 +65,12 @@ def grammar_base_networks(grammar_name: str) -> tuple[CircuitNode, ...]:
             Inductor(),
             Gerischer(),
         ),
+        "relaxed_no_G": (
+            Resistor(),
+            CPE(),
+            Warburg(),
+            Inductor(),
+        ),
         "compact_hybrid": (
             randles,
             zarc,

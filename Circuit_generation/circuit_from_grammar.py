@@ -18,20 +18,6 @@ GRAMMAR_SOURCES = {
         Element -> 'L'
         Element -> 'CPE'
         Element -> 'W'
-        Element -> 'G'
-    """,
-    "relaxed_no_G": """
-        Circuit -> 'Rs'
-        Circuit -> 'Rs' '+' Network
-
-        Network -> Element
-        Network -> '(' Network '+' Network ')'
-        Network -> '(' Network '||' Network ')'
-
-        Element -> 'R'
-        Element -> 'L'
-        Element -> 'CPE'
-        Element -> 'W'
     """,
     "compact_hybrid": """
         Circuit -> 'Rs'
