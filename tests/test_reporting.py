@@ -81,7 +81,7 @@ class FitReportingTests(unittest.TestCase):
         fake_figure = MagicMock()
         fake_axis = MagicMock()
         circuit_one_label = MagicMock()
-        circuit_one_label.get_text.return_value = "Circuit 1"
+        circuit_one_label.get_text.return_value = "Circuit 1: Rs"
         fake_axis.legend.return_value.get_texts.return_value = [
             circuit_one_label
         ]
@@ -112,7 +112,7 @@ class FitReportingTests(unittest.TestCase):
         plot_options = [call.kwargs for call in fake_axis.plot.call_args_list]
         self.assertEqual(
             [options["label"] for options in plot_options],
-            [f"Circuit {rank}" for rank in range(1, 6)],
+            [f"Circuit {rank}: Rs" for rank in range(1, 6)],
         )
         self.assertEqual(plot_options[0]["linestyle"], "-")
         self.assertEqual(plot_options[0]["linewidth"], 3.2)
@@ -166,7 +166,7 @@ class FitReportingTests(unittest.TestCase):
             )
             self.assertEqual(
                 document["top_circuits"][0]["plot_label"],
-                "Circuit 1",
+                "Circuit 1: Rs",
             )
             self.assertIsNone(document["top_circuits"][5]["plot_label"])
 

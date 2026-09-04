@@ -211,6 +211,9 @@ tempCodeRunnerFile.py
 # Local datasets
 data/
 
+# Intermediate results
+Results/
+
 # Ruff stuff:
 .ruff_cache/
 

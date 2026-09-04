@@ -1,4 +1,3 @@
-import heapq
 import os
 from pathlib import Path
 
@@ -10,94 +9,16 @@ from fitting_parameters.reporting import (
     plot_circuit_fits,
 )
 from fitting_parameters.train import LEAST_SQUARES_SETTINGS, compare_circuits
-from fitting_parameters.load_data import load_spectrum
-
 from circuit_export import load_circuits
-from fitting_parameters.import_freq_data import raw_impedance
+from fitting_parameters.load_data import raw_impedance, load_spectrum, logarithmic_frequency_indices, uniform_frequency_indices
 
-
-def logarithmic_frequency_indices(frequency, number_points=300):
-    """Select existing samples distributed across log-frequency space."""
-
-    frequency = np.asarray(frequency)
-
-    if np.any(frequency <= 0):
-        raise ValueError(
-            "Logarithmic downsampling requires positive frequencies."
-        )
-
-    if len(frequency) <= number_points:
-        return np.arange(len(frequency))
-
-    order = np.argsort(frequency)
-    log_frequency = np.log(frequency[order])
-
-    # Always retain the lowest and highest frequencies.
-    selected = {0, len(frequency) - 1}
-
-    # Heap entries contain: negative logarithmic gap, left, right.
-    intervals = [
-        (
-            -(log_frequency[-1] - log_frequency[0]),
-            0,
-            len(frequency) - 1,
-        )
-    ]
-
-    while len(selected) < number_points:
-        _, left, right = heapq.heappop(intervals)
-
-        if right - left <= 1:
-            continue
-
-        logarithmic_midpoint = (
-            log_frequency[left] + log_frequency[right]
-        ) / 2
-
-        insertion = np.searchsorted(
-            log_frequency,
-            logarithmic_midpoint,
-        )
-
-        candidates = [
-            index
-            for index in (insertion - 1, insertion)
-            if left < index < right
-        ]
-
-        midpoint = min(
-            candidates,
-            key=lambda index: abs(
-                log_frequency[index] - logarithmic_midpoint
-            ),
-        )
-
-        selected.add(midpoint)
-
-        if midpoint - left > 1:
-            heapq.heappush(
-                intervals,
-                (
-                    -(log_frequency[midpoint] - log_frequency[left]),
-                    left,
-                    midpoint,
-                ),
-            )
-
-        if right - midpoint > 1:
-            heapq.heappush(
-                intervals,
-                (
-                    -(log_frequency[right] - log_frequency[midpoint]),
-                    midpoint,
-                    right,
-                ),
-            )
-
-    # Return original array indices ordered by increasing frequency.
-    return order[np.array(sorted(selected))]
+def normalize_sigma(sigma, percentage_floor=0.1):
+    floor = percentage_floor * np.nanmedian(sigma)
+    return np.maximum(np.abs(sigma), floor)
+    #return np.sqrt(sigma ** 2 + floor ** 2)
 
 PROJECT_DIR = Path(__file__).resolve().parent
+
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +27,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 # Use "raw" for bank4 files containing curr, batt_1, batt_2, etc.
 # Use "spectrum" for files containing F and Z.
-DATA_MODE = "raw"
+DATA_MODE = "spectrum"
 
 
 # ---------------------------------------------------------------------------
@@ -117,8 +38,9 @@ RAW_DATA_PATH = (
     PROJECT_DIR
     / "data"
     / "battery"
-    #/ "bank4_20260208-184533_1.npz"
     / "bank3_20260208-084547_1.npz"
+    #/ "bank4_20260208-184533_1.npz"
+    #/ "bank2_20260207-224617_0.01.npz"
 )
 
 SPECTRUM_DATA_PATH = (
@@ -128,16 +50,19 @@ SPECTRUM_DATA_PATH = (
     / "eis_20200224_190006.npz"
 )
 
-BATTERY_CHANNEL = "batt_8"
+BATTERY_CHANNEL = "batt_4" #bank3 battery 5 is weird, ask Pavle
 
 
 # ---------------------------------------------------------------------------
 # GENERATED CIRCUITS
 # ---------------------------------------------------------------------------
 
-grammar_type = "compact_hybrid_elements"
-nr_elements = 7
+#grammar_type = "compact_hybrid"
+grammar_type = "no_G_relaxed"
+nr_elements = 5
 filename_prefix = os.environ.get("FODE_FILENAME_PREFIX", "")
+
+
 OPTIMIZER = "least_squares"
 
 collection_name = f"{filename_prefix}{grammar_type}"
@@ -145,7 +70,7 @@ collection_name = f"{filename_prefix}{grammar_type}"
 CIRCUIT_PATH = (PROJECT_DIR
     / "data"
     / "circuits"
-    / f"{grammar_type}_{nr_elements}.json"
+    / f"{grammar_type}_elements_{nr_elements}.json"
 )
 
 circuits = sorted(
@@ -164,25 +89,29 @@ print(CIRCUIT_PATH)
 if DATA_MODE == "raw":
     # Raw time-domain data:
     # fs, curr, batt_1, batt_2, ...
-    frequency, measured_impedance, coherence = raw_impedance(
+    frequency, measured_impedance, coherence, real_scatter, imag_scatter = raw_impedance(
         RAW_DATA_PATH,
         channel=BATTERY_CHANNEL,
     )
     selected_data_path = RAW_DATA_PATH
 
-    selected = logarithmic_frequency_indices(
-        frequency,
-        number_points=300,
-    )
+    selected = uniform_frequency_indices(frequency, 300)
+    #selected = logarithmic_frequency_indices(
+    #    frequency,
+    #    number_points=400,
+    #)
 
     frequency = frequency[selected]
     measured_impedance = measured_impedance[selected]
     coherence = coherence[selected]
+    real_scatter = real_scatter[selected]
+    imag_scatter = imag_scatter[selected]
+
 
 elif DATA_MODE == "spectrum":
     # Already processed frequency-domain data:
     # F and Z
-    frequency, measured_impedance = load_spectrum(
+    frequency, measured_impedance, real_scatter, imag_scatter = load_spectrum(
         SPECTRUM_DATA_PATH
     )
     selected_data_path = SPECTRUM_DATA_PATH
@@ -210,10 +139,18 @@ print(
 # FIT AND RANK THE CIRCUITS
 # ---------------------------------------------------------------------------
 
+floor = 0.002
+real_smooth_scatter = normalize_sigma(real_scatter)#, floor)
+imag_smooth_scatter = normalize_sigma(imag_scatter)#, floor)
+
 results, fitted_parameters = compare_circuits(
     circuits=circuits,
     frequency=frequency,
     measured_impedance=measured_impedance,
+    real_scatter=real_smooth_scatter,
+    imag_scatter=imag_smooth_scatter,
+    #real_scatter=real_scatter,
+    #imag_scatter=imag_scatter,
     optimizer=OPTIMIZER,
 )
 # ---------------------------------------------------------------------------
@@ -224,7 +161,8 @@ print("\nBest fitted circuits:\n")
 
 for rank, result in enumerate(results[:5], start=1):
     print(f"{rank}. {result['circuit']}")
-    print(f"   BIC: {result['bic']:.4f}")
+    #print(f"   BIC: {result['bic']:.4f}")
+    print(f"   lp_error: {result['lp_error']:.6g}")
     print(f"   MSE: {result['mse']:.6g}")
     print(f"   Success: {result['success']}")
     print(f"   Parameters: {result['parameters']}")
@@ -248,19 +186,19 @@ plot_circuit_fits(
     output_path=plot_path,
 )
 
-export_fit_summary(
-    results=results,
-    output_path=summary_path,
-    plot_path=plot_path.relative_to(PROJECT_DIR),
-    dataset_path=selected_data_path.relative_to(PROJECT_DIR),
-    circuit_path=CIRCUIT_PATH.relative_to(PROJECT_DIR),
-    grammar_name=collection_name,
-    maximum_elements=nr_elements,
-    optimizer=OPTIMIZER,
-    optimizer_settings=LEAST_SQUARES_SETTINGS,
-    frequency=frequency,
-)
-
-print(f"Saved plot: {plot_path}")
-print(f"Saved fit summary: {summary_path}")
+#export_fit_summary(
+#    results=results,
+#    output_path=summary_path,
+#    plot_path=plot_path.relative_to(PROJECT_DIR),
+#    dataset_path=selected_data_path.relative_to(PROJECT_DIR),
+#    circuit_path=CIRCUIT_PATH.relative_to(PROJECT_DIR),
+#    grammar_name=collection_name,
+#    maximum_elements=nr_elements,
+#    optimizer=OPTIMIZER,
+#    optimizer_settings=LEAST_SQUARES_SETTINGS,
+#    frequency=frequency,
+#)
+#
+#print(f"Saved plot: {plot_path}")
+#print(f"Saved fit summary: {summary_path}")
 

@@ -75,7 +75,7 @@ def plot_circuit_fits(
         axis.plot(
             predicted.real,
             -predicted.imag,
-            label=f"Circuit {index}",
+            label=_circuit_plot_label(index, result["circuit"]),
             linestyle="-" if is_best else "--",
             linewidth=3.2 if is_best else 1.6,
             alpha=1.0 if is_best else 0.85,
@@ -89,7 +89,9 @@ def plot_circuit_fits(
 
     legend = axis.legend()
     for label in legend.get_texts():
-        if label.get_text() == "Circuit 1":
+        if label.get_text() == _circuit_plot_label(
+            1, plotted_results[0]["circuit"]
+        ):
             label.set_fontweight("bold")
 
     #################################
@@ -100,13 +102,13 @@ def plot_circuit_fits(
 
 
 
-    #figure.tight_layout()
-    #figure.savefig(
-    #    output_path,
-    #    bbox_inches="tight",
-    #    dpi=300,
-    #    pad_inches=0.2,
-    #)
+    figure.tight_layout()
+    figure.savefig(
+        output_path,
+        bbox_inches="tight",
+        dpi=300,
+        pad_inches=0.2,
+    )
 
     if show:
         plt.show()
@@ -146,7 +148,11 @@ def export_fit_summary(
         top_circuits.append(
             {
                 "rank": rank,
-                "plot_label": f"Circuit {rank}" if rank <= 5 else None,
+                "plot_label": (
+                    _circuit_plot_label(rank, result["circuit"])
+                    if rank <= 5
+                    else None
+                ),
                 "circuit": str(result["circuit"]),
                 "element_count": _count_elements(result["circuit"]),
                 "parameter_count": len(parameters),
@@ -201,12 +207,12 @@ def export_fit_summary(
     #                             #
     ###############################
 
-    #temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
-    #temporary_path.write_text(
-    #    json.dumps(document, indent=2, allow_nan=False) + "\n",
-    #    encoding="utf-8",
-    #)
-    #temporary_path.replace(output_path)
+    temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
+    temporary_path.write_text(
+        json.dumps(document, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    temporary_path.replace(output_path)
     return output_path
 
 
@@ -214,6 +220,11 @@ def _count_elements(node: CircuitNode) -> int:
     if isinstance(node, Element):
         return 1
     return sum(_count_elements(child) for child in node.children)  # type: ignore[attr-defined]
+
+
+def _circuit_plot_label(rank: int, circuit: CircuitNode) -> str:
+    """Return the ranked legend label, including the circuit expression."""
+    return f"Circuit {rank}: {circuit}"
 
 
 def _json_number(value: Any) -> float | int | None:
