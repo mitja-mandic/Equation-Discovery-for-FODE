@@ -29,8 +29,13 @@ class InitialValueTests(unittest.TestCase):
         )
 
     def test_first_start_is_the_deterministic_start(self):
-        starts = generate_initial_values(self.circuit, number_starts=6)
+        starts = generate_initial_values(
+            self.circuit,
+            number_starts=6,
+            random_seed=42,
+        )
 
+        self.assertEqual(len(starts), 6)
         self.assertEqual(
             starts[0],
             set_deterministic_initial_values(self.circuit),
@@ -51,7 +56,11 @@ class InitialValueTests(unittest.TestCase):
         self.assertEqual(first, second)
 
     def test_random_starts_stay_in_the_configured_sampling_ranges(self):
-        starts = generate_initial_values(self.circuit, number_starts=6)
+        starts = generate_initial_values(
+            self.circuit,
+            number_starts=6,
+            random_seed=42,
+        )
 
         expected_ranges = {
             "Rs": (0.005, 0.5),
@@ -72,7 +81,24 @@ class InitialValueTests(unittest.TestCase):
 
     def test_number_starts_must_be_positive(self):
         with self.assertRaisesRegex(ValueError, "at least 1"):
-            generate_initial_values(self.circuit, number_starts=0)
+            generate_initial_values(
+                self.circuit,
+                number_starts=0,
+                random_seed=42,
+            )
+
+    def test_deterministic_mode_returns_only_the_fixed_start(self):
+        starts = generate_initial_values(
+            self.circuit,
+            number_starts=6,
+            random_seed=42,
+            deterministic=True,
+        )
+
+        self.assertEqual(
+            starts,
+            [set_deterministic_initial_values(self.circuit)],
+        )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,202 @@
+\documentclass[
+    11pt,
+    a4paper,
+    oneside
+]{article}
+
+% ---------- Language and typography ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc} % Omit when using LuaLaTeX/XeLaTeX
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Page layout ----------
+\usepackage[
+    top=25mm,
+    bottom=25mm,
+    left=30mm,
+    right=25mm
+]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% ---------- Mathematics ----------
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{bm}
+\usepackage{siunitx}
+\sisetup{
+    separate-uncertainty=true,
+    per-mode=symbol,
+    range-phrase=--,
+    range-units=single
+}
+
+% Useful mathematical operators
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\RePart}{Re}
+\DeclareMathOperator{\ImPart}{Im}
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\e}{\mathrm{e}}
+\newcommand{\iu}{\mathrm{i}}
+\newcommand{\vect}[1]{\bm{#1}}
+\usepackage{amsmath,amssymb,mathtools}
+
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[europeanresistors]{circuitikz}
+\ctikzset{bipoles/length=1.3cm}
+
+% Circuit notation
+\newcommand{\seriesconn}{\mathbin{\oplus}}
+\newcommand{\Lel}[1]{\mathrm{L}\!\left(#1\right)}
+\newcommand{\Wel}[1]{\mathrm{W}\!\left(#1\right)}
+\newcommand{\Gel}[2]{\mathrm{G}\!\left(#1,#2\right)}
+\newcommand{\CPEel}[2]{\mathrm{CPE}\!\left(#1,#2\right)}
+
+
+% Grammar notation
+\newcommand{\nt}[1]{\mathit{#1}}
+\newcommand{\term}[1]{\text{\texttt{#1}}}
+\newcommand{\defines}{\Coloneqq}
+% Fractional derivatives
+\newcommand{\Caputo}[2]{%
+    {}^{\mathrm{C}}\!D_{#1}^{#2}%
+}
+
+% ---------- Figures and tables ----------
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\newcommand{\reportgraphic}[2][]{%
+    \IfFileExists{#2}{%
+        \includegraphics[#1]{#2}%
+    }{%
+        \IfFileExists{figures/#2}{%
+            \includegraphics[#1]{figures/#2}%
+        }{%
+            \PackageWarning{report}{Image `#2' not found; using a placeholder}%
+            \fbox{%
+                \parbox[c][45mm][c]{0.9\linewidth}{%
+                    \centering Missing image: \texttt{\detokenize{#2}}%
+                }%
+            }%
+        }%
+    }%
+}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{subcaption}
+\usepackage{float}
+
+% ---------- Algorithms and source code ----------
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{RGB}{0,120,70}
+\definecolor{codegray}{RGB}{100,100,100}
+\definecolor{codeblue}{RGB}{20,70,160}
+\definecolor{codebackground}{RGB}{247,247,247}
+
+\lstset{
+    backgroundcolor=\color{codebackground},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegreen},
+    stringstyle=\color{red!70!black},
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b
+}
+
+% ---------- References ----------
+\usepackage[
+    backend=biber,
+    style=numeric-comp,
+    sorting=none,
+    giveninits=true,
+    doi=true,
+    url=true
+]{biblatex}
+\addbibresource{references.bib}
+
+% ---------- Cross-references and links ----------
+\usepackage{csquotes}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    citecolor=green!40!black,
+    urlcolor=blue!60!black,
+    pdftitle={Fractional-Order za SOFCs},
+    pdfauthor={Your Name}
+}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+% ---------- Headers and footers ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{FODE za SOFC}
+\fancyhead[R]{\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{14pt}
+
+% ---------- Section formatting ----------
+\usepackage{titlesec}
+\titleformat{\chapter}[hang]
+    {\normalfont\huge\bfseries}
+    {\thechapter.}
+    {0.6em}
+    {}
+
+% ---------- Document metadata ----------
+\title{
+    \textbf{Fractional-Order Differential Equation Modelling\\
+    of Solid Oxide Fuel Cells}
+}
+\author{
+    Your Name\\
+    \small Institution or Department
+}
+\date{\today}
+
+\begin{document}
+
+\section{Uvod}
+
+Po prejšnjem poročilu in okvirnem potrdilu, da se premikam v pravo smer, sem se lotil izboljšav algoritma. Dodal sem normalizacijo residualov (na vsakem koraku jih 
+delim s fiksno vrednostjo), in pa implementacija testiranja več začetnih vrednosti za vsako vezje. Rezultati so vzpodbudni, predvsem so se izboljšali pri vezjih brez 
+omejitev. %Znova bom razdelil poročilo na dva dela glede na dve gramatiki, ki jih testiram.
+
+\section{Splošna gramatika}
+
+\subsection{SOFC podatki}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi}
+\end{figure}
+\subsection{Podatki baterij}
+
+
+
+\section{Hibridna gramatika}
+
+\subsection{SOFC podatki}
+
+\subsection{Podatki baterij}
+
+
+\end{document}

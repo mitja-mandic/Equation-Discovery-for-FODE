@@ -120,14 +120,15 @@ def set_initial_values(circuit: CircuitNode) -> dict[str, float]:
 def generate_initial_values(
     circuit: CircuitNode,
     number_starts: int,# = 6,
-    random_seed: int #= 42,
+    random_seed: int, #= 42,
+    deterministic: bool = False,
 ) -> list[dict[str, float]]:
     """Generate reproducible, stratified initial values for one circuit.
 
-    The first start always contains the existing deterministic values. Positive
-    parameters in the remaining starts are perturbed multiplicatively in
-    log10 space. CPE exponents are sampled directly from
-    ``ALPHA_INITIAL_RANGE``.
+    When ``deterministic`` is true, return only the deterministic start.
+    Otherwise, the first start contains the deterministic values and positive
+    parameters in the remaining starts are perturbed multiplicatively in log10
+    space. CPE exponents are sampled directly from ``ALPHA_INITIAL_RANGE``.
 
     A stable circuit-specific seed makes the generated starts independent of
     the order in which circuits are fitted.
@@ -136,8 +137,11 @@ def generate_initial_values(
     if number_starts < 1:
         raise ValueError("number_starts must be at least 1.")
 
-    deterministic = set_deterministic_initial_values(circuit)
-    starts = [deterministic.copy() for _ in range(number_starts)]
+    deterministic_values = set_deterministic_initial_values(circuit)
+    if deterministic:
+        return [deterministic_values]
+
+    starts = [deterministic_values.copy() for _ in range(number_starts)]
 
     number_random_starts = number_starts - 1
     if number_random_starts == 0:
@@ -151,7 +155,7 @@ def generate_initial_values(
     digest = hashlib.blake2b(seed_material, digest_size=16).digest()
     rng = np.random.default_rng(int.from_bytes(digest, byteorder="big"))
 
-    for name, deterministic_value in deterministic.items():
+    for name, deterministic_value in deterministic_values.items():
         if name.startswith("alpha"):
             sampled_values = _stratified_uniform(
                 rng,

@@ -11,12 +11,14 @@ import numpy as np
 
 from Circuit_generation.circuit_class import CircuitNode, Element
 
+#from main import SAVE_RESULTS, FILENAME_SUFFIX, PLOT_TITLE
 
 def build_fit_output_paths(
     project_directory: str | Path,
     dataset_path: str | Path,
     grammar_name: str,
     maximum_elements: int,
+    filename_suffix: str,
     filename_prefix: str = "",
 ) -> tuple[Path, Path]:
     """Return matching, dataset-specific paths for one plot and summary."""
@@ -30,13 +32,13 @@ def build_fit_output_paths(
         / "Results"
         / "Plots"
         / "Nyquists"
-        / f"{run_name}_best_5.png"
+        / f"{run_name}_best_5_{filename_suffix}.png"
     )
     summary_path = (
         project_directory
         / "Results"
         / "fit_results"
-        / f"{run_name}_fit_summary.json"
+        / f"{run_name}_fit_summary_{filename_suffix}.json"
     )
     return plot_path, summary_path
 
@@ -47,6 +49,8 @@ def plot_circuit_fits(
     output_path: str | Path,
     *,
     show: bool = True,
+    save_output: bool,
+    plot_title: str
 ) -> Path:
     """Plot the five best ranked circuits and emphasize the winner."""
     import matplotlib.pyplot as plt
@@ -84,7 +88,7 @@ def plot_circuit_fits(
 
     axis.set_xlabel("Re(Z)")
     axis.set_ylabel("-Im(Z)")
-    axis.set_title("Nyquist plot")
+    axis.set_title(plot_title)
     axis.grid(True, alpha=0.3)
 
     legend = axis.legend()
@@ -101,14 +105,14 @@ def plot_circuit_fits(
     #################################
 
 
-
-    figure.tight_layout()
-    figure.savefig(
-        output_path,
-        bbox_inches="tight",
-        dpi=300,
-        pad_inches=0.2,
-    )
+    if save_output:
+        figure.tight_layout()
+        figure.savefig(
+            output_path,
+            bbox_inches="tight",
+            dpi=300,
+            pad_inches=0.2,
+        )
 
     if show:
         plt.show()
@@ -154,12 +158,13 @@ def export_fit_summary(
                     else None
                 ),
                 "circuit": str(result["circuit"]),
+                "rand_start":result['rand_start'],
                 "element_count": _count_elements(result["circuit"]),
                 "parameter_count": len(parameters),
                 "parameters": parameters,
                 "mse": _json_number(mse),
                 "rmse": _json_number(sqrt(mse)),
-                "aic": _json_number(result["aic"]),
+#                "aic": _json_number(result["aic"]),
                 "bic": _json_number(result["bic"]),
                 "delta_bic": _json_number(float(result["bic"]) - best_bic),
                 "success": bool(result["success"]),
@@ -192,7 +197,7 @@ def export_fit_summary(
             "successful": successful_count,
             "unsuccessful": len(results) - successful_count,
         },
-        "ranking_metric": "bic",
+        "ranking_metric": "mse",
         "associated_plot": str(plot_path),
         "circuits_shown_in_plot": min(5, len(results)),
         "top_circuits": top_circuits,
@@ -200,12 +205,6 @@ def export_fit_summary(
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    ###############################
-    #                             #
-    #UNCOMMENT BELOW TO SAVE JSONS#
-    #                             #
-    ###############################
 
     temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
     temporary_path.write_text(

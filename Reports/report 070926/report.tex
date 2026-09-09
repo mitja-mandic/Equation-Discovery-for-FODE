@@ -1,0 +1,888 @@
+\documentclass[
+    11pt,
+    a4paper,
+    oneside
+]{article}
+
+% ---------- Language and typography ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc} % Omit when using LuaLaTeX/XeLaTeX
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Page layout ----------
+\usepackage[
+    top=25mm,
+    bottom=25mm,
+    left=30mm,
+    right=25mm
+]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% ---------- Mathematics ----------
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{bm}
+\usepackage{siunitx}
+\sisetup{
+    separate-uncertainty=true,
+    per-mode=symbol,
+    range-phrase=--,
+    range-units=single
+}
+
+% Useful mathematical operators
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\RePart}{Re}
+\DeclareMathOperator{\ImPart}{Im}
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\e}{\mathrm{e}}
+\newcommand{\iu}{\mathrm{i}}
+\newcommand{\vect}[1]{\bm{#1}}
+\usepackage{amsmath,amssymb,mathtools}
+
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[europeanresistors]{circuitikz}
+\ctikzset{bipoles/length=1.3cm}
+
+% Circuit notation
+\newcommand{\seriesconn}{\mathbin{\oplus}}
+\newcommand{\Lel}[1]{\mathrm{L}\!\left(#1\right)}
+\newcommand{\Wel}[1]{\mathrm{W}\!\left(#1\right)}
+\newcommand{\Gel}[2]{\mathrm{G}\!\left(#1,#2\right)}
+\newcommand{\CPEel}[2]{\mathrm{CPE}\!\left(#1,#2\right)}
+
+
+% Grammar notation
+\newcommand{\nt}[1]{\mathit{#1}}
+\newcommand{\term}[1]{\text{\texttt{#1}}}
+\newcommand{\defines}{\Coloneqq}
+% Fractional derivatives
+\newcommand{\Caputo}[2]{%
+    {}^{\mathrm{C}}\!D_{#1}^{#2}%
+}
+
+% ---------- Figures and tables ----------
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\newcommand{\reportgraphic}[2][]{%
+    \IfFileExists{#2}{%
+        \includegraphics[#1]{#2}%
+    }{%
+        \IfFileExists{figures/#2}{%
+            \includegraphics[#1]{figures/#2}%
+        }{%
+            \PackageWarning{report}{Image `#2' not found; using a placeholder}%
+            \fbox{%
+                \parbox[c][45mm][c]{0.9\linewidth}{%
+                    \centering Missing image: \texttt{\detokenize{#2}}%
+                }%
+            }%
+        }%
+    }%
+}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{subcaption}
+\usepackage{float}
+
+% ---------- Algorithms and source code ----------
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{RGB}{0,120,70}
+\definecolor{codegray}{RGB}{100,100,100}
+\definecolor{codeblue}{RGB}{20,70,160}
+\definecolor{codebackground}{RGB}{247,247,247}
+
+\lstset{
+    backgroundcolor=\color{codebackground},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegreen},
+    stringstyle=\color{red!70!black},
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b
+}
+
+% ---------- References ----------
+\usepackage[
+    backend=biber,
+    style=numeric-comp,
+    sorting=none,
+    giveninits=true,
+    doi=true,
+    url=true
+]{biblatex}
+\addbibresource{references.bib}
+
+% ---------- Cross-references and links ----------
+\usepackage{csquotes}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    citecolor=green!40!black,
+    urlcolor=blue!60!black,
+    pdftitle={Fractional-Order za SOFCs},
+    pdfauthor={Your Name}
+}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+% ---------- Headers and footers ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{FODE za SOFC}
+\fancyhead[R]{\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{14pt}
+
+% ---------- Section formatting ----------
+\usepackage{titlesec}
+\titleformat{\chapter}[hang]
+    {\normalfont\huge\bfseries}
+    {\thechapter.}
+    {0.6em}
+    {}
+
+% ---------- Document metadata ----------
+\title{
+    \textbf{Fractional-Order Differential Equation Modelling\\
+    of Solid Oxide Fuel Cells}
+}
+\author{
+    Your Name\\
+    \small Institution or Department
+}
+\date{\today}
+
+\begin{document}
+
+\section{Uvod}
+
+Po prejšnjem poročilu in okvirnem potrdilu, da se premikam v pravo smer, sem se lotil izboljšav algoritma. Dodal sem normalizacijo residualov (na vsakem koraku jih 
+delim s fiksno vrednostjo), in pa implementacija testiranja več začetnih vrednosti za vsako vezje. Rezultati so vzpodbudni, predvsem so se izboljšali pri vezjih brez 
+omejitev. %Znova bom razdelil poročilo na dva dela glede na dve gramatiki, ki jih testiram.
+
+\subsection{Normaliziranje residualov}
+V iskanju optimizacije ocenjevanja parametrov sem se odločil preizkusiti normalizirati residuale. To storim tako, da iz podatkov za vsako frekvenco izračunam mediano impedanc
+in s to fiksno vrednostjo nato delim napake na vsakem koraku optimizacije.
+
+\section{Splošna gramatika}
+
+\subsection{SOFC podatki}
+
+Najprej vidimo graf vezij s 4 elementi v Grafu \ref{sofc4el}. V tem primeru nobeno vezje ne povzame oblike podatkov.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 4 elementi}
+\label{sofc4el}
+\end{figure}
+
+
+Nadaljeval sem z ocenjevanjem parametrov, vendar pa tudi s 5 elementi rezultati niso bili najboljši, kot je razvidno iz Grafa \ref{sofc5el_nonorm}.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike brez normalizacije residualov}
+\label{sofc5el_nonorm}
+\end{figure}
+
+Začel sem testirati različne možnosti izboljševanja algoritma in normalizacija resiudalov je prinesla največji napredek. 
+S tem dodatnim korakom 5 elementov že zadostuje za natančno prileganje. V Grafu \ref{sofc5el} vidimo rezultate, ki pa so zelo podobni med sabo. Tu sem tudi že uporabil različne začetne vrednosti.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
+\label{sofc5el}
+\end{figure}
+
+Nekaj poizvedovanja po internetu kako izboljšati algoritem v pythonu me je pripeljalo do uporabe \texttt{soft\_l1} funkcije napake ter zamenjavo približno 10\% najmanjših vrednosti
+v normalizacijskem parametru s fiksno spodnjo mejo. Tako dobimo sledeče rezultate:
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
+\end{figure}
+
+
+Prvi model potrebuje manj parametrov, pa tudi nobena vrednost ne doseže svojih meja, v nasprotju z $\alpha_2$ v vezju brez dodane numerike. Razlika v MSE je minimalna, in bi se morda z dodanimi koraki
+v optimizaciji še zmanjšala. Izbrani vezji sta bili:
+
+\[
+\begin{aligned}
+\textnormal{Model z dodatno optimizacijo}
+    &= R_s
+    \seriesconn
+    \left[
+        \CPEel{Q_1}{\alpha_1}
+        \parallel
+        \left(
+            R_2
+            \seriesconn
+            \left[
+                R_3
+                \parallel
+                \CPEel{Q_4}{\alpha_4}
+            \right]
+        \right)
+    \right],
+    \\[1.5ex]
+\textnormal{Model brez dodatkov}
+    &= R_s
+    \seriesconn
+    \left[
+        R_1
+        \parallel
+        \left(
+            \CPEel{Q_2}{\alpha_2}
+            \seriesconn
+            \left[
+                \CPEel{Q_3}{\alpha_3}
+                \parallel
+                \CPEel{Q_4}{\alpha_4}
+            \right]
+        \right)
+    \right].
+\end{aligned}
+\]
+
+\begin{figure}[htbp]
+    \centering
+
+    %------------------------------------------------
+    % Model A
+    %------------------------------------------------
+    \begin{subfigure}[t]{0.47\textwidth}
+        \centering
+        \resizebox{0.95\linewidth}{!}{%
+        \begin{circuitikz}[line width=0.7pt]
+
+            % Series resistance
+            \draw
+            (0,0) node[ocirc, label=left:$a$] {}
+            to[R, l={$R_s$}, fill=gray!10]
+            (1.6,0)
+            -- (2,0) coordinate (A);
+
+            % Outer upper branch: CPE1
+            \draw
+            (A)
+            -- (2,1)
+            to[generic,
+               l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
+               fill=blue!12]
+            (6.6,1)
+            -- (6.6,0) coordinate (B);
+
+            % Outer lower branch: R2
+            \draw
+            (A)
+            -- (2,-1)
+            to[R, l_={$R_2$}, fill=gray!10]
+            (3.6,-1)
+            -- (3.9,-1) coordinate (C);
+
+            % Nested upper branch: R3
+            \draw
+            (C)
+            to[R, l^={$R_3$}, fill=gray!10]
+            (5.6,-1) coordinate (D);
+
+            % Nested lower branch: CPE4
+            \draw
+            (C)
+            -- (3.9,-2.2)
+            to[generic,
+               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
+               fill=blue!12]
+            (5.6,-2.2)
+            -- (D);
+
+            % Rejoin outer branch
+            \draw
+            (D)
+            -- (6.6,-1)
+            -- (B);
+
+            % Output
+            \draw
+            (B)
+            -- (7.2,0)
+            node[ocirc, label=right:$b$] {};
+
+            % Junctions
+            \fill (A) circle (1.7pt);
+            \fill (B) circle (1.7pt);
+            \fill (C) circle (1.7pt);
+            \fill (D) circle (1.7pt);
+
+        \end{circuitikz}%
+        }
+
+        \caption{Model A}
+        \label{fig:first-table-model-a}
+    \end{subfigure}
+    \hfill
+    %------------------------------------------------
+    % Model B
+    %------------------------------------------------
+    \begin{subfigure}[t]{0.47\textwidth}
+        \centering
+        \resizebox{0.95\linewidth}{!}{%
+        \begin{circuitikz}[line width=0.7pt]
+
+            % Series resistance
+            \draw
+            (0,0) node[ocirc, label=left:$a$] {}
+            to[R, l={$R_s$}, fill=gray!10]
+            (1.6,0)
+            -- (2,0) coordinate (A);
+
+            % Outer upper branch: R1
+            \draw
+            (A)
+            -- (2,1)
+            to[R, l^={$R_1$}, fill=gray!10]
+            (6.6,1)
+            -- (6.6,0) coordinate (B);
+
+            % Outer lower branch: CPE2
+            \draw
+            (A)
+            -- (2,-1)
+            to[generic,
+               l_={$\mathrm{CPE}(Q_2,\alpha_2)$},
+               fill=blue!12]
+            (3.6,-1)
+            -- (3.9,-1) coordinate (C);
+
+            % Nested upper branch: CPE3
+            \draw
+            (C)
+            to[generic,
+               l^={$\mathrm{CPE}(Q_3,\alpha_3)$},
+               fill=blue!12]
+            (5.6,-1) coordinate (D);
+
+            % Nested lower branch: CPE4
+            \draw
+            (C)
+            -- (3.9,-2.2)
+            to[generic,
+               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
+               fill=blue!12]
+            (5.6,-2.2)
+            -- (D);
+
+            % Rejoin outer branch
+            \draw
+            (D)
+            -- (6.6,-1)
+            -- (B);
+
+            % Output
+            \draw
+            (B)
+            -- (7.2,0)
+            node[ocirc, label=right:$b$] {};
+
+            % Junctions
+            \fill (A) circle (1.7pt);
+            \fill (B) circle (1.7pt);
+            \fill (C) circle (1.7pt);
+            \fill (D) circle (1.7pt);
+
+        \end{circuitikz}%
+        }
+
+        \caption{Model B}
+        \label{fig:first-table-model-b}
+    \end{subfigure}
+
+    \caption{Vezij iz Tabele \ref{tab:circuit_comparison_sofc}:
+    (a) algoritem z dodanimi numeričnimi koraki;
+    (b) brez dodatkov.}
+    \label{fig:first-table-circuits}
+\end{figure}
+
+
+\begin{table}[htbp]
+\centering
+\caption{Primerjava vrednosti parametrov vezij z dodanimi numeričnimi izboljšavami in brez.}
+\label{tab:circuit_comparison_sofc}
+\small
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\toprule
+\textbf{Parameter} & \textbf{Rezultat z izboljšanim algoritmom} & \textbf{Rezultat brez dodatnih korakov} \\
+\midrule
+
+%Circuit &
+%$\displaystyle
+%R_s +
+%\left[
+%\mathrm{CPE}(Q_1,\alpha_1)
+%\parallel
+%\left(
+%R_2 +
+%\left[
+%R_3 \parallel \mathrm{CPE}(Q_4,\alpha_4)
+%\right]
+%\right)
+%\right]$
+%&
+%$\displaystyle
+%R_s +
+%\left[
+%R_1
+%\parallel
+%\left(
+%\mathrm{CPE}(Q_2,\alpha_2) +
+%\left[
+%\mathrm{CPE}(Q_3,\alpha_3)
+%\parallel
+%\mathrm{CPE}(Q_4,\alpha_4)
+%\right]
+%\right)
+%\right]$
+%\\[2ex]
+
+Število elementov     & 5 & 5 \\
+Število parametrov   & 7 & 8 \\
+%Random start      & Yes & Yes \\
+MSE               & $1.89647\times10^{-6}$ & $1.64223\times10^{-6}$ \\
+BIC & $-3031.73789$ & $-3059.82487$ \\
+%$\mathrm{lp\_error}$ & 0.865611 & Not reported \\
+
+\midrule
+\multicolumn{3}{@{}l}{\textbf{Parametri vezja}} \\
+\midrule
+
+$R_s$ (\si{\ohm}) &
+0.0463228 &
+0.0461368 \\
+
+$R_1$ (\si{\ohm}) &
+--- &
+0.0258082 \\
+
+$R_2$ (\si{\ohm}) &
+0.0129929 &
+--- \\
+
+$R_3$ (\si{\ohm}) &
+0.0133333 &
+--- \\
+
+$Q_1$ (\si{\siemens\second\tothe{\alpha_1}}) &
+0.542887 &
+--- \\
+
+$\alpha_1$ &
+0.795783 &
+--- \\
+
+$Q_2$ (\si{\siemens\second\tothe{\alpha_2}}) &
+--- &
+1.05020 \\
+
+$\alpha_2$ &
+--- &
+0.990000 \\
+
+$Q_3$ (\si{\siemens\second\tothe{\alpha_3}}) &
+--- &
+50.8970 \\
+
+$\alpha_3$ &
+--- &
+0.0298022 \\
+
+$Q_4$ (\si{\siemens\second\tothe{\alpha_4}}) &
+3.33826 &
+0.469656 \\
+
+$\alpha_4$ &
+0.941526 &
+0.819800 \\
+
+\midrule
+%\multicolumn{3}{@{}l}{\textbf{Rezistenčne lastnosti}} \\
+%\midrule
+%
+%Teoretičen upor vezja pri visokih frekvencah, $R_{\infty}$ (\si{\ohm}) &
+%0.0463228 &
+%0.0461368 \\
+%
+%Teoretičen upor vezja pri nizkih frekvencah, $R_0$ (\si{\ohm}) &
+%0.0726489 &
+%0.0719450 \\
+%
+%Razlika med obema, $R_{\mathrm{pol}}$ (\si{\ohm}) &
+%0.0263261 &
+%0.0258082 \\
+%
+%\bottomrule
+\end{tabularx}
+\end{table}
+
+
+
+
+
+\clearpage
+
+
+
+\subsection{Podatki baterij}
+
+Enake metode sem uporabil tudi na podatkih iz baterij. Tej so bolj razpršeni, zato je grafe morda težje ocenjevati.
+
+Rezultati s 4 elementi prinesejo pričakovan zaporedno vezan Warburgov element.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 4 elementi z izboljšanimi rezultati}
+\end{figure}
+
+Zopet dobimo nekoliko različne rezultate brez dodanih korakov v optimizaciji.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png}
+\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
+\end{figure}
+
+Izbrani vezji sta bili:
+
+\[
+\begin{aligned}
+\textnormal{Model z dodatno optimizacijo}
+    &= R_s
+    \seriesconn
+    \left[
+        \left(
+            \CPEel{Q_1}{\alpha_1}
+            \seriesconn
+            \CPEel{Q_2}{\alpha_2}
+        \right)
+        \parallel
+        \left(
+            R_3
+            \seriesconn
+            \CPEel{Q_4}{\alpha_4}
+        \right)
+    \right],
+    \\[1.5ex]
+\textnormal{Model brez dodatkov}
+    &= R_s
+    \seriesconn
+    \CPEel{Q_1}{\alpha_1}
+    \seriesconn
+    \left[
+        R_2
+        \parallel
+        \left(
+            \CPEel{Q_3}{\alpha_3}
+            \seriesconn
+            \CPEel{Q_4}{\alpha_4}
+        \right)
+    \right].
+\end{aligned}
+\]
+
+\begin{figure}[htbp]
+    \centering
+
+    %------------------------------------------------
+    % Extra-numerics circuit
+    %------------------------------------------------
+    \begin{subfigure}[t]{0.47\textwidth}
+        \centering
+        \resizebox{0.95\linewidth}{!}{%
+        \begin{circuitikz}[line width=0.7pt]
+
+            % Series resistance
+            \draw
+            (0,0) node[ocirc, label=left:$a$] {}
+            to[R, l={$R_s$}, fill=gray!10]
+            (1.6,0)
+            -- (2,0) coordinate (A);
+
+            % Upper branch: CPE1 + CPE2
+            \draw
+            (A)
+            -- (2,1)
+            to[generic,
+               l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
+               fill=blue!12]
+            (4.2,1)
+            to[generic,
+               l^={$\mathrm{CPE}(Q_2,\alpha_2)$},
+               fill=blue!12]
+            (6.4,1)
+            -- (6.4,0) coordinate (B);
+
+            % Lower branch: R3 + CPE4
+            \draw
+            (A)
+            -- (2,-1)
+            to[R, l_={$R_3$}, fill=gray!10]
+            (4.2,-1)
+            to[generic,
+               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
+               fill=blue!12]
+            (6.4,-1)
+            -- (B);
+
+            % Output
+            \draw
+            (B)
+            -- (7,0)
+            node[ocirc, label=right:$b$] {};
+
+            % Junctions
+            \fill (A) circle (1.7pt);
+            \fill (B) circle (1.7pt);
+
+        \end{circuitikz}%
+        }
+
+        \caption{Extra-numerics fit}
+        \label{fig:second-table-extra}
+    \end{subfigure}
+    \hfill
+    %------------------------------------------------
+    % Standard circuit
+    %------------------------------------------------
+    \begin{subfigure}[t]{0.47\textwidth}
+        \centering
+        \resizebox{0.95\linewidth}{!}{%
+        \begin{circuitikz}[line width=0.7pt]
+
+            % Rs and CPE1 in series
+            \draw
+            (0,0) node[ocirc, label=left:$a$] {}
+            to[R, l={$R_s$}, fill=gray!10]
+            (1.4,0)
+            to[generic,
+               l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
+               fill=blue!12]
+            (3.7,0)
+            -- (4,0) coordinate (A);
+
+            % Upper branch: R2
+            \draw
+            (A)
+            -- (4,1)
+            to[R, l^={$R_2$}, fill=gray!10]
+            (7.1,1)
+            -- (7.1,0) coordinate (B);
+
+            % Lower branch: CPE3 + CPE4
+            \draw
+            (A)
+            -- (4,-1)
+            to[generic,
+               l_={$\mathrm{CPE}(Q_3,\alpha_3)$},
+               fill=blue!12]
+            (5.5,-1)
+            to[generic,
+               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
+               fill=blue!12]
+            (7.1,-1)
+            -- (B);
+
+            % Output
+            \draw
+            (B)
+            -- (7.7,0)
+            node[ocirc, label=right:$b$] {};
+
+            % Junctions
+            \fill (A) circle (1.7pt);
+            \fill (B) circle (1.7pt);
+
+        \end{circuitikz}%
+        }
+
+        \caption{Standard fit}
+        \label{fig:second-table-standard}
+    \end{subfigure}
+
+    \caption{Primerjava vezij v Tabeli \ref{tab:circuit_comparison}:
+    (a) dodatni numerični koraki
+    (b) brez dodatkov}
+    \label{fig:second-table-circuits}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Primerjava parametrov vezij na podatkih iz baterij.}
+\label{tab:circuit_comparison}
+\small
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\toprule
+\textbf{Parameter}
+& \textbf{Rezultat z izboljšanim algoritmom}
+& \textbf{Rezultat brez dodatnih korakov} \\
+\midrule
+
+%Circuit
+%&
+%$\begin{aligned}
+%R_s + \bigl[
+%&\bigl(
+%\operatorname{CPE}(Q_1,\alpha_1)
+%+\operatorname{CPE}(Q_2,\alpha_2)
+%\bigr)\\
+%&\parallel
+%\bigl(
+%R_3+\operatorname{CPE}(Q_4,\alpha_4)
+%\bigr)
+%\bigr]
+%\end{aligned}$
+%&
+%$\begin{aligned}
+%R_s &+ \operatorname{CPE}(Q_1,\alpha_1)\\
+%&+ \bigl[
+%R_2 \parallel
+%\bigl(
+%\operatorname{CPE}(Q_3,\alpha_3)
+%+\operatorname{CPE}(Q_4,\alpha_4)
+%\bigr)
+%\bigr]
+%\end{aligned}$
+%\\[2ex]
+
+Število elementov
+& 5
+& 5 \\
+
+Število parametrov
+& 8
+& 8 \\
+
+MSE
+& $2.72147\times10^{-8}$
+& $2.33564\times10^{-8}$ \\
+
+BIC
+& $-5180.22$
+& $-5226.09$ \\
+
+\midrule
+\multicolumn{3}{@{}l}{\textbf{Parametri vezja}} \\
+\midrule
+
+%RMSE
+%& $1.64969\times10^{-4}$
+%& $1.52828\times10^{-4}$ \\
+%
+%
+%Function evaluations
+%& 100
+%& 62 \\
+%
+%Termination
+%& Maximum number of evaluations exceeded
+%& \texttt{ftol} condition satisfied \\
+
+
+$R_s$ (\(\Omega\))
+& 0.0160873
+& $8.08927\times10^{-5}$ \\
+
+$R_2$ (\(\Omega\))
+& ---
+& 0.0225741 \\
+
+$R_3$ (\(\Omega\))
+& 0.00747417
+& --- \\
+
+$Q_1$ (\(\mathrm{S\,s}^{\alpha_1}\))
+& 122.545
+& 505.257 \\
+
+$\alpha_1$
+& 0.664787
+& 0.612086 \\
+
+$Q_2$ (\(\mathrm{S\,s}^{\alpha_2}\))
+& 5.36106
+& --- \\
+
+$\alpha_2$
+& 0.640431
+& --- \\
+
+$Q_3$ (\(\mathrm{S\,s}^{\alpha_3}\))
+& ---
+& 4.29185 \\
+
+$\alpha_3$
+& ---
+& 0.166491 \\
+
+$Q_4$ (\(\mathrm{S\,s}^{\alpha_4}\))
+& 859.752
+& 0.122094 \\
+
+$\alpha_4$
+& 0.693547
+& 0.989999 \\
+
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%\begin{figure}
+%\centering
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png}
+%  \caption{A subfigure}
+%  \label{fig:sub1}
+%\end{subfigure}%
+%\begin{subfigure}{.5\textwidth}
+%  \centering
+%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png}
+%  \caption{A subfigure}
+%  \label{fig:sub2}
+%\end{subfigure}
+%\caption{A figure with two subfigures}
+%\label{fig:test}
+%\end{figure}
+
+
+
+
+\end{document}

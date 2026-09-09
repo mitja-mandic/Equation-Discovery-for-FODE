@@ -36,3 +36,7 @@ def compute_weighted_lp(measured, predicted, weights_real, weights_imag, p=None)
     error = predicted - measured
 
     return np.mean((np.abs(error.real) / weights_real) ** p + (np.abs(error.imag) / weights_imag) ** p)
+
+def normalize_sigma(sigma, percentage_floor=0.1):
+    floor = percentage_floor * np.nanmedian(sigma)
+    return np.maximum(np.abs(sigma), floor)

@@ -51,102 +51,6 @@ def physical_bounds(name):
         return 1e-10, 1e10
     raise ValueError(f"No bounds defined for {name!r}")
 
-
-def fit_circuit_parameters_fixed_start(
-    circuit,
-    frequency,
-    measured_impedance,
-    real_scatter,
-    imag_scatter,
-    optimizer="least_squares",
-):
-    '''
-    finds best parameters for a circuit for a single set of starting values
-    '''
-
-
-    names = get_parameter_names(circuit)
-    initial = set_deterministic_initial_values(circuit)
-    #x0 = np.array([initial[name] for name in names])
-
-    is_alpha = np.array([name.startswith("alpha") for name in names])
-    physical_x0 = np.array([initial[name] for name in names])
-
-    x0 = np.where(is_alpha, physical_x0, np.log(physical_x0))
-
-    #bounds to be removed
-    #bounds = [
-    #    (0.01, 1.0) if name.startswith("alpha") else (1e-18, np.inf)
-    #    for name in names
-    #]
-    #################
-
-
-
-    bounds_physical = [physical_bounds(name) for name in names]
-    #zipped_physical = zip(bounds_physical, is_alpha)
-
-    lower = np.array([
-        lo if alpha else np.log(lo)
-        for (lo, _), alpha in zip(bounds_physical, is_alpha)])
-    upper = np.array([
-        hi if alpha else np.log(hi)
-        for (_, hi), alpha in zip(bounds_physical, is_alpha)])
-
-    def to_physical(values):
-        physical = values.copy()
-        physical[~is_alpha] = np.exp(values[~is_alpha])
-        return physical
-
-    def residual(values, scaled = True):
-        parameters = dict(zip(names, to_physical(values)))
-        predicted = evaluate_impedance(
-            circuit,
-            frequency,
-            parameters,
-        )
-        error = predicted - measured_impedance
-
-        if scaled:
-            return np.concatenate([error.real/real_scatter, error.imag/imag_scatter])
-        else:
-            return np.concatenate([error.real, error.imag])
-        
-
-    def objective(values):
-        errors = residual(values)
-        return np.sum(errors ** 2)
-
-#    def objective(values):
-#            errors = residual(values)
-#            return np.sum(np.abs(errors))
-        
-    if optimizer == "least_squares":
-        result = least_squares(
-            residual, #minimize residuals
-            x0, #starting values
-            bounds=(lower, upper), #parameter bounds for estimations
-            **LEAST_SQUARES_SETTINGS,
-        )
-    elif optimizer == "powell":
-        result = minimize(
-            objective,
-            x0,
-            method=optimizer,
-            bounds=list(zip(lower, upper)),
-            options=POWELL_SETTINGS,
-        )
-    else:
-        result = minimize(
-            objective, #minimize squared errors
-            x0, 
-            method=optimizer, #choose something else than least_squares
-            bounds=list(zip(lower, upper)),
-        )
-
-    fitted_parameters = dict(zip(names, to_physical(result.x)))
-    return fitted_parameters, result
-
 def fit_circuit_parameters_random_start(
     circuit,
     frequency,
@@ -158,7 +62,7 @@ def fit_circuit_parameters_random_start(
     '''function that fits parameters for every starting value for a given circuit'''
 
     attempts = []
-    starting_values = generate_initial_values(circuit, number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED)
+    starting_values = generate_initial_values(circuit, number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED, deterministic=False)
     names = get_parameter_names(circuit)
 
     bounds_physical = [physical_bounds(name) for name in names]
@@ -243,7 +147,7 @@ def compare_circuits(
     for circuit_index, circuit in enumerate(circuits, start=1):
         #circuit = add_indexes(circuit)
 
-        initial_values = set_deterministic_initial_values(circuit)
+        #initial_values = set_deterministic_initial_values(circuit)
 
         #parameters, optimization = fit_circuit_parameters_fixed_start(
         #    circuit,
@@ -269,7 +173,7 @@ def compare_circuits(
             frequency,
             parameters,
         )
-
+        rand_start = "False" if optimization['start_index'] == 0 else "True"
         error = predicted - measured_impedance
         #med_real = np.median(error.real)
         #med_imag = np.median(error.imag)
@@ -299,6 +203,7 @@ def compare_circuits(
             "optimizer_status": int(result.status),
             "optimizer_message": str(result.message),
             "function_evaluations": int(result.nfev),
+            "rand_start": rand_start
         })
 
         if (

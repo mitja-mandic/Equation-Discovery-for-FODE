@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 
-import numpy as np
-
 from fitting_parameters.reporting import (
     build_fit_output_paths,
     export_fit_summary,
@@ -10,16 +8,15 @@ from fitting_parameters.reporting import (
 )
 from fitting_parameters.train import LEAST_SQUARES_SETTINGS, compare_circuits
 from circuit_export import load_circuits
-from fitting_parameters.load_data import raw_impedance, load_spectrum, logarithmic_frequency_indices, uniform_frequency_indices
+from fitting_parameters.load_data import raw_impedance, load_spectrum, uniform_frequency_indices
+from fitting_parameters.model_selection import normalize_sigma
 
-def normalize_sigma(sigma, percentage_floor=0.1):
-    floor = percentage_floor * np.nanmedian(sigma)
-    return np.maximum(np.abs(sigma), floor)
-    #return np.sqrt(sigma ** 2 + floor ** 2)
 
 PROJECT_DIR = Path(__file__).resolve().parent
+SAVE_RESULTS = True
 
-
+if not SAVE_RESULTS:
+    print("Results will not be saved!")
 
 # ---------------------------------------------------------------------------
 # SELECT INPUT FORMAT
@@ -27,7 +24,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 # Use "raw" for bank4 files containing curr, batt_1, batt_2, etc.
 # Use "spectrum" for files containing F and Z.
-DATA_MODE = "spectrum"
+DATA_MODE = "raw"
 
 
 # ---------------------------------------------------------------------------
@@ -43,14 +40,16 @@ RAW_DATA_PATH = (
     #/ "bank2_20260207-224617_0.01.npz"
 )
 
+BATTERY_CHANNEL = "batt_4" #bank3 battery 5 is weird, ask Pavle
+
 SPECTRUM_DATA_PATH = (
     PROJECT_DIR
     / "data"
     / "spectrum"
-    / "eis_20200224_190006.npz"
+    #/ "eis_20200224_190006.npz"
+    / "eis_20200227_070006.npz"
 )
 
-BATTERY_CHANNEL = "batt_4" #bank3 battery 5 is weird, ask Pavle
 
 
 # ---------------------------------------------------------------------------
@@ -139,9 +138,9 @@ print(
 # FIT AND RANK THE CIRCUITS
 # ---------------------------------------------------------------------------
 
-floor = 0.002
-real_smooth_scatter = normalize_sigma(real_scatter)#, floor)
-imag_smooth_scatter = normalize_sigma(imag_scatter)#, floor)
+floor = 0.1
+real_smooth_scatter = normalize_sigma(real_scatter, percentage_floor=floor)#, floor)
+imag_smooth_scatter = normalize_sigma(imag_scatter, percentage_floor=floor)#, floor)
 
 results, fitted_parameters = compare_circuits(
     circuits=circuits,
@@ -163,6 +162,7 @@ for rank, result in enumerate(results[:5], start=1):
     print(f"{rank}. {result['circuit']}")
     #print(f"   BIC: {result['bic']:.4f}")
     print(f"   lp_error: {result['lp_error']:.6g}")
+    print(f"   Random start: {result['rand_start']}")
     print(f"   MSE: {result['mse']:.6g}")
     print(f"   Success: {result['success']}")
     print(f"   Parameters: {result['parameters']}")
@@ -170,7 +170,11 @@ for rank, result in enumerate(results[:5], start=1):
 
 # ---------------------------------------------------------------------------
 # PLOT THE BEST RESULTS
-# ---------------------------------------------------------------------------
+# -----------------------
+
+FILENAME_SUFFIX = "extra_numerics" #fixed_starting_values_no_normalization
+PLOT_TITLE = "Nyquist plot with stratified random starting values, normalized residuals and more robust solver"
+
 
 plot_path, summary_path = build_fit_output_paths(
     project_directory=PROJECT_DIR,
@@ -178,27 +182,36 @@ plot_path, summary_path = build_fit_output_paths(
     grammar_name=grammar_type,
     maximum_elements=nr_elements,
     filename_prefix=filename_prefix,
+    filename_suffix=FILENAME_SUFFIX
 )
+
+
 
 plot_circuit_fits(
     measured_impedance=measured_impedance,
     results=results,
     output_path=plot_path,
+    save_output = SAVE_RESULTS,
+    plot_title=PLOT_TITLE
 )
 
-#export_fit_summary(
-#    results=results,
-#    output_path=summary_path,
-#    plot_path=plot_path.relative_to(PROJECT_DIR),
-#    dataset_path=selected_data_path.relative_to(PROJECT_DIR),
-#    circuit_path=CIRCUIT_PATH.relative_to(PROJECT_DIR),
-#    grammar_name=collection_name,
-#    maximum_elements=nr_elements,
-#    optimizer=OPTIMIZER,
-#    optimizer_settings=LEAST_SQUARES_SETTINGS,
-#    frequency=frequency,
-#)
-#
-#print(f"Saved plot: {plot_path}")
-#print(f"Saved fit summary: {summary_path}")
+
+if SAVE_RESULTS:
+    export_fit_summary(
+        results=results,
+        output_path=summary_path,
+        plot_path=plot_path.relative_to(PROJECT_DIR),
+        dataset_path=selected_data_path.relative_to(PROJECT_DIR),
+        circuit_path=CIRCUIT_PATH.relative_to(PROJECT_DIR),
+        grammar_name=collection_name,
+        maximum_elements=nr_elements,
+        optimizer=OPTIMIZER,
+        optimizer_settings=LEAST_SQUARES_SETTINGS,
+        frequency=frequency,
+    )
+
+    print(f"Saved plot: {plot_path}")
+    print(f"Saved fit summary: {summary_path}")
+else:
+    print("Fitting done, results not saved")
 
