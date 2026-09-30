@@ -24,6 +24,18 @@ LEAST_SQUARES_SETTINGS = {
     "method": "trf"
 }
 
+FINAL_LEAST_SQUARES_SETTINGS = {
+    "x_scale": "jac",
+    "ftol": 1e-8,
+    "xtol": 1e-8,
+    "gtol": 1e-8,
+    "f_scale": 0.001, #Larger f_scale → more residuals behave quadratically; less robust, smaller f_scale → more residuals are downweighted; more robust.
+    "max_nfev": 10000,
+    "loss": "soft_l1",
+    "method": "trf"
+    }
+
+
 POWELL_SETTINGS = {
     "xtol": 1e-4,
     "ftol": 1e-4,
@@ -60,9 +72,9 @@ def fit_circuit_parameters_random_start(
     #optimizer="least_squares",
 ):
     '''function that fits parameters for every starting value for a given circuit'''
+    starting_values = generate_initial_values(circuit, number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED, deterministic=False)
 
     attempts = []
-    starting_values = generate_initial_values(circuit, number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED, deterministic=False)
     names = get_parameter_names(circuit)
 
     bounds_physical = [physical_bounds(name) for name in names]
@@ -95,7 +107,7 @@ def fit_circuit_parameters_random_start(
             return np.concatenate([error.real, error.imag])
         
     for start_index, physical_initial_values in enumerate(starting_values):
-        #initial_values = np.asarray(physical_initial_values)
+
         physical_x0 = np.array([physical_initial_values[name] for name in names])
         x0 = np.where(is_alpha, physical_x0, np.log(physical_x0))
 
@@ -130,7 +142,74 @@ def fit_circuit_parameters_random_start(
         key=lambda attempt: attempt["score"],
     )
     return best_attempt
-        
+
+def finalize_fit(frequency, measured_impedance,
+                circuit,
+                parameters: dict[str,float],
+                sigma_real,
+                sigma_imag):
+    parameter_names = [y for y in parameters.keys()]
+    parameter_values = np.asarray([y for y in parameters.values()])
+    is_alpha = np.array([name.startswith("alpha") for name in parameter_names])
+
+    log_initial_values = np.where(is_alpha, parameter_values, np.log(parameter_values)) #logarithm of parameters
+
+    bounds_physical = [physical_bounds(name) for name in parameter_names]
+    is_alpha = np.array([name.startswith("alpha") for name in parameter_names])
+
+    lower = np.array([
+        lo if alpha else np.log(lo)
+        for (lo, _), alpha in zip(bounds_physical, is_alpha)])
+    upper = np.array([
+        hi if alpha else np.log(hi)
+        for (_, hi), alpha in zip(bounds_physical, is_alpha)])
+    
+    def to_physical(values):
+        physical = values.copy()
+        physical[~is_alpha] = np.exp(values[~is_alpha])
+        return physical
+    
+    def residual(values, scaled = True):
+        parameters = dict(zip(parameter_names, to_physical(values)))
+        predicted = evaluate_impedance(
+            circuit,
+            frequency,
+            parameters,
+        )
+        error = predicted - measured_impedance
+
+        if scaled:
+            return np.concatenate([error.real/sigma_real, error.imag/sigma_imag])
+        else:
+            return np.concatenate([error.real, error.imag])
+    
+    optimization_result = least_squares(
+        residual,
+        log_initial_values,
+        bounds=(lower, upper),
+        **FINAL_LEAST_SQUARES_SETTINGS
+    )
+    parameter_values = to_physical(optimization_result.x)
+    parameters = dict(zip(parameter_names, parameter_values))
+
+    predicted = evaluate_impedance(
+            circuit,
+            frequency,
+            parameters,
+        )
+
+    score = compute_mse(measured_impedance, predicted)
+
+    final_result = {
+        #"start_index": start_index,
+        "initial_values": to_physical(log_initial_values),
+        "parameters": parameters,
+        "result": optimization_result,
+        "score": score
+    }
+    return final_result
+
+
 def compare_circuits(
     circuits,
     frequency,
@@ -182,7 +261,7 @@ def compare_circuits(
 
         mse = optimization['score'] #compute_mse(measured_impedance, predicted)
         
-        lp_error = compute_weighted_lp(measured_impedance, predicted, real_scatter, imag_scatter, p=0.6)
+        lp_error = compute_weighted_lp(measured_impedance, predicted, real_scatter, imag_scatter, p=2)
         #rmse = np.sqrt(mse)
 
 
@@ -193,7 +272,7 @@ def compare_circuits(
             "circuit": circuit,
             "parameters": parameters,
             "predicted_impedance": predicted,
-            "lp_error": lp_error,
+            "wmse": lp_error,
             "mse": mse,
 #            "aic": compute_aic(n, mse, num_parameters),
             "bic": compute_bic(n, mse, num_parameters),
@@ -224,9 +303,59 @@ def compare_circuits(
 
     results.sort(key=lambda result: result["mse"])
 
+    best_results = []
+
+    for result in results[:5]:
+        rand_string = result['rand_start']
+        circuit = result['circuit']
+
+        optimized = finalize_fit(frequency,measured_impedance,circuit,result['parameters'],real_scatter,imag_scatter)
+        #if not result['success']:
+        #else:
+        #    optimized = result
+
+        parameters = optimized['parameters']
+        improved_result = optimized['result']
+        ## FINAL RESULTS ##
+        predicted = evaluate_impedance(
+            circuit,
+            frequency,
+            parameters,
+        )
+        error = predicted - measured_impedance
+        #med_real = np.median(error.real)
+        #med_imag = np.median(error.imag)
+        #print(med_real)
+        #print(med_imag)
+        mse = optimized['score'] #compute_mse(measured_impedance, predicted)
+        lp_error = compute_weighted_lp(measured_impedance, predicted, real_scatter, imag_scatter, p=2)
+        #rmse = np.sqrt(mse)
+        n = len(error)
+        num_parameters = len(parameters)
+
+        best_results.append({
+            "circuit": circuit,
+            "parameters": parameters,
+            "predicted_impedance": predicted,
+            "wmse": lp_error,
+            "mse": mse,
+#            "aic": compute_aic(n, mse, num_parameters),
+            "bic": compute_bic(n, mse, num_parameters),
+#            "aic": compute_aic(n, mse, num_parameters),
+#            "wbic": compute_bic(n, lp_error, num_parameters),
+            "success": improved_result.success,
+            "optimizer_status": int(improved_result.status),
+            "optimizer_message": str(improved_result.message),
+            "function_evaluations": int(improved_result.nfev),
+            "rand_start": rand_string
+        })
+
+
+    best_results.sort(key=lambda best_result: best_result["bic"])
+
     fitted_parameters = {
         str(result["circuit"]): result["parameters"]
         for result in results
     }
 
-    return results, fitted_parameters
+    return results, fitted_parameters, best_results

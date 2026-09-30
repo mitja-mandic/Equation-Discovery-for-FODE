@@ -179,20 +179,60 @@ Po prejšnjem poročilu in okvirnem potrdilu, da se premikam v pravo smer, sem s
 delim s fiksno vrednostjo), in pa implementacija testiranja več začetnih vrednosti za vsako vezje. Rezultati so vzpodbudni, predvsem so se izboljšali pri vezjih brez 
 omejitev. %Znova bom razdelil poročilo na dva dela glede na dve gramatiki, ki jih testiram.
 
-\subsection{Normaliziranje residualov}
-V iskanju optimizacije ocenjevanja parametrov sem se odločil preizkusiti normalizirati residuale. To storim tako, da iz podatkov za vsako frekvenco izračunam mediano impedanc
-in s to fiksno vrednostjo nato delim napake na vsakem koraku optimizacije.
-
 \section{Splošna gramatika}
 
+Osredotočil sem se na gramatiko brez stukturnih omejitev pri generaciji vezij, omejuje jo le število elementov, ki lahko nastopajo v vezju. Edina
+predpostavka je, da vsako vezje vsebuje en zaporedno vezan upornik $\term{Rs}$.
+
+%Na grafu spodaj je predstavljen rezultat 5 najbolje prilegajočih vezij po BIC kriteriju izmed vseh 4356 vezij z največ 6 elementi. 
+
+\begin{equation}
+\label{eq:grammar-relaxed}
+\begin{aligned}
+\nt{Circuit}
+    &\longrightarrow
+    \term{Rs}
+    \mid
+    \term{Rs}\;\term{+}\;\nt{Network},
+    \\[2mm]
+\nt{Network}
+    &\longrightarrow
+    \nt{Element}
+    \\%\mid
+    &\longrightarrow\term{(}\;\nt{Network}\;\term{+}\;\nt{Network}\;\term{)}
+    \\
+    &\longrightarrow%\quad%\mid
+    \term{(}\;\nt{Network}\;\term{||}\;\nt{Network}\;\term{)},
+    \\[2mm]
+\nt{Element}
+    &\longrightarrow
+    \term{R}
+    \mid \term{L}
+    \mid \term{CPE}
+    \mid \term{W}.
+\end{aligned}
+\end{equation}
+
+V tem poročilu sem se ustavil pri vezij s 5 elementi, teh je 601 in ocenjevanje parametrov z naključnimi začetnimi
+vrednostmi traja nekaj minut. V doglednem času (cca nekaj ur) bi lahko ocenili tudi parametre vezij s 6 elementi, ki jih je 4356, vendar so bili rezultati z manj
+elementi že zadovoljivi.
+
+
 \subsection{SOFC podatki}
+\subsubsection{Normaliziranje residualov}
+
+V iskanju optimizacije ocenjevanja parametrov sem se odločil preizkusiti normalizirati residuale. 
+To storim tako, da iz podatkov za vsako frekvenco izračunam mediano impedanc in s to fiksno vrednostjo nato delim napake na vsakem koraku optimizacije.
+
+\subsubsection{Predstavitev rezultatov}
+Poredstavljeni so rezultati iz podatkov \texttt{eis\_20200227\_070006.npz} iz repozitorija\\\href{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}.
 
 Najprej vidimo graf vezij s 4 elementi v Grafu \ref{sofc4el}. V tem primeru nobeno vezje ne povzame oblike podatkov.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png}
-\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 4 elementi}
+\caption{Nyquistovi grafi najboljših 5 vezij z največ 4 elementi iz splošne gramatike}
 \label{sofc4el}
 \end{figure}
 
@@ -202,7 +242,7 @@ Nadaljeval sem z ocenjevanjem parametrov, vendar pa tudi s 5 elementi rezultati 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png}
-\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike brez normalizacije residualov}
+\caption{Nyquistovi grafi najboljših 5 vezij z največ 5 elementi iz splošne gramatike brez normalizacije residualov}
 \label{sofc5el_nonorm}
 \end{figure}
 
@@ -556,7 +596,8 @@ $\alpha_4$ &
 
 \subsection{Podatki baterij}
 
-Enake metode sem uporabil tudi na podatkih iz baterij. Tej so bolj razpršeni, zato je grafe morda težje ocenjevati.
+Enake metode sem uporabil tudi na podatkih iz baterij iz repozitorija \\\href{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}.
+Tej so predvsem v nizkih frekvencah bolj razpršeni, zato je grafe vizualno morda težje ocenjevati.
 
 Rezultati s 4 elementi prinesejo pričakovan zaporedno vezan Warburgov element.
 

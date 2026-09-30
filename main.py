@@ -6,7 +6,7 @@ from fitting_parameters.reporting import (
     export_fit_summary,
     plot_circuit_fits,
 )
-from fitting_parameters.train import LEAST_SQUARES_SETTINGS, compare_circuits
+from fitting_parameters.train import LEAST_SQUARES_SETTINGS, FINAL_LEAST_SQUARES_SETTINGS, compare_circuits
 from circuit_export import load_circuits
 from fitting_parameters.load_data import raw_impedance, load_spectrum, uniform_frequency_indices
 from fitting_parameters.model_selection import normalize_sigma
@@ -24,7 +24,7 @@ if not SAVE_RESULTS:
 
 # Use "raw" for bank4 files containing curr, batt_1, batt_2, etc.
 # Use "spectrum" for files containing F and Z.
-DATA_MODE = "raw"
+DATA_MODE = "spectrum"
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ SPECTRUM_DATA_PATH = (
     / "data"
     / "spectrum"
     #/ "eis_20200224_190006.npz"
-    / "eis_20200227_070006.npz"
+    / "eis_20200226_150005.npz"
 )
 
 
@@ -142,7 +142,7 @@ floor = 0.1
 real_smooth_scatter = normalize_sigma(real_scatter, percentage_floor=floor)#, floor)
 imag_smooth_scatter = normalize_sigma(imag_scatter, percentage_floor=floor)#, floor)
 
-results, fitted_parameters = compare_circuits(
+results, fitted_parameters, besties = compare_circuits(
     circuits=circuits,
     frequency=frequency,
     measured_impedance=measured_impedance,
@@ -152,6 +152,7 @@ results, fitted_parameters = compare_circuits(
     #imag_scatter=imag_scatter,
     optimizer=OPTIMIZER,
 )
+
 # ---------------------------------------------------------------------------
 # PRINT THE BEST RESULTS
 # ---------------------------------------------------------------------------
@@ -161,20 +162,32 @@ print("\nBest fitted circuits:\n")
 for rank, result in enumerate(results[:5], start=1):
     print(f"{rank}. {result['circuit']}")
     #print(f"   BIC: {result['bic']:.4f}")
-    print(f"   lp_error: {result['lp_error']:.6g}")
-    print(f"   Random start: {result['rand_start']}")
+    #print(f"   lp_error: {result['lp_error']:.6g}")
+    #print(f"   Random start: {result['rand_start']}")
     print(f"   MSE: {result['mse']:.6g}")
     print(f"   Success: {result['success']}")
     print(f"   Parameters: {result['parameters']}")
     print()
 
+print("\nBest 5 reoptimized:\n")
+for rank, result in enumerate(besties, start=1):
+    print(f"{rank}. {result['circuit']}")
+    print(f"   Parameters: {result['parameters']}")
+    print(f"   BIC: {result['bic']:.4f}")
+    print(f"   WMSE: {result['wmse']:.6g}")
+    #print(f"   Random start: {result['rand_start']}")
+    print(f"   MSE: {result['mse']:.6g}")
+    #print(f"   Success: {result['success']}")
+    #print(f"   Parameters: {result['parameters']}")
+    #print()
 # ---------------------------------------------------------------------------
 # PLOT THE BEST RESULTS
 # -----------------------
 
 FILENAME_SUFFIX = "extra_numerics" #fixed_starting_values_no_normalization
+FILENAME_SUFFIX_REOPTIMIZED = "extra_numerics_converged" #fixed_starting_values_no_normalization
 PLOT_TITLE = "Nyquist plot with stratified random starting values, normalized residuals and more robust solver"
-
+PLOT_TITLE_REOPTIMIZED = "Top 5 circuits parameters refitted until convergence"
 
 plot_path, summary_path = build_fit_output_paths(
     project_directory=PROJECT_DIR,
@@ -185,16 +198,31 @@ plot_path, summary_path = build_fit_output_paths(
     filename_suffix=FILENAME_SUFFIX
 )
 
+plot_path, summary_path = build_fit_output_paths(
+    project_directory=PROJECT_DIR,
+    dataset_path=selected_data_path,
+    grammar_name=grammar_type,
+    maximum_elements=nr_elements,
+    filename_prefix=filename_prefix,
+    filename_suffix=FILENAME_SUFFIX_REOPTIMIZED
+)
 
 
 plot_circuit_fits(
     measured_impedance=measured_impedance,
     results=results,
     output_path=plot_path,
-    save_output = SAVE_RESULTS,
+    save_output = True,
     plot_title=PLOT_TITLE
 )
 
+plot_circuit_fits(
+    measured_impedance=measured_impedance,
+    results=besties,
+    output_path=plot_path,
+    save_output = SAVE_RESULTS,
+    plot_title=PLOT_TITLE_REOPTIMIZED
+)
 
 if SAVE_RESULTS:
     export_fit_summary(
@@ -207,6 +235,18 @@ if SAVE_RESULTS:
         maximum_elements=nr_elements,
         optimizer=OPTIMIZER,
         optimizer_settings=LEAST_SQUARES_SETTINGS,
+        frequency=frequency,
+    )
+    export_fit_summary(
+        results=besties,
+        output_path=summary_path,
+        plot_path=plot_path.relative_to(PROJECT_DIR),
+        dataset_path=selected_data_path.relative_to(PROJECT_DIR),
+        circuit_path=CIRCUIT_PATH.relative_to(PROJECT_DIR),
+        grammar_name=collection_name,
+        maximum_elements=nr_elements,
+        optimizer=OPTIMIZER,
+        optimizer_settings=FINAL_LEAST_SQUARES_SETTINGS,
         frequency=frequency,
     )
 
