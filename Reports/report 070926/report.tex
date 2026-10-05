@@ -147,7 +147,7 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{FODE za SOFC}
+\fancyhead[L]{FODE equation discovery}
 \fancyhead[R]{\nouppercase{\leftmark}}
 \fancyfoot[C]{\thepage}
 \setlength{\headheight}{14pt}
@@ -173,16 +173,27 @@
 
 \begin{document}
 
-\section{Uvod}
+\section{Introduction}
 
-Po prejšnjem poročilu in okvirnem potrdilu, da se premikam v pravo smer, sem se lotil izboljšav algoritma. Dodal sem normalizacijo residualov (na vsakem koraku jih 
-delim s fiksno vrednostjo), in pa implementacija testiranja več začetnih vrednosti za vsako vezje. Rezultati so vzpodbudni, predvsem so se izboljšali pri vezjih brez 
-omejitev. %Znova bom razdelil poročilo na dva dela glede na dve gramatiki, ki jih testiram.
+In this report we present progress of formal grammar based equation discovery applied to EIS data in frequency domain,
+both from solid oxide fuel cells and batteries.
 
-\section{Splošna gramatika}
+%\section{Uvod}
+%
+%Po prejšnjem poročilu in okvirnem potrdilu, da se premikam v pravo smer, sem se lotil izboljšav algoritma. Dodal sem normalizacijo residualov (na vsakem koraku jih 
+%delim s fiksno vrednostjo), in pa implementacija testiranja več začetnih vrednosti za vsako vezje. Rezultati so vzpodbudni, predvsem so se izboljšali pri vezjih brez 
+%omejitev. %Znova bom razdelil poročilo na dva dela glede na dve gramatiki, ki jih testiram.
 
-Osredotočil sem se na gramatiko brez stukturnih omejitev pri generaciji vezij, omejuje jo le število elementov, ki lahko nastopajo v vezju. Edina
-predpostavka je, da vsako vezje vsebuje en zaporedno vezan upornik $\term{Rs}$.
+\section{The grammar}
+
+We use formal grammars to define candidate circuits which we then fit on the data. We use a grammar that does not impose any structural
+assumptions on the circuit. Each element can appear at any position, the only restriction being that a resistor $\term{Rs}$ is in series
+with the rest of the circuit. The circuit elements present are standard equivalent circuit modeling (ECM) elements, which we present below.
+
+%\section{Splošna gramatika}
+%
+%Osredotočil sem se na gramatiko brez stukturnih omejitev pri generaciji vezij, omejuje jo le število elementov, ki lahko nastopajo v vezju. Edina
+%predpostavka je, da vsako vezje vsebuje en zaporedno vezan upornik $\term{Rs}$.
 
 %Na grafu spodaj je predstavljen rezultat 5 najbolje prilegajočih vezij po BIC kriteriju izmed vseh 4356 vezij z največ 6 elementi. 
 
@@ -199,10 +210,12 @@ predpostavka je, da vsako vezje vsebuje en zaporedno vezan upornik $\term{Rs}$.
     &\longrightarrow
     \nt{Element}
     \\%\mid
-    &\longrightarrow\term{(}\;\nt{Network}\;\term{+}\;\nt{Network}\;\term{)}
+    &\longrightarrow\;\nt{Network}\;\term{+}\;\nt{Network}\;
+    %&\longrightarrow\term{(}\;\nt{Network}\;\term{+}\;\nt{Network}\;\term{)}
     \\
     &\longrightarrow%\quad%\mid
-    \term{(}\;\nt{Network}\;\term{||}\;\nt{Network}\;\term{)},
+    \;\nt{Network}\;\term{||}\;\nt{Network}\;,
+    %\term{(}\;\nt{Network}\;\term{||}\;\nt{Network}\;\term{)},
     \\[2mm]
 \nt{Element}
     &\longrightarrow
@@ -213,65 +226,245 @@ predpostavka je, da vsako vezje vsebuje en zaporedno vezan upornik $\term{Rs}$.
 \end{aligned}
 \end{equation}
 
-V tem poročilu sem se ustavil pri vezij s 5 elementi, teh je 601 in ocenjevanje parametrov z naključnimi začetnimi
-vrednostmi traja nekaj minut. V doglednem času (cca nekaj ur) bi lahko ocenili tudi parametre vezij s 6 elementi, ki jih je 4356, vendar so bili rezultati z manj
-elementi že zadovoljivi.
+%Impedance can be modelled by connecting series and parallel branches of basic elements. 
+%\subsubsection*{Constant phase element (CPE)}
+%Constant phase element is a component that models an imperfect capacitor. 
+%\subsubsection*{Inductor (L) and Resistor (R)}
+%
+%Inductors and resistors 
+%
+%\subsubsection*{Warburg element (W)}
 
 
-\subsection{SOFC podatki}
-\subsubsection{Normaliziranje residualov}
+\section{Methodology}
 
-V iskanju optimizacije ocenjevanja parametrov sem se odločil preizkusiti normalizirati residuale. 
-To storim tako, da iz podatkov za vsako frekvenco izračunam mediano impedanc in s to fiksno vrednostjo nato delim napake na vsakem koraku optimizacije.
+Several steps were taken in circuit generation, subsequent derivation of impedance equations and finally parameter fitting.
+Here we describe the core procedure.
 
-\subsubsection{Predstavitev rezultatov}
-Poredstavljeni so rezultati iz podatkov \texttt{eis\_20200227\_070006.npz} iz repozitorija\\\href{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}.
+\subsection{Circuit generation}
 
-Najprej vidimo graf vezij s 4 elementi v Grafu \ref{sofc4el}. V tem primeru nobeno vezje ne povzame oblike podatkov.
+Circuit generation from formal grammars feels almost like solving a puzzle backwards. We consequently connect elements in series or parallel
+and in the end map each $\nt{Element}$ to either a resistor, inductor, warburg element or a CPE. However, we can take a few measures to 
+keep the number of circuit parameters as small as possible, namely:
+\begin{itemize}
+    \item replacing two resistors in series or in parallel with a single resistor
+    \item replacing two inductors in series or in parallel with a single inductor
+\end{itemize}
+
+\subsection{Impedance equation generation}
+
+Obtaining impedance equations from circuits generated by the grammar is straightforward. For series of elements we concatenate their
+respective impedances, and for elements in parallel we sum their admittances. Below we list the elements present in the grammar and their impedances.
+
+\subsubsection*{Constant phase element (CPE)}
+Constant phase element is a component that models an imperfect capacitor. It contains a dimensionless parameter $0\le\alpha\leq1$ that can be
+interpreted as a measure of non-ideality. When $\alpha=1$ a CPE is a perfect capacitor.
+CPE's impedance is
+\[
+    Z_{CPE} = \frac{1}{(j\omega)^{\alpha}Q}
+\]
+where $j$ is the imaginary unit, and $Q$ is a parameter independent of the frequency. $\omega=2\pi f$ is the angular frequency
+\subsubsection*{Inductor (L) and Resistor (R)}
+
+Resistor's impedance is constant does not depend on the frequency, and inductor's impedance is a linear function of the frequency. 
+$$Z_R = R,$$
+where $R$ is the resistor's resistance, and
+\[
+    Z_L = j\omega L,
+\]
+with $L$ the inductance.
+\subsubsection*{Warburg element (W)}
+Warburg element is used mainly in batteries EIS analysis. It is a special case of the CPE where $\alpha=0.5$. We focused on the infinite Warburg
+element with impedance defined as
+\[
+    Z_W = \frac{\sigma}{\sqrt{jw}}
+\]
+\subsection{Parameter fitting}
+As described above, frequency domain impedance equations are directly generated from the circuits by simply summing up elements
+impedance formulas when they are connected in series, and summing up their reciprocal values when they are connected in parallel circuits.
+
+We set a ceiling of the number of elements that may feature in the circuits. We run the optimization algorithm (more on that in a later section)
+up to a certain threshold, and for the 5 best fitting circuits based on mean squared error we re-run the optimization algorithm with 
+stricter thresholds to obtain results as close to full convergence as possible. We sort these 5 based on standard BIC to include some 
+penalty for circuit complexity.
+
+\subsubsection{Initial value selection}
+
+We opted for a multi start stratified approach. Each circuit gets fitted 6 times in the initial evaluation. First fit is using deterministic
+fixed values $p_{fixed}$:
+
+\begin{itemize}
+    \item 0.8 for $\alpha$
+    \item 0.05 for $R_s$
+    \item 0.02 for other resistors $R$
+    \item 1.0 for $Q$
+    \item 0.01 for $\sigma$
+    \item $10^{-6}$ for $L$
+\end{itemize}
+
+For the remaining 5 starts we selected the values as follows:
+\begin{itemize}
+    \item $\alpha$: Divide interval $[0.03,0.98]$ in 5 equal parts and sample from each of the subintervals
+    \item $R_s$: Divide interval $[0.05\cdot10^{-1},0.05\cdot10]=[0.005,0.5]$ into 5 parts and sample from subintervals
+    \item For the other parameters: Divide $[p_{fixed}\cdot10^{-2},p_{fixed}\cdot10^{2}]$ in 5 subintervals and sample from them
+\end{itemize}
+
+This way we get a decent spread of initial values. We chose a narrower band for $R_s$ as it is more directly constrained by the higher frequencies,
+and kept a broader band to allow for more uncertainty in initial values.
+
+\subsubsection{Numerical algorithm}\label{numalg}
+
+In order to improve results of the algorithm we tried to improve robustness of SciPy's \texttt{least\_squares} algorithm. 
+For the initial optimization run we use:
+
+\begin{table}[]
+\centering
+\begin{tabular}{l|l}
+Parameter & value \\ \hline
+\texttt{x\_scale} & \texttt{jac} \\
+\texttt{ftol} &  10{-6}\\
+\texttt{xtol} &  10{-6}\\
+\texttt{gtol} &  10{-6}\\
+\texttt{f\_scale} &  0.001\\
+\texttt{max\_nfev} &  100\\
+\texttt{loss} &  \texttt{soft\_l1}\\
+\texttt{method} & \texttt{trf}
+\end{tabular}
+\label{parsopt1}
+\caption{Parameters for the SciPy.optimize least\_squares algorithm in the first optimization}
+\end{table}
+
+TRF method means we use the \textit{Trust region field} method of nonlinear least squares, and JAC scale is a specific 
+way of calculating matrix column scales. Tolerance fields (f-,x-,g-) stop the iteration if function values, parameters or function's derivatives
+move less than the threshold. Soft L1 loss with corresponding f-scale parameter means that instead of minimizing squared residuals, the optimizer
+is instead minimizing the following objective function:
+
+\begin{equation}
+    F(\boldsymbol{x})
+    = \frac{C^2}{2}
+      \sum_{i=1}^{m}
+      \rho\left(\frac{r_i(\boldsymbol{x})^2}{C^2}\right),
+\end{equation}
+where $r_i(\boldsymbol{x})$ denotes the $i$th residual.
+For the \texttt{soft\_l1} loss with \texttt{f\_scale = 0.001},
+\begin{equation}
+    \rho(z) = 2\left(\sqrt{1+z}-1\right),
+    \qquad C = 10^{-3}.
+\end{equation}
+
+Simply put, more residuals behave quadratically with a larger f-scale, while a smaller f-scale means most of the function is behaving like
+the L1 loss. For the first optimization round, so for all circuits generated, the stopping point was the 100 function evaluations.
+
+Substituting these expressions gives the optimization problem
+\begin{equation}
+    \boxed{
+        \min_{\boldsymbol{x}} F(\boldsymbol{x})
+        =
+        \min_{\boldsymbol{x}}
+        10^{-6}\sum_{i=1}^{m}
+        \left[
+            \sqrt{1+10^{6}r_i(\boldsymbol{x})^2}-1
+        \right].
+    }
+\end{equation}
+
+In the second optimization round, that is, for 5 circuits with smallest MSE values, we again used the same algorithm, but with stricter
+optimization values presented in Table \ref{parsopt2}. Main difference is the increased number of steps and stricter function evaluation.
+In this case, for each of the circuits one of the tolerances was reached before we hit the step limit.
+\begin{table}[]
+\centering
+\begin{tabular}{l|l}
+Parameter & value \\ \hline
+\texttt{x\_scale} & \texttt{jac} \\
+\texttt{ftol} &  10{-8}\\
+\texttt{xtol} &  10{-8}\\
+\texttt{gtol} &  10{-8}\\
+\texttt{f\_scale} &  0.001\\
+\texttt{max\_nfev} &  10000\\
+\texttt{loss} &  \texttt{soft\_l1}\\
+\texttt{method} & \texttt{trf}
+\end{tabular}
+\caption{Parameters for the SciPy.optimize least\_squares algorithm in the second optimization round}
+\label{parsopt2}
+\end{table}
+
+\subsubsection{Normalising residuals}\label{normalisation}
+
+We obtain one scale value per frequency in either of the two types of data used. For SOFC data, since each dataset is comprised of
+several measurements across 233 frequencies, we take a median of impedances. This leaves us with a 233 point dataset. To calculate the scales, we
+take the median absolute deviation (MAD) of impedances of each frequency.
+
+For the battery data, we first need to derive the impedances from the raw data available. Since there are many datapoints available we randomly
+sample 300 points for the data
+
+We noticed that in some cases the scales can be quite small, which makes dividing residual values (which can also be small) with them unstable.
+To this end, we replace the smallest 10 \% of the values of the scale with a fixed value. It should be noted that we calculate separate scale values
+for imaginary and real parts of the impedances.
+
+%In practice
+
+\section{Results}
+
+We apply methods described above to data from both solid oxide fuel cells, as well as batteries. We try to distinguish which of the numerical adaptations
+of the algorithm (additional settings for the SciPy's least-squares solver, normalising residuals) have the largest impact on the fit.
+
+The plots presented in the graphs are the Nyquist graphs of the 5 circuits which we fitted until convergence, ordered by their BIC values.
+
+\subsection{SOFC data}
+
+We took \texttt{eis\_20200227\_070006.npz} dataset from repository \\\href{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}.
+As mentioned in Section \ref{normalisation}, we have several repeated measurements of impedance at each frequency. We take the median of them to get 
+one impedance value per frequency.
+
+In Figure \ref{sofc4el} we see results of fitting circuits with up to 4 elements. They do not capture any of the details of the data.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png}
-\caption{Nyquistovi grafi najboljših 5 vezij z največ 4 elementi iz splošne gramatike}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 4 elements}
 \label{sofc4el}
 \end{figure}
+%Nadaljeval sem z ocenjevanjem parametrov, vendar pa tudi s 5 elementi rezultati niso bili najboljši, kot je razvidno iz Grafa \ref{sofc5el_nonorm}.
 
-
-Nadaljeval sem z ocenjevanjem parametrov, vendar pa tudi s 5 elementi rezultati niso bili najboljši, kot je razvidno iz Grafa \ref{sofc5el_nonorm}.
+Results with an additional circuit element are only marginally better (Figure \ref{sofc5el_nonorm}).
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png}
-\caption{Nyquistovi grafi najboljših 5 vezij z največ 5 elementi iz splošne gramatike brez normalizacije residualov}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements}
 \label{sofc5el_nonorm}
 \end{figure}
 
-Začel sem testirati različne možnosti izboljševanja algoritma in normalizacija resiudalov je prinesla največji napredek. 
-S tem dodatnim korakom 5 elementov že zadostuje za natančno prileganje. V Grafu \ref{sofc5el} vidimo rezultate, ki pa so zelo podobni med sabo. Tu sem tudi že uporabil različne začetne vrednosti.
+Before expanding the search space with even more circuits, we decided to try to make the algorithm more robust.
+We first implemented normalising residuals at each step of the algorithm and present results in Figure \ref{sofc5el}. There is noticable
+improvement in how closely the graphs fit the data. When inspecting the results in Table \ref{fig:first-table-circuits} more closely, we see that
+several parameters are close to their limits (especially $\alpha$). 
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png}
-\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and normalised residuals.}
 \label{sofc5el}
 \end{figure}
 
-Nekaj poizvedovanja po internetu kako izboljšati algoritem v pythonu me je pripeljalo do uporabe \texttt{soft\_l1} funkcije napake ter zamenjavo približno 10\% najmanjših vrednosti
-v normalizacijskem parametru s fiksno spodnjo mejo. Tako dobimo sledeče rezultate:
+To improve on unstable solutions we robustify the algorithm with adaptations described in Section \ref{numalg}. This way we get some more diversity
+in results in Graph \ref{sofc5elnum}.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png}
-\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
+\label{sofc5elnum}
 \end{figure}
 
-
-Prvi model potrebuje manj parametrov, pa tudi nobena vrednost ne doseže svojih meja, v nasprotju z $\alpha_2$ v vezju brez dodane numerike. Razlika v MSE je minimalna, in bi se morda z dodanimi koraki
-v optimizaciji še zmanjšala. Izbrani vezji sta bili:
+Comparing the circuits obtained with the standard and robustified numerical procedures we get
+can see that the former contains one parameter less (but same number of elements),
+and none of the parameters are on the border of their permitted range. MSE difference
+between them was minimal. The circuits in question were:
 
 \[
 \begin{aligned}
-\textnormal{Model z dodatno optimizacijo}
+\textnormal{Robustified approach}
     &= R_s
     \seriesconn
     \left[
@@ -288,7 +481,7 @@ v optimizaciji še zmanjšala. Izbrani vezji sta bili:
         \right)
     \right],
     \\[1.5ex]
-\textnormal{Model brez dodatkov}
+\textnormal{Standard approach}
     &= R_s
     \seriesconn
     \left[
@@ -380,7 +573,7 @@ v optimizaciji še zmanjšala. Izbrani vezji sta bili:
         \end{circuitikz}%
         }
 
-        \caption{Model A}
+        \caption{Result of the robustified approach}
         \label{fig:first-table-model-a}
     \end{subfigure}
     \hfill
@@ -456,25 +649,25 @@ v optimizaciji še zmanjšala. Izbrani vezji sta bili:
         \end{circuitikz}%
         }
 
-        \caption{Model B}
+        \caption{Result of the standard approach}
         \label{fig:first-table-model-b}
     \end{subfigure}
 
-    \caption{Vezij iz Tabele \ref{tab:circuit_comparison_sofc}:
-    (a) algoritem z dodanimi numeričnimi koraki;
-    (b) brez dodatkov.}
+    \caption{Resulting circuits from two approaches with parameters described in \ref{tab:circuit_comparison_sofc}:
+    (a) robustified algorithm;
+    (b) standard algorithm.}
     \label{fig:first-table-circuits}
 \end{figure}
 
 
 \begin{table}[htbp]
 \centering
-\caption{Primerjava vrednosti parametrov vezij z dodanimi numeričnimi izboljšavami in brez.}
+\caption{Parameter comparison of the two circuits}
 \label{tab:circuit_comparison_sofc}
 \small
 \begin{tabularx}{\textwidth}{@{}lXX@{}}
 \toprule
-\textbf{Parameter} & \textbf{Rezultat z izboljšanim algoritmom} & \textbf{Rezultat brez dodatnih korakov} \\
+\textbf{Parameter} & \textbf{Robustified algorithm} & \textbf{Standard approach} \\
 \midrule
 
 %Circuit &
@@ -507,15 +700,15 @@ v optimizaciji še zmanjšala. Izbrani vezji sta bili:
 %\right]$
 %\\[2ex]
 
-Število elementov     & 5 & 5 \\
-Število parametrov   & 7 & 8 \\
+Element count     & 5 & 5 \\
+Parameter count   & 7 & 8 \\
 %Random start      & Yes & Yes \\
 MSE               & $1.89647\times10^{-6}$ & $1.64223\times10^{-6}$ \\
 BIC & $-3031.73789$ & $-3059.82487$ \\
 %$\mathrm{lp\_error}$ & 0.865611 & Not reported \\
 
 \midrule
-\multicolumn{3}{@{}l}{\textbf{Parametri vezja}} \\
+\multicolumn{3}{@{}l}{\textbf{Circuit parameters}} \\
 \midrule
 
 $R_s$ (\si{\ohm}) &
@@ -590,42 +783,45 @@ $\alpha_4$ &
 
 
 
+
 \clearpage
 
 
 
-\subsection{Podatki baterij}
+\subsection{Battery data}
 
-Enake metode sem uporabil tudi na podatkih iz baterij iz repozitorija \\\href{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}.
-Tej so predvsem v nizkih frekvencah bolj razpršeni, zato je grafe vizualno morda težje ocenjevati.
+We apply the methods to data from batteries as well. We used data from 
+\href{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}.
 
-Rezultati s 4 elementi prinesejo pričakovan zaporedno vezan Warburgov element.
+%Enake metode sem uporabil tudi na podatkih iz baterij iz repozitorija \\\href{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}.
+%Tej so predvsem v nizkih frekvencah bolj razpršeni, zato je grafe vizualno morda težje ocenjevati.
+
+
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png}
-\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 4 elementi z izboljšanimi rezultati}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 4 elements}
 \end{figure}
 
-Zopet dobimo nekoliko različne rezultate brez dodanih korakov v optimizaciji.
+
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png}
-\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
-\end{figure}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements}\end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png}
-\caption{Nyquistovi grafi najboljših 5 vezij iz splošne gramatike z največ 5 elementi z izboljšanimi rezultati}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
 \end{figure}
 
-Izbrani vezji sta bili:
+We compare the 5 element circuits obtained from robustified and standard numerical algorithm. 
 
 \[
 \begin{aligned}
-\textnormal{Model z dodatno optimizacijo}
+\textnormal{Robustified approach}
     &= R_s
     \seriesconn
     \left[
@@ -642,7 +838,7 @@ Izbrani vezji sta bili:
         \right)
     \right],
     \\[1.5ex]
-\textnormal{Model brez dodatkov}
+\textnormal{Standard approach}
     &= R_s
     \seriesconn
     \CPEel{Q_1}{\alpha_1}
@@ -778,22 +974,22 @@ Izbrani vezji sta bili:
         \label{fig:second-table-standard}
     \end{subfigure}
 
-    \caption{Primerjava vezij v Tabeli \ref{tab:circuit_comparison}:
-    (a) dodatni numerični koraki
-    (b) brez dodatkov}
+    \caption{Side by side cirucit comparison:
+    (a) Robustified approach
+    (b) Standard approach}
     \label{fig:second-table-circuits}
 \end{figure}
 
 \begin{table}[htbp]
 \centering
-\caption{Primerjava parametrov vezij na podatkih iz baterij.}
+\caption{5 element circuit parameter comparison}
 \label{tab:circuit_comparison}
 \small
 \begin{tabularx}{\textwidth}{@{}lXX@{}}
 \toprule
 \textbf{Parameter}
-& \textbf{Rezultat z izboljšanim algoritmom}
-& \textbf{Rezultat brez dodatnih korakov} \\
+& \textbf{Robustified approach}
+& \textbf{Standard approach} \\
 \midrule
 
 %Circuit
@@ -823,11 +1019,11 @@ Izbrani vezji sta bili:
 %\end{aligned}$
 %\\[2ex]
 
-Število elementov
+Element count
 & 5
 & 5 \\
 
-Število parametrov
+Parameter count
 & 8
 & 8 \\
 
@@ -840,7 +1036,7 @@ BIC
 & $-5226.09$ \\
 
 \midrule
-\multicolumn{3}{@{}l}{\textbf{Parametri vezja}} \\
+\multicolumn{3}{@{}l}{\textbf{Circuit parameters}} \\
 \midrule
 
 %RMSE
@@ -922,8 +1118,12 @@ $\alpha_4$
 %\caption{A figure with two subfigures}
 %\label{fig:test}
 %\end{figure}
+\clearpage
+\nocite{*} 
+\printbibliography
+%\bibliographystyle{plainnat}
 
-
+%\bibliography{references} 
 
 
 \end{document}

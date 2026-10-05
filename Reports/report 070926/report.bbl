@@ -16,5 +16,794 @@
   {}
 \endgroup
 
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{Santoni2024EquivalentCircuit}{article}{}{}
+      \name{author}{8}{}{%
+        {{hash=7b48c00499b4f876bb5ab268c13da454}{%
+           family={Santoni},
+           familyi={S\bibinitperiod},
+           given={Francesco},
+           giveni={F\bibinitperiod}}}%
+        {{hash=de9191fe5e914e0d76acd54697492922}{%
+           family={De\bibnamedelima Angelis},
+           familyi={D\bibinitperiod\bibinitdelim A\bibinitperiod},
+           given={Alessio},
+           giveni={A\bibinitperiod}}}%
+        {{hash=a9f646949b1d3be6e559ca132e8007a8}{%
+           family={Moschitta},
+           familyi={M\bibinitperiod},
+           given={Antonio},
+           giveni={A\bibinitperiod}}}%
+        {{hash=4a2454388e7185da294540671559156b}{%
+           family={Carbone},
+           familyi={C\bibinitperiod},
+           given={Paolo},
+           giveni={P\bibinitperiod}}}%
+        {{hash=6bb91d298d388282d9d6acaa652591fd}{%
+           family={Galeotti},
+           familyi={G\bibinitperiod},
+           given={Matteo},
+           giveni={M\bibinitperiod}}}%
+        {{hash=09d4209a672f1f889f2c899d62223502}{%
+           family={Cinà},
+           familyi={C\bibinitperiod},
+           given={Lucio},
+           giveni={L\bibinitperiod}}}%
+        {{hash=b9f0a473b086d401a14de639769736f5}{%
+           family={Giammanco},
+           familyi={G\bibinitperiod},
+           given={C.},
+           giveni={C\bibinitperiod}}}%
+        {{hash=2c35668270ddeb522f088dece1a84eec}{%
+           family={Di\bibnamedelima Carlo},
+           familyi={D\bibinitperiod\bibinitdelim C\bibinitperiod},
+           given={Aldo},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{6cf347986493953b21ac0060ed84e096}
+      \strng{fullhash}{a4972b8a7198559b102c892ee92f799a}
+      \strng{fullhashraw}{a4972b8a7198559b102c892ee92f799a}
+      \strng{bibnamehash}{6cf347986493953b21ac0060ed84e096}
+      \strng{authorbibnamehash}{6cf347986493953b21ac0060ed84e096}
+      \strng{authornamehash}{6cf347986493953b21ac0060ed84e096}
+      \strng{authorfullhash}{a4972b8a7198559b102c892ee92f799a}
+      \strng{authorfullhashraw}{a4972b8a7198559b102c892ee92f799a}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Energy Storage}
+      \field{title}{A guide to equivalent circuit fitting for impedance analysis and battery state estimation}
+      \field{volume}{82}
+      \field{year}{2024}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1016/j.est.2023.110389
+      \endverb
+    \endentry
+    \entry{Ramos2013GeneExpressionProgramming}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=4a5e4ddfea2ffe8236774e4d707dc758}{%
+           family={Ramos},
+           familyi={R\bibinitperiod},
+           given={Pedro\bibnamedelima M.},
+           giveni={P\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=40ee7f50d087f7d2cb7a75a593894277}{%
+           family={Janeiro},
+           familyi={J\bibinitperiod},
+           given={Fernando\bibnamedelima M.},
+           giveni={F\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{6f669be4f28c52d13e4d103540fb1310}
+      \strng{fullhash}{6f669be4f28c52d13e4d103540fb1310}
+      \strng{fullhashraw}{6f669be4f28c52d13e4d103540fb1310}
+      \strng{bibnamehash}{6f669be4f28c52d13e4d103540fb1310}
+      \strng{authorbibnamehash}{6f669be4f28c52d13e4d103540fb1310}
+      \strng{authornamehash}{6f669be4f28c52d13e4d103540fb1310}
+      \strng{authorfullhash}{6f669be4f28c52d13e4d103540fb1310}
+      \strng{authorfullhashraw}{6f669be4f28c52d13e4d103540fb1310}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Measurement}
+      \field{number}{10}
+      \field{title}{Gene expression programming for automatic circuit model identification in impedance spectroscopy: Performance evaluation}
+      \field{volume}{46}
+      \field{year}{2013}
+      \true{nocite}
+      \field{pages}{4379\bibrangedash 4387}
+      \range{pages}{9}
+      \verb{doi}
+      \verb 10.1016/j.measurement.2013.05.011
+      \endverb
+    \endentry
+    \entry{Ciucci2015BayesianDRT}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=54316b018562f683fd1978bab9ad3c21}{%
+           family={Ciucci},
+           familyi={C\bibinitperiod},
+           given={Francesco},
+           giveni={F\bibinitperiod}}}%
+        {{hash=215c7d91e47bc648dac2d6096241a0e5}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Chi},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{d036799c3164179503f73c1159663b4f}
+      \strng{fullhash}{d036799c3164179503f73c1159663b4f}
+      \strng{fullhashraw}{d036799c3164179503f73c1159663b4f}
+      \strng{bibnamehash}{d036799c3164179503f73c1159663b4f}
+      \strng{authorbibnamehash}{d036799c3164179503f73c1159663b4f}
+      \strng{authornamehash}{d036799c3164179503f73c1159663b4f}
+      \strng{authorfullhash}{d036799c3164179503f73c1159663b4f}
+      \strng{authorfullhashraw}{d036799c3164179503f73c1159663b4f}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Electrochimica Acta}
+      \field{title}{Analysis of Electrochemical Impedance Spectroscopy Data Using the Distribution of Relaxation Times: A {Bayesian} and Hierarchical {Bayesian} Approach}
+      \field{volume}{167}
+      \field{year}{2015}
+      \true{nocite}
+      \field{pages}{439\bibrangedash 454}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1016/j.electacta.2015.03.123
+      \endverb
+    \endentry
+    \entry{Zhang2023AutoEIS}{article}{}{}
+      \name{author}{8}{}{%
+        {{hash=97c060ba5c136e3a3a761aecb10ed70c}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Runze},
+           giveni={R\bibinitperiod}}}%
+        {{hash=71255f83a700d3d837af4f199b6cb384}{%
+           family={Black},
+           familyi={B\bibinitperiod},
+           given={Robert},
+           giveni={R\bibinitperiod}}}%
+        {{hash=d551f49cdb77e4e1782c2ce127f38b6a}{%
+           family={Sur},
+           familyi={S\bibinitperiod},
+           given={Debashish},
+           giveni={D\bibinitperiod}}}%
+        {{hash=d3a26af53d7f8f02eaa5893b5d1684a5}{%
+           family={Karimi},
+           familyi={K\bibinitperiod},
+           given={Parisa},
+           giveni={P\bibinitperiod}}}%
+        {{hash=b82f3e7d87581ec87770cf90927a429d}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Kangming},
+           giveni={K\bibinitperiod}}}%
+        {{hash=c183521f98b1d555e6817206b59fb332}{%
+           family={DeCost},
+           familyi={D\bibinitperiod},
+           given={Brian},
+           giveni={B\bibinitperiod}}}%
+        {{hash=c4f1840390911c0a87d947ea9b4a6cc3}{%
+           family={Scully},
+           familyi={S\bibinitperiod},
+           given={John\bibnamedelima R.},
+           giveni={J\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=405658f4f45c09fd0e7f0983b593c35c}{%
+           family={Hattrick-Simpers},
+           familyi={H\bibinithyphendelim S\bibinitperiod},
+           given={Jason},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{4d992c2388b96b51d4bf042a5f845068}
+      \strng{fullhash}{db0ccc7f854368bcc9c517a8cf836b3b}
+      \strng{fullhashraw}{db0ccc7f854368bcc9c517a8cf836b3b}
+      \strng{bibnamehash}{4d992c2388b96b51d4bf042a5f845068}
+      \strng{authorbibnamehash}{4d992c2388b96b51d4bf042a5f845068}
+      \strng{authornamehash}{4d992c2388b96b51d4bf042a5f845068}
+      \strng{authorfullhash}{db0ccc7f854368bcc9c517a8cf836b3b}
+      \strng{authorfullhashraw}{db0ccc7f854368bcc9c517a8cf836b3b}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eid}{086502}
+      \field{journaltitle}{Journal of The Electrochemical Society}
+      \field{number}{8}
+      \field{title}{Editors' Choice---{AutoEIS}: Automated {Bayesian} Model Selection and Analysis for Electrochemical Impedance Spectroscopy}
+      \field{volume}{170}
+      \field{year}{2023}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1149/1945-7111/aceab2
+      \endverb
+    \endentry
+    \entry{Boskoski2017FastEIS}{book}{}{}
+      \name{author}{3}{}{%
+        {{hash=78af62b8be14bbee8ff178a7bd01a9b6}{%
+           family={Boškoski},
+           familyi={B\bibinitperiod},
+           given={Pavle},
+           giveni={P\bibinitperiod}}}%
+        {{hash=66c7feef95832ba283c124907956bf7c}{%
+           family={Debenjak},
+           familyi={D\bibinitperiod},
+           given={Andrej},
+           giveni={A\bibinitperiod}}}%
+        {{hash=45cb9a1bda989baf0e64f3c8c679def9}{%
+           family={Mileva\bibnamedelima Boshkoska},
+           familyi={M\bibinitperiod\bibinitdelim B\bibinitperiod},
+           given={Biljana},
+           giveni={B\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Cham}%
+      }
+      \list{publisher}{1}{%
+        {Springer International Publishing}%
+      }
+      \strng{namehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{fullhash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{fullhashraw}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{bibnamehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authorbibnamehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authornamehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authorfullhash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authorfullhashraw}{6cae100f160af5d2b33bd8f6d1f85091}
+      \field{extraname}{1}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{978-3-319-53389-6}
+      \field{series}{SpringerBriefs in Applied Sciences and Technology}
+      \field{title}{Fast Electrochemical Impedance Spectroscopy: As a Statistical Condition Monitoring Tool}
+      \field{year}{2017}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1007/978-3-319-53390-2
+      \endverb
+    \endentry
+    \entry{Aguedo2020MXeneInterfaces}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=845c5c726baf9c047725d37f58e1ff14}{%
+           family={Aguedo},
+           familyi={A\bibinitperiod},
+           given={Juvissan},
+           giveni={J\bibinitperiod}}}%
+        {{hash=2a804cfc42c3e114f957050c1f67dae6}{%
+           family={Lorencova},
+           familyi={L\bibinitperiod},
+           given={Lenka},
+           giveni={L\bibinitperiod}}}%
+        {{hash=8618bf2d2f1ee8fa2fc372e238b3222b}{%
+           family={Barath},
+           familyi={B\bibinitperiod},
+           given={Marek},
+           giveni={M\bibinitperiod}}}%
+        {{hash=b5c62b21af97749d88da5a5c12cc827e}{%
+           family={Farkas},
+           familyi={F\bibinitperiod},
+           given={Pavol},
+           giveni={P\bibinitperiod}}}%
+        {{hash=4b77533f41add8cd10b39b74a9936fc1}{%
+           family={Tkac},
+           familyi={T\bibinitperiod},
+           given={Jan},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{1e92725b44d68bdf4aefd3a88192a4d7}
+      \strng{fullhash}{d8e60e919f742051a4c2701d42f41104}
+      \strng{fullhashraw}{d8e60e919f742051a4c2701d42f41104}
+      \strng{bibnamehash}{1e92725b44d68bdf4aefd3a88192a4d7}
+      \strng{authorbibnamehash}{1e92725b44d68bdf4aefd3a88192a4d7}
+      \strng{authornamehash}{1e92725b44d68bdf4aefd3a88192a4d7}
+      \strng{authorfullhash}{d8e60e919f742051a4c2701d42f41104}
+      \strng{authorfullhashraw}{d8e60e919f742051a4c2701d42f41104}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eid}{127}
+      \field{journaltitle}{Chemosensors}
+      \field{number}{4}
+      \field{title}{Electrochemical Impedance Spectroscopy on {2D} Nanomaterial {MXene} Modified Interfaces: Application as a Characterization and Transducing Tool}
+      \field{volume}{8}
+      \field{year}{2020}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.3390/chemosensors8040127
+      \endverb
+    \endentry
+    \entry{Cao2010FractionalSOFC}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=003d582080edd937c53aa6f034897bfe}{%
+           family={Cao},
+           familyi={C\bibinitperiod},
+           given={Hongliang},
+           giveni={H\bibinitperiod}}}%
+        {{hash=a5c16a22a223bf91ed8c96867f8723da}{%
+           family={Deng},
+           familyi={D\bibinitperiod},
+           given={Zhonghua},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=1a1f520c1123587494e9d4c74ae07269}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Xi},
+           giveni={X\bibinitperiod}}}%
+        {{hash=4656453b716273b4ea07ab731e9b6dd5}{%
+           family={Yang},
+           familyi={Y\bibinitperiod},
+           given={Jie},
+           giveni={J\bibinitperiod}}}%
+        {{hash=d5089793647c7edab2e2ecab6a15d881}{%
+           family={Qin},
+           familyi={Q\bibinitperiod},
+           given={Yi},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{1bd3745011c066f71653670c962adb0a}
+      \strng{fullhash}{e0fb999a9634408a0065da6340aca616}
+      \strng{fullhashraw}{e0fb999a9634408a0065da6340aca616}
+      \strng{bibnamehash}{1bd3745011c066f71653670c962adb0a}
+      \strng{authorbibnamehash}{1bd3745011c066f71653670c962adb0a}
+      \strng{authornamehash}{1bd3745011c066f71653670c962adb0a}
+      \strng{authorfullhash}{e0fb999a9634408a0065da6340aca616}
+      \strng{authorfullhashraw}{e0fb999a9634408a0065da6340aca616}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{International Journal of Hydrogen Energy}
+      \field{number}{4}
+      \field{title}{Dynamic modeling of electrical characteristics of solid oxide fuel cells using fractional derivatives}
+      \field{volume}{35}
+      \field{year}{2010}
+      \true{nocite}
+      \field{pages}{1749\bibrangedash 1758}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.1016/j.ijhydene.2009.11.103
+      \endverb
+    \endentry
+    \entry{Boskoski2024QuantitativeInsights}{inproceedings}{}{}
+      \name{author}{5}{}{%
+        {{hash=78af62b8be14bbee8ff178a7bd01a9b6}{%
+           family={Boškoski},
+           familyi={B\bibinitperiod},
+           given={Pavle},
+           giveni={P\bibinitperiod}}}%
+        {{hash=9577145ffa0eb9f899d146e61ba52f50}{%
+           family={Königshofer},
+           familyi={K\bibinitperiod},
+           given={Benjamin},
+           giveni={B\bibinitperiod}}}%
+        {{hash=48a6806223ad3ef037154e37cf773447}{%
+           family={Nusev},
+           familyi={N\bibinitperiod},
+           given={Gjorgji},
+           giveni={G\bibinitperiod}}}%
+        {{hash=ac055d45eb262a4748129c77c8d189bd}{%
+           family={Ostrež},
+           familyi={O\bibinitperiod},
+           given={Aljaž},
+           giveni={A\bibinitperiod}}}%
+        {{hash=337f94cf47727c87d3620145f2a1d8d6}{%
+           family={Subotić},
+           familyi={S\bibinitperiod},
+           given={Vanja},
+           giveni={V\bibinitperiod}}}%
+      }
+      \strng{namehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{fullhash}{2d4e32f7388addc9cd6c1caca37c27b1}
+      \strng{fullhashraw}{2d4e32f7388addc9cd6c1caca37c27b1}
+      \strng{bibnamehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{authorbibnamehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{authornamehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{authorfullhash}{2d4e32f7388addc9cd6c1caca37c27b1}
+      \strng{authorfullhashraw}{2d4e32f7388addc9cd6c1caca37c27b1}
+      \field{extraname}{1}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the Annual Conference of the {PHM} Society 2024}
+      \field{number}{1}
+      \field{title}{Extracting Quantitative Insights from Electrochemical Impedance Spectra Using Statistical Methods}
+      \field{volume}{16}
+      \field{year}{2024}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.36001/phmconf.2024.v16i1.4057
+      \endverb
+    \endentry
+    \entry{Monje2010FractionalOrderSystems}{book}{}{}
+      \name{author}{5}{}{%
+        {{hash=2be3ca745a554f6e7553b4d42eacf73a}{%
+           family={Monje},
+           familyi={M\bibinitperiod},
+           given={Concepción\bibnamedelima A.},
+           giveni={C\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=cc012cb35dabc84a8f3be9e5436141e0}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={YangQuan},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=db96c44100ff9c2fb459bbc14b37b808}{%
+           family={Vinagre},
+           familyi={V\bibinitperiod},
+           given={Blas\bibnamedelima M.},
+           giveni={B\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=d173337a7940bd002ef13e3a235da46f}{%
+           family={Xue},
+           familyi={X\bibinitperiod},
+           given={Dingyü},
+           giveni={D\bibinitperiod}}}%
+        {{hash=3f16cc579e427fadf0d58b7f1a61da9c}{%
+           family={Feliu},
+           familyi={F\bibinitperiod},
+           given={Vicente},
+           giveni={V\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {London}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{fd24e664dba57ea9a8de462de6ceb07d}
+      \strng{fullhash}{b240ad6b5e3a68e7107ea4544595d2ca}
+      \strng{fullhashraw}{b240ad6b5e3a68e7107ea4544595d2ca}
+      \strng{bibnamehash}{fd24e664dba57ea9a8de462de6ceb07d}
+      \strng{authorbibnamehash}{fd24e664dba57ea9a8de462de6ceb07d}
+      \strng{authornamehash}{fd24e664dba57ea9a8de462de6ceb07d}
+      \strng{authorfullhash}{b240ad6b5e3a68e7107ea4544595d2ca}
+      \strng{authorfullhashraw}{b240ad6b5e3a68e7107ea4544595d2ca}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{978-1-84996-334-3}
+      \field{series}{Advances in Industrial Control}
+      \field{title}{Fractional-order Systems and Controls: Fundamentals and Applications}
+      \field{year}{2010}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1007/978-1-84996-335-0
+      \endverb
+    \endentry
+    \entry{OHayre2016FuelCellFundamentals}{book}{}{}
+      \name{author}{4}{}{%
+        {{hash=d404512a1ef82b92a965e32ab2a430a2}{%
+           family={O'Hayre},
+           familyi={O\bibinitperiod},
+           given={Ryan},
+           giveni={R\bibinitperiod}}}%
+        {{hash=087db45bbe1de51d55d6edd3d3958d97}{%
+           family={Cha},
+           familyi={C\bibinitperiod},
+           given={Suk-Won},
+           giveni={S\bibinithyphendelim W\bibinitperiod}}}%
+        {{hash=8f5259ea9b78159e2f04ad1aac3bb761}{%
+           family={Colella},
+           familyi={C\bibinitperiod},
+           given={Whitney\bibnamedelima G.},
+           giveni={W\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+        {{hash=74d8b5fcd429f80e67053bfe55f93a8f}{%
+           family={Prinz},
+           familyi={P\bibinitperiod},
+           given={Fritz\bibnamedelima B.},
+           giveni={F\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Hoboken, NJ}%
+      }
+      \list{publisher}{1}{%
+        {John Wiley \& Sons}%
+      }
+      \strng{namehash}{9ef1662a40f365f5a93cc9867825f17d}
+      \strng{fullhash}{a05ff69d6f3d02ac1fd7ba2cb8eefa0c}
+      \strng{fullhashraw}{a05ff69d6f3d02ac1fd7ba2cb8eefa0c}
+      \strng{bibnamehash}{9ef1662a40f365f5a93cc9867825f17d}
+      \strng{authorbibnamehash}{9ef1662a40f365f5a93cc9867825f17d}
+      \strng{authornamehash}{9ef1662a40f365f5a93cc9867825f17d}
+      \strng{authorfullhash}{a05ff69d6f3d02ac1fd7ba2cb8eefa0c}
+      \strng{authorfullhashraw}{a05ff69d6f3d02ac1fd7ba2cb8eefa0c}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{3}
+      \field{isbn}{978-1-119-11380-5}
+      \field{title}{Fuel Cell Fundamentals}
+      \field{year}{2016}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1002/9781119191766
+      \endverb
+    \endentry
+    \entry{ONeill2001GrammaticalEvolution}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=db877efec377d286d55053ba3ff91aa6}{%
+           family={O'Neill},
+           familyi={O\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{hash=f4a76e3192428c449e76fe826182f443}{%
+           family={Ryan},
+           familyi={R\bibinitperiod},
+           given={Conor},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{60c4d3357a69522aa287a26540889839}
+      \strng{fullhash}{60c4d3357a69522aa287a26540889839}
+      \strng{fullhashraw}{60c4d3357a69522aa287a26540889839}
+      \strng{bibnamehash}{60c4d3357a69522aa287a26540889839}
+      \strng{authorbibnamehash}{60c4d3357a69522aa287a26540889839}
+      \strng{authornamehash}{60c4d3357a69522aa287a26540889839}
+      \strng{authorfullhash}{60c4d3357a69522aa287a26540889839}
+      \strng{authorfullhashraw}{60c4d3357a69522aa287a26540889839}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Evolutionary Computation}
+      \field{number}{4}
+      \field{title}{Grammatical Evolution}
+      \field{volume}{5}
+      \field{year}{2001}
+      \true{nocite}
+      \field{pages}{349\bibrangedash 358}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.1109/4235.942529
+      \endverb
+    \endentry
+    \entry{VanHaeverbeke2021CircuitIdentification}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=5d3cfe22bd482125b086d94da083dcc4}{%
+           family={Van\bibnamedelima Haeverbeke},
+           familyi={V\bibinitperiod\bibinitdelim H\bibinitperiod},
+           given={Maxime},
+           giveni={M\bibinitperiod}}}%
+        {{hash=9ca255bb7d4148777fac8166aaae2b53}{%
+           family={Stock},
+           familyi={S\bibinitperiod},
+           given={Michiel},
+           giveni={M\bibinitperiod}}}%
+        {{hash=0edf7e47d59a27e2c75c810bbcb93cd3}{%
+           family={De\bibnamedelima Baets},
+           familyi={D\bibinitperiod\bibinitdelim B\bibinitperiod},
+           given={Bernard},
+           giveni={B\bibinitperiod}}}%
+      }
+      \strng{namehash}{0e4e6ad7625298f513a0c395338341d9}
+      \strng{fullhash}{0e4e6ad7625298f513a0c395338341d9}
+      \strng{fullhashraw}{0e4e6ad7625298f513a0c395338341d9}
+      \strng{bibnamehash}{0e4e6ad7625298f513a0c395338341d9}
+      \strng{authorbibnamehash}{0e4e6ad7625298f513a0c395338341d9}
+      \strng{authornamehash}{0e4e6ad7625298f513a0c395338341d9}
+      \strng{authorfullhash}{0e4e6ad7625298f513a0c395338341d9}
+      \strng{authorfullhashraw}{0e4e6ad7625298f513a0c395338341d9}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eid}{2514612}
+      \field{journaltitle}{IEEE Transactions on Instrumentation and Measurement}
+      \field{title}{Practical Equivalent Electrical Circuit Identification for Electrochemical Impedance Spectroscopy Analysis With Gene Expression Programming}
+      \field{volume}{70}
+      \field{year}{2021}
+      \true{nocite}
+      \field{pages}{1\bibrangedash 12}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1109/TIM.2021.3113116
+      \endverb
+    \endentry
+    \entry{Boskoski2024VariationalBayesian}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=78af62b8be14bbee8ff178a7bd01a9b6}{%
+           family={Boškoski},
+           familyi={B\bibinitperiod},
+           given={Pavle},
+           giveni={P\bibinitperiod}}}%
+        {{hash=f48671392c9fc48e925b3fe969692cd3}{%
+           family={Žnidarič},
+           familyi={Ž\bibinitperiod},
+           given={Luka},
+           giveni={L\bibinitperiod}}}%
+        {{hash=302dad6e13c5f31cae34336b94deb331}{%
+           family={Gradišar},
+           familyi={G\bibinitperiod},
+           given={Žiga},
+           giveni={Ž\bibinitperiod}}}%
+        {{hash=337f94cf47727c87d3620145f2a1d8d6}{%
+           family={Subotić},
+           familyi={S\bibinitperiod},
+           given={Vanja},
+           giveni={V\bibinitperiod}}}%
+      }
+      \strng{namehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{fullhash}{8256230b9adbd62f3e0eb40e9d652f67}
+      \strng{fullhashraw}{8256230b9adbd62f3e0eb40e9d652f67}
+      \strng{bibnamehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{authorbibnamehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{authornamehash}{5b984b57fc0a03364ff6cd3fa30fe191}
+      \strng{authorfullhash}{8256230b9adbd62f3e0eb40e9d652f67}
+      \strng{authorfullhashraw}{8256230b9adbd62f3e0eb40e9d652f67}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eid}{235359}
+      \field{journaltitle}{Journal of Power Sources}
+      \field{title}{Probabilistic deconvolution for electrochemical impedance through variational {Bayesian} inference}
+      \field{volume}{622}
+      \field{year}{2024}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1016/j.jpowsour.2024.235359
+      \endverb
+    \endentry
+    \entry{Kunaver2021GrammaticalEvolution}{article}{}{}
+      \name{author}{7}{}{%
+        {{hash=f5351adb1a9cb01824b44c2749c24394}{%
+           family={Kunaver},
+           familyi={K\bibinitperiod},
+           given={Matevž},
+           giveni={M\bibinitperiod}}}%
+        {{hash=b52e266d63302a49f3f188f667f356d4}{%
+           family={Žic},
+           familyi={Ž\bibinitperiod},
+           given={Mark},
+           giveni={M\bibinitperiod}}}%
+        {{hash=60ff99d2675434887e02723d05f0cac8}{%
+           family={Fajfar},
+           familyi={F\bibinitperiod},
+           given={Iztok},
+           giveni={I\bibinitperiod}}}%
+        {{hash=81cd7c51c20d430ec4bc5421838d4480}{%
+           family={Tuma},
+           familyi={T\bibinitperiod},
+           given={Tadej},
+           giveni={T\bibinitperiod}}}%
+        {{hash=493e07a09507a60a9991189798799aa4}{%
+           family={Bűrmen},
+           familyi={B\bibinitperiod},
+           given={Árpád},
+           giveni={Á\bibinitperiod}}}%
+        {{hash=337f94cf47727c87d3620145f2a1d8d6}{%
+           family={Subotić},
+           familyi={S\bibinitperiod},
+           given={Vanja},
+           giveni={V\bibinitperiod}}}%
+        {{hash=9acb9dd2ae79f599596af00f9decec42}{%
+           family={Rojec},
+           familyi={R\bibinitperiod},
+           given={Žiga},
+           giveni={Ž\bibinitperiod}}}%
+      }
+      \strng{namehash}{227c2d670ad65ff6d1a9a834ff5aeb40}
+      \strng{fullhash}{3264bfdb597de829593971056f6f9104}
+      \strng{fullhashraw}{3264bfdb597de829593971056f6f9104}
+      \strng{bibnamehash}{227c2d670ad65ff6d1a9a834ff5aeb40}
+      \strng{authorbibnamehash}{227c2d670ad65ff6d1a9a834ff5aeb40}
+      \strng{authornamehash}{227c2d670ad65ff6d1a9a834ff5aeb40}
+      \strng{authorfullhash}{3264bfdb597de829593971056f6f9104}
+      \strng{authorfullhashraw}{3264bfdb597de829593971056f6f9104}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eid}{1859}
+      \field{journaltitle}{Processes}
+      \field{number}{11}
+      \field{title}{Synthesizing Electrically Equivalent Circuits for Use in Electrochemical Impedance Spectroscopy through Grammatical Evolution}
+      \field{volume}{9}
+      \field{year}{2021}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.3390/pr9111859
+      \endverb
+    \endentry
+    \entry{Laschuk2021ReducingResistance}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=ef63d8aeb1d472a07a79a2f6c214be5e}{%
+           family={Laschuk},
+           familyi={L\bibinitperiod},
+           given={Nadia\bibnamedelima O.},
+           giveni={N\bibinitperiod\bibinitdelim O\bibinitperiod}}}%
+        {{hash=f9460b9789bdbad235448bab0c0801a4}{%
+           family={Easton},
+           familyi={E\bibinitperiod},
+           given={E.\bibnamedelimi Bradley},
+           giveni={E\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=30b5cab270987cfe46cb9ec9761092bb}{%
+           family={Zenkina},
+           familyi={Z\bibinitperiod},
+           given={Olena\bibnamedelima V.},
+           giveni={O\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+      }
+      \strng{namehash}{ec75eae332632dfe6047b08733eb805f}
+      \strng{fullhash}{ec75eae332632dfe6047b08733eb805f}
+      \strng{fullhashraw}{ec75eae332632dfe6047b08733eb805f}
+      \strng{bibnamehash}{ec75eae332632dfe6047b08733eb805f}
+      \strng{authorbibnamehash}{ec75eae332632dfe6047b08733eb805f}
+      \strng{authornamehash}{ec75eae332632dfe6047b08733eb805f}
+      \strng{authorfullhash}{ec75eae332632dfe6047b08733eb805f}
+      \strng{authorfullhashraw}{ec75eae332632dfe6047b08733eb805f}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{RSC Advances}
+      \field{title}{Reducing the resistance for the use of electrochemical impedance spectroscopy analysis in materials chemistry}
+      \field{volume}{11}
+      \field{year}{2021}
+      \true{nocite}
+      \field{pages}{27925\bibrangedash 27936}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1039/D1RA03785D
+      \endverb
+    \endentry
+    \entry{Boskoski2017TestCases}{inbook}{}{}
+      \name{author}{3}{}{%
+        {{hash=78af62b8be14bbee8ff178a7bd01a9b6}{%
+           family={Boškoski},
+           familyi={B\bibinitperiod},
+           given={Pavle},
+           giveni={P\bibinitperiod}}}%
+        {{hash=66c7feef95832ba283c124907956bf7c}{%
+           family={Debenjak},
+           familyi={D\bibinitperiod},
+           given={Andrej},
+           giveni={A\bibinitperiod}}}%
+        {{hash=45cb9a1bda989baf0e64f3c8c679def9}{%
+           family={Mileva\bibnamedelima Boshkoska},
+           familyi={M\bibinitperiod\bibinitdelim B\bibinitperiod},
+           given={Biljana},
+           giveni={B\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Cham}%
+      }
+      \list{publisher}{1}{%
+        {Springer International Publishing}%
+      }
+      \strng{namehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{fullhash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{fullhashraw}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{bibnamehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authorbibnamehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authornamehash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authorfullhash}{6cae100f160af5d2b33bd8f6d1f85091}
+      \strng{authorfullhashraw}{6cae100f160af5d2b33bd8f6d1f85091}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Fast Electrochemical Impedance Spectroscopy: As a Statistical Condition Monitoring Tool}
+      \field{chapter}{4}
+      \field{series}{SpringerBriefs in Applied Sciences and Technology}
+      \field{title}{Test Cases}
+      \field{year}{2017}
+      \true{nocite}
+      \field{pages}{31\bibrangedash 41}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1007/978-3-319-53390-2_4
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
 \endinput
 
