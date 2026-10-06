@@ -10,10 +10,12 @@ from fitting_parameters.train import LEAST_SQUARES_SETTINGS, FINAL_LEAST_SQUARES
 from circuit_export import load_circuits
 from fitting_parameters.load_data import raw_impedance, load_spectrum, uniform_frequency_indices
 from fitting_parameters.model_selection import normalize_sigma
-
+from Circuit_generation.circuit_class import (
+    CPE, Gerischer, Inductor, Parallel, Resistor, Series, SeriesResistance, Warburg,
+)
 
 PROJECT_DIR = Path(__file__).resolve().parent
-SAVE_RESULTS = True
+SAVE_RESULTS = False
 
 if not SAVE_RESULTS:
     print("Results will not be saved!")
@@ -24,6 +26,7 @@ if not SAVE_RESULTS:
 
 # Use "raw" for bank4 files containing curr, batt_1, batt_2, etc.
 # Use "spectrum" for files containing F and Z.
+# Use "simulated" for output from data/simulation/run_simulation.py.
 DATA_MODE = "spectrum"
 
 
@@ -47,9 +50,17 @@ SPECTRUM_DATA_PATH = (
     / "data"
     / "spectrum"
     #/ "eis_20200224_190006.npz"
-    / "eis_20200226_150005.npz"
+    / "eis_20200227_070006.npz"
+    #/ "eis_20200226_150005.npz"
 )
 
+SIMULATED_DATA_PATH = (
+    PROJECT_DIR
+    / "data"
+    / "simulation"
+    / "generated"
+    / "simulated_spectrum.npz"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -107,23 +118,24 @@ if DATA_MODE == "raw":
     imag_scatter = imag_scatter[selected]
 
 
-elif DATA_MODE == "spectrum":
-    # Already processed frequency-domain data:
-    # F and Z
-    frequency, measured_impedance, real_scatter, imag_scatter = load_spectrum(
-        SPECTRUM_DATA_PATH
+elif DATA_MODE in ("spectrum", "simulated"):
+    # Measured and simulated spectra share the F/Z format.
+    selected_data_path = (
+        SIMULATED_DATA_PATH if DATA_MODE == "simulated" else SPECTRUM_DATA_PATH
     )
-    selected_data_path = SPECTRUM_DATA_PATH
+    frequency, measured_impedance, real_scatter, imag_scatter = load_spectrum(
+        selected_data_path
+    )
 
     # Coherence is not present in the F/Z files.
     coherence = None
 
-    print("Loaded an existing F/Z impedance spectrum")
+    print(f"Loaded {DATA_MODE} F/Z impedance data from {selected_data_path}")
 
 else:
     raise ValueError(
         f"Unknown DATA_MODE {DATA_MODE!r}; "
-        "choose 'raw' or 'spectrum'"
+        "choose 'raw', 'spectrum', or 'simulated'"
     )
 
 
@@ -142,6 +154,23 @@ floor = 0.1
 real_smooth_scatter = normalize_sigma(real_scatter, percentage_floor=floor)#, floor)
 imag_smooth_scatter = normalize_sigma(imag_scatter, percentage_floor=floor)#, floor)
 
+#manual_circuit = Series(children=(
+#    SeriesResistance("Rs"),
+#    Inductor("L"),
+#    Parallel(children=(Resistor("R1"), CPE("Q1", "alpha1"))),
+#    Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
+#    Warburg("sigma3"),
+#))
+
+manual_circuit = Series(children=(
+    SeriesResistance("Rs"),
+    Inductor("L"),
+    Parallel(children=(Resistor("R1"), CPE("Q1", "alpha1"))),
+    Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
+    Parallel(children=(Resistor("R3"), CPE("Q3", "alpha3"))),
+))
+
+
 results, fitted_parameters, besties = compare_circuits(
     circuits=circuits,
     frequency=frequency,
@@ -150,6 +179,7 @@ results, fitted_parameters, besties = compare_circuits(
     imag_scatter=imag_smooth_scatter,
     #real_scatter=real_scatter,
     #imag_scatter=imag_scatter,
+    manual_entry=manual_circuit,
     optimizer=OPTIMIZER,
 )
 

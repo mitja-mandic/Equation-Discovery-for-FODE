@@ -209,7 +209,11 @@ cython_debug/
 tempCodeRunnerFile.py
 
 # Local datasets
-data/
+data/*
+!data/simulation/
+data/simulation/*
+!data/simulation/*.py
+!data/simulation/README.md
 
 # Intermediate results
 Results/

@@ -1,6 +1,13 @@
 # Equation-Discovery-for-FODE
 Repository for working on equation discovery for fractional order systems
 
+## Simulate circuit data from the IDE
+
+Open `data/simulation/run_simulation.py`, edit its circuit, component values,
+frequency sweep and noise settings, and run the file. The default sweep covers
+1 mHz to 1 MHz. It saves an NPZ compatible with the existing spectrum loader and
+Nyquist/Bode plots. See [the simulator guide](data/simulation/README.md).
+
 ## Export generated circuits to Modelica
 
 `alt_parse.py` generates normalized circuit trees. `modelica_export.py` turns

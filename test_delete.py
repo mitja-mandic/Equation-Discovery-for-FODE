@@ -9,6 +9,18 @@ import numpy as np
 #
 #    print(data[item])
    
-x =  {'Rs': np.float64(0.017161530254175966), 'Q1': np.float64(38.05237609752811), 'alpha1': np.float64(0.8440783232423466), 'sigma2': np.float64(0.0017909991422941397), 'R3': np.float64(0.005606625157797635), 'Q4': np.float64(3.5686721833944475), 'alpha4': np.float64(0.7972900507433649)}
-parameter_names = [y for y in x.keys()]
-print(parameter_names)
+#x =  {'Rs': np.float64(0.017161530254175966), 'Q1': np.float64(38.05237609752811), 'alpha1': np.float64(0.8440783232423466), 'sigma2': np.float64(0.0017909991422941397), 'R3': np.float64(0.005606625157797635), 'Q4': np.float64(3.5686721833944475), 'alpha4': np.float64(0.7972900507433649)}
+#parameter_names = [y for y in x.keys()]
+#print(parameter_names)
+
+
+import json
+import numpy as np
+SIMULATED_DATA_PATH = r"C:\Users\Mitja\Work\ijs\baterije\FODE for SOFC\Equation-Discovery-for-FODE\data\simulation\generated\simulated_spectrum.npz"
+with np.load(SIMULATED_DATA_PATH, allow_pickle=False) as data:
+    metadata = json.loads(data["metadata_json"].item())
+
+print("Generating circuit:", metadata["circuit"])
+print("Parameters:", metadata["parameters"])
+print(f"Noise: {100 * metadata['relative_noise']:g}%")
+print(f"Absolute noise floor: {metadata['absolute_noise_ohm']:g} ohm")

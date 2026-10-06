@@ -69,6 +69,7 @@ def fit_circuit_parameters_random_start(
     measured_impedance,
     real_scatter,
     imag_scatter,
+    least_squares_settings = LEAST_SQUARES_SETTINGS
     #optimizer="least_squares",
 ):
     '''function that fits parameters for every starting value for a given circuit'''
@@ -115,7 +116,7 @@ def fit_circuit_parameters_random_start(
             residual,
             x0,
             bounds=(lower, upper),
-            **LEAST_SQUARES_SETTINGS,
+            **least_squares_settings,
         )
 
         parameter_values = to_physical(result.x)
@@ -216,6 +217,7 @@ def compare_circuits(
     measured_impedance,
     real_scatter,
     imag_scatter,
+    manual_entry,
     optimizer="least_squares",
 ):
     results = []
@@ -224,6 +226,7 @@ def compare_circuits(
     start_time = perf_counter()
 
     for circuit_index, circuit in enumerate(circuits, start=1):
+        
         #circuit = add_indexes(circuit)
 
         #initial_values = set_deterministic_initial_values(circuit)
@@ -332,7 +335,7 @@ def compare_circuits(
         #rmse = np.sqrt(mse)
         n = len(error)
         num_parameters = len(parameters)
-
+        
         best_results.append({
             "circuit": circuit,
             "parameters": parameters,
@@ -350,9 +353,39 @@ def compare_circuits(
             "rand_start": rand_string
         })
 
-
     best_results.sort(key=lambda best_result: best_result["bic"])
-
+    if manual_entry:
+        manual_result = fit_circuit_parameters_random_start(manual_entry,frequency,measured_impedance,real_scatter,imag_scatter, FINAL_LEAST_SQUARES_SETTINGS)
+        manual_parameters = manual_result['parameters']
+        manual_predicted = evaluate_impedance(
+            manual_entry,
+            frequency,
+            manual_parameters,
+        )
+        manual_result_dict = manual_result['result']       
+        mse = manual_result['score'] #compute_mse(measured_impedance, manual_predicted)
+        lp_error = compute_weighted_lp(measured_impedance, manual_predicted, real_scatter, imag_scatter, p=2)
+        error = manual_predicted - measured_impedance
+        n = len(error)
+        num_parameters = len(manual_parameters)
+        
+        best_results.append({
+            "circuit": manual_entry,
+            "parameters": manual_parameters,
+            "predicted_impedance": manual_predicted,
+            "wmse": lp_error,
+            "mse": mse,
+#            "aic": compute_aic(n, mse, num_parameters),
+            "bic": compute_bic(n, mse, num_parameters),
+#            "aic": compute_aic(n, mse, num_parameters),
+#            "wbic": compute_bic(n, lp_error, num_parameters),
+            "success": manual_result_dict.success,
+            "optimizer_status": int(manual_result_dict.status),
+            "optimizer_message": str(manual_result_dict.message),
+            "function_evaluations": int(manual_result_dict.nfev),
+            "rand_start": "True"
+        })
+        
     fitted_parameters = {
         str(result["circuit"]): result["parameters"]
         for result in results

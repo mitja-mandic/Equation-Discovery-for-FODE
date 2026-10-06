@@ -55,7 +55,8 @@ def plot_circuit_fits(
     """Plot the five best ranked circuits and emphasize the winner."""
     import matplotlib.pyplot as plt
 
-    plotted_results = list(results[:5])
+    #plotted_results = list(results[:5])
+    plotted_results = list(results[:6])
     if not plotted_results:
         raise ValueError("At least one fit result is required to create a plot")
 
