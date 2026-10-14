@@ -77,6 +77,47 @@ class SimulationTests(unittest.TestCase):
             with self.subTest(limits=limits), self.assertRaises(ValueError):
                 frequency_sweep(*limits)
 
+    def test_repeated_saves_preserve_datasets_and_matching_plots(self):
+        first = simulate(Resistor(), {"R": 2}, frequency_sweep())
+        second = simulate(Resistor(), {"R": 3}, frequency_sweep())
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory) / "spectrum.npz"
+            original = save_spectrum(first, base)
+            original_bytes = original.read_bytes()
+            # An orphaned PNG must also be preserved.
+            orphan = base.with_name("spectrum_001.png")
+            orphan.write_bytes(b"existing plot")
+            saved = save_spectrum(second, base)
+            third = save_spectrum(second, base)
+            self.assertEqual(saved.name, "spectrum_002.npz")
+            self.assertEqual(third.name, "spectrum_003.npz")
+            self.assertEqual(original.read_bytes(), original_bytes)
+            self.assertEqual(orphan.read_bytes(), b"existing plot")
+            np.testing.assert_allclose(load_spectrum(saved)[1], 3)
+
+    def test_plot_identifies_generating_circuit_and_noise(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from data.simulation.simulator import plot_spectrum
+
+        circuit = Series(children=(Resistor("Rs"), CPE("Q1", "alpha1")))
+        spectrum = simulate(
+            circuit, {"Rs": 1, "Q1": 0.1, "alpha1": 0.8},
+            frequency_sweep(), relative_noise=0.05,
+        )
+        figure = plot_spectrum(spectrum)
+        try:
+            title = figure._suptitle.get_text()
+            self.assertIn(str(circuit), title)
+            self.assertIn("5%", title)
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "plot.png"
+                figure.savefig(path)
+                self.assertGreater(path.stat().st_size, 0)
+        finally:
+            plt.close(figure)
+
 
 if __name__ == "__main__":
     unittest.main()

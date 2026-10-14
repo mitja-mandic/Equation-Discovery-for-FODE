@@ -1118,6 +1118,112 @@ $\alpha_4$
 %\caption{A figure with two subfigures}
 %\label{fig:test}
 %\end{figure}
+
+\clearpage
+
+\section{EIS Battery data}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png}
+\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
+\end{figure}
+
+
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll}
+\textbf{Metric} & \textbf{Value} \\ \hline
+Element count & 5 \\
+Parameter count & 7 \\
+MSE & $1.49010\times10^{-7}$ \\
+BIC & $-3985.31221$ \\ \hline
+\textbf{Circuit parameter} \\\hline
+$R_s$ (\si{\ohm}) & 0.0155126 \\
+$R_3$ (\si{\ohm}) & 0.00593952 \\
+$L_4$ (\si{\henry}) & 0.734682 \\
+$Q_1$ (\si{\siemens\second\tothe{\alpha_1}}) & 2.91787 \\
+$\alpha_1$ & 0.673854 \\
+$Q_2$ (\si{\siemens\second\tothe{\alpha_2}}) & 433.414 \\
+$\alpha_2$ & 0.602733
+\end{tabular}
+\caption{Fitted parameters of the best-performing circuit.}
+\label{tab:best_circuit_sofc}
+\end{table}
+
+% Required packages: circuitikz, graphicx
+\begin{figure}[htbp]
+    \centering
+    \resizebox{0.75\linewidth}{!}{%
+    \begin{circuitikz}[line width=0.7pt]
+
+        % Series resistance
+        \draw
+        (0,0) node[ocirc, label=left:$a$] {}
+        to[R, l={$R_s$}, fill=gray!10]
+        (1.6,0)
+        -- (2,0) coordinate (A);
+
+        % Outer upper branch: CPE1
+        \draw
+        (A)
+        -- (2,1.2)
+        to[generic,
+           l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
+           fill=blue!12]
+        (8,1.2)
+        -- (8,0) coordinate (B);
+
+        % Outer lower branch: CPE2
+        \draw
+        (A)
+        -- (2,-1.2)
+        to[generic,
+           l_={$\mathrm{CPE}(Q_2,\alpha_2)$},
+           fill=blue!12]
+        (4.8,-1.2)
+        -- (5.1,-1.2) coordinate (C);
+
+        % Nested upper branch: R3
+        \draw
+        (C)
+        to[R, l^={$R_3$}, fill=gray!10]
+        (7.2,-1.2) coordinate (D);
+
+        % Nested lower branch: L4
+        \draw
+        (C)
+        -- (5.1,-2.6)
+        to[L, l_={$L_4$}]
+        (7.2,-2.6)
+        -- (D);
+
+        % Rejoin outer branch
+        \draw
+        (D)
+        -- (8,-1.2)
+        -- (B);
+
+        % Output
+        \draw
+        (B)
+        -- (8.6,0)
+        node[ocirc, label=right:$b$] {};
+
+        % Junctions
+        \fill (A) circle (1.7pt);
+        \fill (B) circle (1.7pt);
+        \fill (C) circle (1.7pt);
+        \fill (D) circle (1.7pt);
+
+    \end{circuitikz}%
+    }
+    \caption{Best-performing equivalent circuit with parameters
+    listed in Table~\ref{tab:best_circuit_sofc}.}
+    \label{fig:best-circuit-sofc}
+\end{figure}
+
 \clearpage
 \nocite{*} 
 \printbibliography
