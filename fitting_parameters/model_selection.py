@@ -23,6 +23,13 @@ def compute_mse(measured, predicted):
     error = predicted - measured
     return np.mean(error.real**2 + error.imag**2)
 
+def compute_relative_mse(measured, predicted):
+    error = predicted - measured
+    s_min = 0.1 * np.median(abs(measured))
+    scale = np.maximum(abs(measured), s_min)
+    return np.mean((error.real/scale) ** 2 + (error.imag/scale) ** 2)
+
+
 def compute_weighted_mse(measured, predicted, weights_real, weights_imag):
     error = predicted - measured
     return np.mean((error.real/weights_real)**2 + (error.imag/weights_imag)**2)
@@ -40,3 +47,38 @@ def compute_weighted_lp(measured, predicted, weights_real, weights_imag, p=None)
 def normalize_sigma(sigma, percentage_floor=0.1):
     floor = percentage_floor * np.nanmedian(sigma)
     return np.maximum(np.abs(sigma), floor)
+
+def compute_ebic(
+    n_frequencies: int,
+    mse: float,
+    num_params: int,
+    num_candidate_models: int,
+    gamma: float = 0.5,
+) -> float:
+    """Calculate EBIC, omitting model-independent likelihood constants.
+
+    mse: mean(abs(predicted_impedance - measured_impedance)**2).
+    num_params: number of fitted circuit parameters, excluding noise variance.
+    num_candidate_models: number of distinct allowed circuit models having
+        this same number of fitted parameters, before fit-quality filtering.
+    """
+    if n_frequencies <= 0:
+        raise ValueError("n_frequencies must be positive")
+    if not np.isfinite(mse) or mse <= 0:
+        raise ValueError("mse must be finite and positive")
+    if num_params < 0:
+        raise ValueError("num_params must be nonnegative")
+    if num_candidate_models < 1:
+        raise ValueError("num_candidate_models must be at least 1")
+    if not np.isfinite(gamma) or not 0 <= gamma <= 1:
+        raise ValueError("gamma must be between 0 and 1")
+
+    n = 2 * n_frequencies        # Real and imaginary scalar observations.
+    variance_mle = mse / 2       # Your MSE sums both squared components.
+    k = num_params + 1           # Include the estimated noise variance.
+
+    return float(
+        n * np.log(variance_mle)
+        + k * np.log(n)
+        + 2 * gamma * np.log(num_candidate_models)
+    )

@@ -6,9 +6,9 @@ from fitting_parameters.reporting import (
     export_fit_summary,
     plot_circuit_fits,
 )
-from fitting_parameters.train import LEAST_SQUARES_SETTINGS, FINAL_LEAST_SQUARES_SETTINGS, compare_circuits
+from fitting_parameters.train_refactored import LEAST_SQUARES_SETTINGS, FINAL_LEAST_SQUARES_SETTINGS, compare_circuits, count_models_by_num_params
 from circuit_export import load_circuits
-from fitting_parameters.load_data import raw_impedance, load_spectrum, uniform_frequency_indices
+from fitting_parameters.load_data import raw_impedance, load_spectrum, load_pcl_spectrum, uniform_frequency_indices
 from fitting_parameters.model_selection import normalize_sigma
 from Circuit_generation.circuit_class import (
     CPE, Gerischer, Inductor, Parallel, Resistor, Series, SeriesResistance, Warburg,
@@ -27,7 +27,8 @@ if not SAVE_RESULTS:
 # Use "raw" for bank4 files containing curr, batt_1, batt_2, etc.
 # Use "spectrum" for files containing F and Z.
 # Use "simulated" for output from data/simulation/run_simulation.py.
-DATA_MODE = "spectrum"
+# Use "pcl" for processed battery dictionaries with frequency/Z at indices 0/1.
+DATA_MODE = "simulated"
 
 
 # ---------------------------------------------------------------------------
@@ -38,20 +39,33 @@ RAW_DATA_PATH = (
     PROJECT_DIR
     / "data"
     / "battery"
-    / "bank3_20260208-084547_1.npz"
+    #/ "bank3_20260208-084547_1.npz"
     #/ "bank4_20260208-184533_1.npz"
-    #/ "bank2_20260207-224617_0.01.npz"
+    / "bank2_20260207-224617_0.01.npz"
 )
 
 BATTERY_CHANNEL = "batt_4" #bank3 battery 5 is weird, ask Pavle
+
+PCL_DATA_PATH = (
+    PROJECT_DIR
+    / "data"
+    / "battery"
+    / "EIS_mitja"
+    / "eis_bank1_20251126-004055.pcl"
+    #/ "eis_bank1_20251112-103715.pcl"
+    #/ "eis_bank1_20251027-171541.pcl" #zelo cuden dataset
+    #/ "eis_bank1_20251112-103715.pcl"
+)
+PCL_BATTERY_CHANNEL = "batt_1"
 
 SPECTRUM_DATA_PATH = (
     PROJECT_DIR
     / "data"
     / "spectrum"
-    #/ "eis_20200224_190006.npz"
-    / "eis_20200227_070006.npz"
+    #/ "eis_20200224_190006.npz" #tu se re-fitting cudno obnasa
+    #/ "eis_20200227_030006.npz"
     #/ "eis_20200226_150005.npz"
+    /"eis_20200227_070006.npz"
 )
 
 SIMULATED_DATA_PATH = (
@@ -59,7 +73,7 @@ SIMULATED_DATA_PATH = (
     / "data"
     / "simulation"
     / "generated"
-    / "simulated_spectrum.npz"
+    / "simulated_spectrum_001.npz"
 )
 
 
@@ -69,9 +83,9 @@ SIMULATED_DATA_PATH = (
 
 #grammar_type = "compact_hybrid"
 grammar_type = "no_G_relaxed"
-nr_elements = 5
+nr_elements = 4
 filename_prefix = os.environ.get("FODE_FILENAME_PREFIX", "")
-
+#filename_prefix = "new_PCL_" + filename_prefix
 
 OPTIMIZER = "least_squares"
 
@@ -132,10 +146,19 @@ elif DATA_MODE in ("spectrum", "simulated"):
 
     print(f"Loaded {DATA_MODE} F/Z impedance data from {selected_data_path}")
 
+elif DATA_MODE == "pcl":
+    selected_data_path = PCL_DATA_PATH
+    frequency, measured_impedance, real_scatter, imag_scatter = load_pcl_spectrum(
+        selected_data_path, channel=PCL_BATTERY_CHANNEL,
+    )
+    coherence = None
+    print(f"Loaded PCL impedance data from {selected_data_path} ({PCL_BATTERY_CHANNEL})")
+    print("Using equal residual weights; PCL metadata arrays are unused.")
+
 else:
     raise ValueError(
         f"Unknown DATA_MODE {DATA_MODE!r}; "
-        "choose 'raw', 'spectrum', or 'simulated'"
+        "choose 'raw', 'spectrum', 'simulated', or 'pcl'"
     )
 
 
@@ -150,36 +173,39 @@ print(
 # FIT AND RANK THE CIRCUITS
 # ---------------------------------------------------------------------------
 
-floor = 0.1
+floor = 0
 real_smooth_scatter = normalize_sigma(real_scatter, percentage_floor=floor)#, floor)
 imag_smooth_scatter = normalize_sigma(imag_scatter, percentage_floor=floor)#, floor)
 
-#manual_circuit = Series(children=(
-#    SeriesResistance("Rs"),
-#    Inductor("L"),
-#    Parallel(children=(Resistor("R1"), CPE("Q1", "alpha1"))),
-#    Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
-#    Warburg("sigma3"),
-#))
+manual_circuit_1 = Series(children=(
+    SeriesResistance("Rs"),
+    Inductor("L"),
+    Parallel(children=(Resistor("R1"), CPE("Q1", "alpha1"))),
+    Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
+    Warburg("sigma3"),
+))
 
-manual_circuit = Series(children=(
+MANUAL_CIRCUIT = Series(children=(
     SeriesResistance("Rs"),
     Inductor("L"),
     Parallel(children=(Resistor("R1"), CPE("Q1", "alpha1"))),
     Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
     Parallel(children=(Resistor("R3"), CPE("Q3", "alpha3"))),
 ))
+MANUAL_PARAMETER_COUNT = 8
 
+circuit_sizes = count_models_by_num_params(circuits)
 
 results, fitted_parameters, besties = compare_circuits(
     circuits=circuits,
+    number_circuit_per_size=circuit_sizes,
     frequency=frequency,
     measured_impedance=measured_impedance,
     real_scatter=real_smooth_scatter,
     imag_scatter=imag_smooth_scatter,
     #real_scatter=real_scatter,
     #imag_scatter=imag_scatter,
-    manual_entry=manual_circuit,
+    manual_entry=None,
     optimizer=OPTIMIZER,
 )
 
@@ -194,7 +220,9 @@ for rank, result in enumerate(results[:5], start=1):
     #print(f"   BIC: {result['bic']:.4f}")
     #print(f"   lp_error: {result['lp_error']:.6g}")
     #print(f"   Random start: {result['rand_start']}")
+    print(f"   EBIC: {result['ebic']:.6g}")
     print(f"   MSE: {result['mse']:.6g}")
+    print(f"   RelMSE: {result['relative_mse']:.6g}")
     print(f"   Success: {result['success']}")
     print(f"   Parameters: {result['parameters']}")
     print()
@@ -203,11 +231,12 @@ print("\nBest 5 reoptimized:\n")
 for rank, result in enumerate(besties, start=1):
     print(f"{rank}. {result['circuit']}")
     print(f"   Parameters: {result['parameters']}")
-    print(f"   BIC: {result['bic']:.4f}")
-    print(f"   WMSE: {result['wmse']:.6g}")
+    #print(f"   BIC: {result['bic']:.4f}")
+    print(f"   EBIC: {result['ebic']:.6g}")
     #print(f"   Random start: {result['rand_start']}")
+    print(f"   RelMSE: {result['relative_mse']:.6g}")
     print(f"   MSE: {result['mse']:.6g}")
-    #print(f"   Success: {result['success']}")
+    print(f"   Success: {result['success']}")
     #print(f"   Parameters: {result['parameters']}")
     #print()
 # ---------------------------------------------------------------------------
@@ -217,7 +246,7 @@ for rank, result in enumerate(besties, start=1):
 FILENAME_SUFFIX = "extra_numerics" #fixed_starting_values_no_normalization
 FILENAME_SUFFIX_REOPTIMIZED = "extra_numerics_converged" #fixed_starting_values_no_normalization
 PLOT_TITLE = "Nyquist plot with stratified random starting values, normalized residuals and more robust solver"
-PLOT_TITLE_REOPTIMIZED = "Top 5 circuits parameters refitted until convergence"
+PLOT_TITLE_REOPTIMIZED = "5 circuits with lowest MSE refitted until reaching a platteau"
 
 plot_path, summary_path = build_fit_output_paths(
     project_directory=PROJECT_DIR,
@@ -228,7 +257,7 @@ plot_path, summary_path = build_fit_output_paths(
     filename_suffix=FILENAME_SUFFIX
 )
 
-plot_path, summary_path = build_fit_output_paths(
+plot_path_converged, summary_path_converged = build_fit_output_paths(
     project_directory=PROJECT_DIR,
     dataset_path=selected_data_path,
     grammar_name=grammar_type,
@@ -242,16 +271,16 @@ plot_circuit_fits(
     measured_impedance=measured_impedance,
     results=results,
     output_path=plot_path,
-    save_output = True,
+    save_output = SAVE_RESULTS,
     plot_title=PLOT_TITLE
 )
 
 plot_circuit_fits(
     measured_impedance=measured_impedance,
     results=besties,
-    output_path=plot_path,
+    output_path=plot_path_converged,
     save_output = SAVE_RESULTS,
-    plot_title=PLOT_TITLE_REOPTIMIZED
+    plot_title=PLOT_TITLE#_REOPTIMIZED
 )
 
 if SAVE_RESULTS:
@@ -269,7 +298,7 @@ if SAVE_RESULTS:
     )
     export_fit_summary(
         results=besties,
-        output_path=summary_path,
+        output_path=summary_path_converged,
         plot_path=plot_path.relative_to(PROJECT_DIR),
         dataset_path=selected_data_path.relative_to(PROJECT_DIR),
         circuit_path=CIRCUIT_PATH.relative_to(PROJECT_DIR),
@@ -280,8 +309,10 @@ if SAVE_RESULTS:
         frequency=frequency,
     )
 
-    print(f"Saved plot: {plot_path}")
-    print(f"Saved fit summary: {summary_path}")
+    print(f"Saved plot first round: {plot_path}")
+    print(f"Saved fit summary first round: {summary_path}")
+    print(f"Saved plot second round: {plot_path_converged}")
+    print(f"Saved fit summary second round: {summary_path_converged}")
 else:
     print("Fitting done, results not saved")
 

@@ -11,7 +11,6 @@ import numpy as np
 
 from Circuit_generation.circuit_class import CircuitNode, Element
 
-#from main import SAVE_RESULTS, FILENAME_SUFFIX, PLOT_TITLE
 
 def build_fit_output_paths(
     project_directory: str | Path,
@@ -55,8 +54,8 @@ def plot_circuit_fits(
     """Plot the five best ranked circuits and emphasize the winner."""
     import matplotlib.pyplot as plt
 
-    #plotted_results = list(results[:5])
-    plotted_results = list(results[:6])
+    plotted_results = list(results[:5])
+    #plotted_results = list(results[:6])
     if not plotted_results:
         raise ValueError("At least one fit result is required to create a plot")
 

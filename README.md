@@ -1,6 +1,23 @@
 # Equation-Discovery-for-FODE
 Repository for working on equation discovery for fractional order systems
 
+## Load processed battery EIS pickles
+
+In `main.py`, set `DATA_MODE = "pcl"`, choose `PCL_DATA_PATH`, and set
+`PCL_BATTERY_CHANNEL` (for example, `"batt_1"`). The example path points to
+`data/battery/EIS_mitja/eis_bank1_20250703-161359.pcl`.
+
+Each file is a dictionary of battery channels. For the selected channel, array
+0 is interpreted as frequency in Hz and array 1 as complex impedance. All
+points are retained without averaging or coherence filtering; the other arrays
+are unused. Equal real and imaginary residual weights are used because no
+measurement uncertainty is inferred from those arrays. Invalid shapes,
+nonpositive/nonfinite frequencies, and nonfinite impedances raise an error.
+Only load trusted pickle files, since unpickling can execute code.
+
+The existing `raw`, `spectrum`, and `simulated` modes remain available, and the
+default mode remains `spectrum`.
+
 ## Simulate circuit data from the IDE
 
 Open `data/simulation/run_simulation.py`, edit its circuit, component values,

@@ -1,6 +1,40 @@
 from pathlib import Path
 import heapq
+import pickle
 import numpy as np
+
+
+
+def load_pcl_spectrum(file_path, channel="batt_1"):
+    """Load Hz frequencies and complex impedance from a trusted battery pickle.
+
+    Each channel stores a tuple whose first two arrays are frequency and Z.
+    Remaining arrays are unused. Return unit real/imaginary residual scales
+    for equal weighting, not estimated measurement uncertainties.
+    """
+    with Path(file_path).open("rb") as handle:
+        data = pickle.load(handle)
+    if not isinstance(data, dict):
+        raise ValueError("PCL data must be a dictionary of battery channels.")
+    if channel not in data:
+        raise ValueError(
+            f"Battery channel {channel!r} not found; available channels: "
+            + ", ".join(map(str, data))
+        )
+    entry = data[channel]
+    if not isinstance(entry, (tuple, list)) or len(entry) < 2:
+        raise ValueError(f"Channel {channel!r} must contain frequency and impedance arrays.")
+    frequency = np.asarray(entry[0], dtype=float)
+    impedance = np.asarray(entry[1], dtype=complex)
+    if frequency.ndim != 1 or impedance.ndim != 1 or frequency.shape != impedance.shape:
+        raise ValueError("Frequency and impedance must be matching one-dimensional arrays.")
+    if frequency.size == 0:
+        raise ValueError("The spectrum must contain at least one point.")
+    if not np.all(np.isfinite(frequency) & (frequency > 0)):
+        raise ValueError("Frequencies must be finite and positive (Hz).")
+    if not np.all(np.isfinite(impedance)):
+        raise ValueError("Impedances must be finite.")
+    return frequency, impedance, np.ones_like(frequency), np.ones_like(frequency)
 
 
 def load_spectrum(file_path):
@@ -226,12 +260,3 @@ def uniform_frequency_indices(frequency, number_points=300):
     return order[selected]
 
 
-
-#def normalize_sigma(sigma, floor):
-#    return np.sqrt(sigma ** 2 + floor ** 2)
-#
-#loc = r"data\spectrum\eis_20200224_190006.npz"
-#
-#res = load_spectrum(loc)
-#
-#print(np.mean(res[2]))

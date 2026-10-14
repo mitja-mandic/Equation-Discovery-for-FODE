@@ -41,9 +41,13 @@ set it to `None` for new noise each run. This is synthetic frequency-domain EIS,
 not a time-domain voltage/current or instrument-error simulation.
 
 Output defaults to `generated/simulated_spectrum.npz` and a matching PNG with
-Nyquist and Bode plots. Re-running replaces these outputs; change `OUTPUT_PATH`
-to keep multiple datasets. `SHOW_PLOT` controls the interactive plot window,
-and `SAVE_PLOT` controls the PNG.
+Nyquist and Bode plots. Existing datasets and matching plots are preserved:
+subsequent runs use `simulated_spectrum_001.npz`, `_002.npz`, etc., with a
+matching PNG. The actual saved paths are printed after each run. Plot titles
+show the generating circuit, relative noise percentage, absolute noise floor,
+and number of repeats. `SHOW_PLOT` controls the interactive plot window,
+and `SAVE_PLOT` controls the PNG. A fixed seed and unchanged settings still
+produce identical data in the new files; use `RANDOM_SEED = None` for fresh noise.
 
 The NPZ stores `F` in Hz and complex `Z` in ohms with shape
 `(1, number_frequencies, repeats)`, plus `Z_clean`, `noise_std_ohm`, and
@@ -55,8 +59,9 @@ DATA_MODE = "simulated"
 SIMULATED_DATA_PATH = PROJECT_DIR / "data" / "simulation" / "generated" / "simulated_spectrum.npz"
 ```
 
-Generate the dataset with `run_simulation.py` before running the fitter. If you
-change the simulator's `OUTPUT_PATH`, update `SIMULATED_DATA_PATH` to match.
+Generate the dataset with `run_simulation.py` before running the fitter. Set
+`SIMULATED_DATA_PATH` to the actual filename printed by the simulator (including
+its numbered suffix). The fitter does not automatically select the latest file.
 
 The existing loader computes measurement medians and robust scatter. Noiseless
 data or a single repeat yields zero scatter; use the fitter's uncertainty floor

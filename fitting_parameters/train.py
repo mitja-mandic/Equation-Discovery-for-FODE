@@ -7,8 +7,13 @@ from fitting_parameters.initialize_parameters import (
     set_deterministic_initial_values,
     generate_initial_values
 )
-from fitting_parameters.model_selection import compute_aic, compute_bic, compute_mse, compute_weighted_mse, compute_weighted_lp
+from fitting_parameters.model_selection import compute_aic, compute_bic, compute_mse, compute_relative_mse, compute_weighted_lp, compute_ebic
 
+from collections import Counter
+from collections.abc import Iterable
+
+from Circuit_generation.circuit_class import CircuitNode
+from fitting_parameters.initialize_parameters import get_parameter_names
 
 NUMBER_INITIAL_STARTS = 6
 RANDOM_SEED = 42
@@ -43,6 +48,22 @@ POWELL_SETTINGS = {
     #"maxfev": max(1000, 200 * len(x0)),
     "disp": False,
 }
+
+def count_models_by_num_params(
+    circuits: Iterable[CircuitNode],
+) -> dict[int, int]:
+    """Count candidate circuits by number of fitted circuit parameters.
+
+    Assumes circuits come from the normalized circuit collection.
+    Removes duplicate circuit objects using their equality/hash definition.
+    Excludes the noise variance from the parameter count.
+    """
+    return dict(
+        Counter(
+            len(get_parameter_names(circuit))
+            for circuit in set(circuits)
+        )
+    )
 
 def evaluate_impedance(circuit, frequency, parameters):
     omega = 2 * np.pi * frequency
@@ -92,8 +113,8 @@ def fit_circuit_parameters_random_start(
         physical = values.copy()
         physical[~is_alpha] = np.exp(values[~is_alpha])
         return physical
-    
-    def residual(values, scaled = True):
+
+    def residual(values, scale_type=None):
         parameters = dict(zip(names, to_physical(values)))
         predicted = evaluate_impedance(
             circuit,
@@ -101,11 +122,27 @@ def fit_circuit_parameters_random_start(
             parameters,
         )
         error = predicted - measured_impedance
+        if scale_type == "scatter":
+            err = [error.real/real_scatter, error.imag/imag_scatter]
+            return np.concatenate(err)
+        
+        elif scale_type == "relative":
+            abs_measured_real = abs(measured_impedance.real)
+            abs_measured_imag = abs(measured_impedance.imag)
 
-        if scaled:
-            return np.concatenate([error.real/real_scatter, error.imag/imag_scatter])
+            real_scale = np.maximum(abs_measured_real, np.median(abs_measured_real) * 0.1)
+            imag_scale = np.maximum(abs_measured_imag, np.median(abs_measured_imag) * 0.1)
+            
+#            abs_measured = abs(measured_impedance)
+#            new_scale = np.maximum(abs_measured, np.median(abs_measured) * 0.1)
+#            err = [error.real/(new_scale), error.imag/(new_scale)]
+
+
+            err = [error.real/(real_scale), error.imag/(imag_scale)]
+            return np.concatenate(err)
         else:
             return np.concatenate([error.real, error.imag])
+
         
     for start_index, physical_initial_values in enumerate(starting_values):
 
@@ -144,6 +181,7 @@ def fit_circuit_parameters_random_start(
     )
     return best_attempt
 
+    
 def finalize_fit(frequency, measured_impedance,
                 circuit,
                 parameters: dict[str,float],
@@ -170,7 +208,7 @@ def finalize_fit(frequency, measured_impedance,
         physical[~is_alpha] = np.exp(values[~is_alpha])
         return physical
     
-    def residual(values, scaled = True):
+    def residual(values, scale_type="relative"):
         parameters = dict(zip(parameter_names, to_physical(values)))
         predicted = evaluate_impedance(
             circuit,
@@ -178,11 +216,23 @@ def finalize_fit(frequency, measured_impedance,
             parameters,
         )
         error = predicted - measured_impedance
-
-        if scaled:
+        if scale_type == "scatter":
             return np.concatenate([error.real/sigma_real, error.imag/sigma_imag])
+        
+        elif scale_type == "relative":
+            abs_measured_real = abs(measured_impedance.real)
+            abs_measured_imag = abs(measured_impedance.imag)
+
+            real_scale = np.maximum(abs_measured_real, np.median(abs_measured_real) * 0.1)
+            imag_scale = np.maximum(abs_measured_imag, np.median(abs_measured_imag) * 0.1)
+            #abs_measured = abs(measured_impedance)
+            #new_scale = np.maximum(abs_measured, np.median(abs_measured) * 0.1)
+            
+            err = [error.real/(real_scale), error.imag/(imag_scale)]
+            return np.concatenate(err)
         else:
             return np.concatenate([error.real, error.imag])
+
     
     optimization_result = least_squares(
         residual,
@@ -213,6 +263,7 @@ def finalize_fit(frequency, measured_impedance,
 
 def compare_circuits(
     circuits,
+    number_circuit_per_size,
     frequency,
     measured_impedance,
     real_scatter,
@@ -226,19 +277,6 @@ def compare_circuits(
     start_time = perf_counter()
 
     for circuit_index, circuit in enumerate(circuits, start=1):
-        
-        #circuit = add_indexes(circuit)
-
-        #initial_values = set_deterministic_initial_values(circuit)
-
-        #parameters, optimization = fit_circuit_parameters_fixed_start(
-        #    circuit,
-        #    frequency,
-        #    measured_impedance,
-        #    real_scatter=real_scatter,
-        #    imag_scatter=imag_scatter,
-        #    optimizer=optimizer
-        #)
 
         optimization = fit_circuit_parameters_random_start(
             circuit,
@@ -257,19 +295,14 @@ def compare_circuits(
         )
         rand_start = "False" if optimization['start_index'] == 0 else "True"
         error = predicted - measured_impedance
-        #med_real = np.median(error.real)
-        #med_imag = np.median(error.imag)
-        #print(med_real)
-        #print(med_imag)
-
         mse = optimization['score'] #compute_mse(measured_impedance, predicted)
         
-        lp_error = compute_weighted_lp(measured_impedance, predicted, real_scatter, imag_scatter, p=2)
-        #rmse = np.sqrt(mse)
+        lp_error = compute_weighted_lp(measured_impedance, predicted, real_scatter, imag_scatter, p=0.5)
+        relative_mse = compute_relative_mse(measured_impedance, predicted)
 
-
-        n = len(error)
+        n = len(error)*2
         num_parameters = len(parameters)
+        ebic = compute_ebic(len(measured_impedance),mse,num_parameters,number_circuit_per_size[num_parameters], gamma=1)
 
         results.append({
             "circuit": circuit,
@@ -277,8 +310,10 @@ def compare_circuits(
             "predicted_impedance": predicted,
             "wmse": lp_error,
             "mse": mse,
+            "relative_mse": relative_mse,
 #            "aic": compute_aic(n, mse, num_parameters),
             "bic": compute_bic(n, mse, num_parameters),
+            "ebic": ebic,
 #            "aic": compute_aic(n, mse, num_parameters),
             "wbic": compute_bic(n, lp_error, num_parameters),
             "success": result.success,
@@ -331,21 +366,22 @@ def compare_circuits(
         #print(med_real)
         #print(med_imag)
         mse = optimized['score'] #compute_mse(measured_impedance, predicted)
-        lp_error = compute_weighted_lp(measured_impedance, predicted, real_scatter, imag_scatter, p=2)
+        lp_error = compute_weighted_lp(measured_impedance, predicted, real_scatter, imag_scatter, p=0.5)
         #rmse = np.sqrt(mse)
-        n = len(error)
+        n = len(error)*2
         num_parameters = len(parameters)
-        
+        ebic = compute_ebic(len(measured_impedance),mse,num_parameters,number_circuit_per_size[num_parameters], gamma=0.5)
+        relative_mse = compute_relative_mse(measured_impedance, predicted)
         best_results.append({
             "circuit": circuit,
             "parameters": parameters,
             "predicted_impedance": predicted,
             "wmse": lp_error,
             "mse": mse,
-#            "aic": compute_aic(n, mse, num_parameters),
             "bic": compute_bic(n, mse, num_parameters),
-#            "aic": compute_aic(n, mse, num_parameters),
-#            "wbic": compute_bic(n, lp_error, num_parameters),
+            "wbic": compute_bic(n, lp_error, num_parameters),
+            "ebic": ebic,
+            "relative_mse": relative_mse,
             "success": improved_result.success,
             "optimizer_status": int(improved_result.status),
             "optimizer_message": str(improved_result.message),
@@ -353,7 +389,7 @@ def compare_circuits(
             "rand_start": rand_string
         })
 
-    best_results.sort(key=lambda best_result: best_result["bic"])
+    best_results.sort(key=lambda best_result: best_result["ebic"])
     if manual_entry:
         manual_result = fit_circuit_parameters_random_start(manual_entry,frequency,measured_impedance,real_scatter,imag_scatter, FINAL_LEAST_SQUARES_SETTINGS)
         manual_parameters = manual_result['parameters']
@@ -366,7 +402,7 @@ def compare_circuits(
         mse = manual_result['score'] #compute_mse(measured_impedance, manual_predicted)
         lp_error = compute_weighted_lp(measured_impedance, manual_predicted, real_scatter, imag_scatter, p=2)
         error = manual_predicted - measured_impedance
-        n = len(error)
+        n = len(error)*2
         num_parameters = len(manual_parameters)
         
         best_results.append({
@@ -377,8 +413,9 @@ def compare_circuits(
             "mse": mse,
 #            "aic": compute_aic(n, mse, num_parameters),
             "bic": compute_bic(n, mse, num_parameters),
+            "wbic": compute_bic(n, lp_error, num_parameters),
+            "ebic": 0,
 #            "aic": compute_aic(n, mse, num_parameters),
-#            "wbic": compute_bic(n, lp_error, num_parameters),
             "success": manual_result_dict.success,
             "optimizer_status": int(manual_result_dict.status),
             "optimizer_message": str(manual_result_dict.message),

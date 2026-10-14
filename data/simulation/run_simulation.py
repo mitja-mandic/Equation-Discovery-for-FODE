@@ -24,8 +24,8 @@ CIRCUIT = Series(children=(
     SeriesResistance("Rs"),
     #Inductor("L"),
     Parallel(children=(Resistor("R1"), CPE("Q1", "alpha1"))),
-    #Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
-    Warburg("sigma"),
+    Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
+    #Warburg("sigma"),
 ))
 
 PARAMETERS = {
@@ -34,10 +34,10 @@ PARAMETERS = {
     "R1": 0.4,       # ohm
     "Q1": 0.02,      # S * s**alpha1
     "alpha1": 0.85,
-    "sigma": 0.01,
-    #"R2": 0.8,       # ohm
-    #"Q2": 0.5,       # S * s**alpha2
-    #"alpha2": 0.7,
+    #"sigma": 0.01,
+    "R2": 0.8,       # ohm
+    "Q2": 5,       # S * s**alpha2
+    "alpha2": 0.7,
 }
 
 # ---------------------------------------------------------------------------
@@ -45,14 +45,15 @@ PARAMETERS = {
 # ---------------------------------------------------------------------------
 MIN_FREQUENCY_HZ = 1e-2
 MAX_FREQUENCY_HZ = 1e5
-POINTS_PER_DECADE = 30  # 271 logarithmically spaced points over nine decades
+POINTS_PER_DECADE = 30  # logarithmic intervals per decade, plus both endpoints
 
 ADD_NOISE = True
-RELATIVE_NOISE = 0.01  # 1% of |Z|, standard deviation of EACH complex component
+RELATIVE_NOISE = 0.05  # 5% of |Z|, standard deviation of EACH complex component
 ABSOLUTE_NOISE_OHM = 0.0  # optional independent noise floor, combined in quadrature
 REPEATS = 20             # fitter takes the median over these measurements
 RANDOM_SEED = 42         # integer for reproducibility; None for a fresh draw
 
+# Base filename; existing files are preserved with _001, _002, ... suffixes.
 OUTPUT_PATH = Path(__file__).resolve().parent / "generated" / "simulated_spectrum.npz"
 SAVE_PLOT = True
 SHOW_PLOT = True
@@ -73,12 +74,14 @@ def main() -> None:
     print(f"Circuit: {CIRCUIT}")
     print(f"Sweep: {frequency[0]:g} to {frequency[-1]:g} Hz, {len(frequency)} points")
     print(f"Saved {REPEATS} measurements per frequency to {path}")
+    print(f"To fit this dataset, set SIMULATED_DATA_PATH in main.py to: {path}")
     if SAVE_PLOT or SHOW_PLOT:
         import matplotlib.pyplot as plt
 
         figure = plot_spectrum(spectrum)
         if SAVE_PLOT:
             figure.savefig(path.with_suffix(".png"), dpi=160)
+            print(f"Saved plot to {path.with_suffix('.png')}")
         if SHOW_PLOT:
             plt.show()
         plt.close(figure)

@@ -3,6 +3,7 @@
 from dataclasses import dataclass, fields
 import json
 from pathlib import Path
+import textwrap
 from typing import TYPE_CHECKING, Mapping
 
 import numpy as np
@@ -132,21 +133,36 @@ def save_spectrum(spectrum: Spectrum, path: str | Path) -> Path:
     """Save loader-compatible F/Z plus ground truth and JSON metadata.
 
     Z has shape (1, frequency, repeat), matching load_spectrum's block format.
-    All entries can be read with allow_pickle=False. Existing files are replaced.
+    All entries can be read with allow_pickle=False. Existing datasets and their
+    matching plots are preserved by adding _001, _002, etc. Return the actual
+    saved path so callers can use the same name for the plot.
     """
     path = Path(path)
     if path.suffix.lower() != ".npz":
         raise ValueError("Output path must end in .npz.")
     path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(
-        path,
-        F=spectrum.frequency_hz,
-        Z=spectrum.measurements[None, :, :],
-        Z_clean=spectrum.clean_impedance,
-        noise_std_ohm=spectrum.noise_std_ohm,
-        metadata_json=json.dumps(spectrum.metadata, indent=2),
-    )
-    return path
+    requested_path = path
+    index = 0
+    while True:
+        if index:
+            path = requested_path.with_name(f"{requested_path.stem}_{index:03d}.npz")
+        index += 1
+        if path.with_suffix(".png").exists():
+            continue
+        try:
+            output = path.open("xb")
+        except FileExistsError:
+            continue
+        with output:
+            np.savez_compressed(
+                output,
+                F=spectrum.frequency_hz,
+                Z=spectrum.measurements[None, :, :],
+                Z_clean=spectrum.clean_impedance,
+                noise_std_ohm=spectrum.noise_std_ohm,
+                metadata_json=json.dumps(spectrum.metadata, indent=2),
+            )
+        return path
 
 
 def plot_spectrum(spectrum: Spectrum) -> "Figure":
@@ -156,7 +172,15 @@ def plot_spectrum(spectrum: Spectrum) -> "Figure":
     measured = np.median(spectrum.measurements.real, axis=1) + 1j * np.median(
         spectrum.measurements.imag, axis=1
     )
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+    circuit_title = textwrap.fill(f"Generating circuit: {spectrum.metadata['circuit']}", width=110)
+    noise_title = (
+        f"Noise per real/imag component: {100 * spectrum.metadata['relative_noise']:g}% of |Z|"
+        f"; absolute floor: {spectrum.metadata['absolute_noise_ohm']:g} ohm"
+        f"; repeats: {spectrum.metadata['repeats']}"
+    )
+    title_lines = circuit_title.count("\n") + 2
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5 + 0.25 * title_lines))
+    fig.suptitle(f"{circuit_title}\n{noise_title}", fontsize=11)
     for values, style, label in (
         (spectrum.clean_impedance, "-", "Ground truth"),
         (measured, ".", "Measurement median"),
