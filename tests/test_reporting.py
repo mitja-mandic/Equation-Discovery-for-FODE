@@ -20,10 +20,45 @@ from fitting_parameters.reporting import (
     build_fit_output_paths,
     export_fit_summary,
     plot_circuit_fits,
+    plot_fit_residuals,
 )
 
 
 class FitReportingTests(unittest.TestCase):
+    @unittest.skipIf(matplotlib is None, "matplotlib is not installed")
+    def test_residual_plot_uses_separate_scales_and_sorted_frequency(self):
+        import matplotlib.pyplot as plt
+
+        results = [{
+            "circuit": SeriesResistance(),
+            "predicted_impedance": np.array([5 + 8j, 3 + 5j]),
+        }]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "residuals.png"
+            with patch.object(plt, "close"):
+                plot_fit_residuals(
+                    np.array([10., 1.]), np.array([1 + 2j, 1 + 1j]),
+                    results, path, real_scale=np.array([2., 4.]),
+                    imag_scale=np.array([3., 2.]), f_scale=0.1,
+                    scale_type="scatter", plot_title="Test",
+                    save_output=True, show=False,
+                )
+                figure = plt.gcf()
+            self.assertTrue(path.is_file())
+            raw_real, real_axis, raw_imag, imag_axis = figure.axes
+            np.testing.assert_allclose(raw_real.lines[0].get_xdata(), [1, 10])
+            np.testing.assert_allclose(raw_real.lines[0].get_ydata(), [2, 4])
+            np.testing.assert_allclose(raw_imag.lines[0].get_ydata(), [4, 6])
+            np.testing.assert_allclose(raw_real.get_ylim(), raw_imag.get_ylim())
+            self.assertEqual(len(raw_real.lines), 2)
+            self.assertEqual(len(raw_imag.lines), 2)
+            np.testing.assert_allclose(real_axis.lines[0].get_xdata(), [1, 10])
+            np.testing.assert_allclose(real_axis.lines[0].get_ydata(), [0.5, 2])
+            np.testing.assert_allclose(imag_axis.lines[0].get_ydata(), [2, 2])
+            np.testing.assert_allclose(real_axis.lines[2].get_ydata(), [0.1, 0.1])
+            np.testing.assert_allclose(imag_axis.lines[3].get_ydata(), [-0.1, -0.1])
+            plt.close(figure)
+
     def setUp(self):
         measured = np.array([1.0 - 0.5j, 1.5 - 0.25j])
         self.measured = measured
@@ -37,6 +72,7 @@ class FitReportingTests(unittest.TestCase):
                 "aic": rank + 1.0,
                 "bic": rank + 2.0,
                 "success": rank != 10,
+                "rand_start": "False",
                 "optimizer_status": 1,
                 "optimizer_message": "test result",
                 "function_evaluations": rank,
@@ -50,16 +86,17 @@ class FitReportingTests(unittest.TestCase):
             dataset_path="data/spectrum/example.npz",
             grammar_name="relaxed_elements",
             maximum_elements=5,
+            filename_suffix="test",
         )
 
         self.assertEqual(
             plot_path.name,
-            "example_relaxed_elements_5_best_5.png",
+            "example_relaxed_elements_5_best_5_test.png",
         )
         self.assertEqual(plot_path.parts[-3:-1], ("Plots", "Nyquists"))
         self.assertEqual(
             summary_path.name,
-            "example_relaxed_elements_5_fit_summary.json",
+            "example_relaxed_elements_5_fit_summary_test.json",
         )
         self.assertEqual(summary_path.parts[-2], "fit_results")
 
@@ -70,6 +107,7 @@ class FitReportingTests(unittest.TestCase):
             grammar_name="relaxed_elements",
             maximum_elements=5,
             filename_prefix="no_G_",
+            filename_suffix="test",
         )
 
         self.assertTrue(plot_path.name.startswith("no_G_"))
@@ -106,6 +144,8 @@ class FitReportingTests(unittest.TestCase):
                     results=self.results,
                     output_path=output_path,
                     show=False,
+                    save_output=True,
+                    plot_title="Top five",
                 )
 
         self.assertEqual(fake_axis.plot.call_count, 5)
@@ -132,6 +172,8 @@ class FitReportingTests(unittest.TestCase):
                 results=self.results,
                 output_path=plot_path,
                 show=False,
+                save_output=True,
+                plot_title="Top five",
             )
 
             self.assertEqual(returned_path, plot_path)

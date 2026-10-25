@@ -15,12 +15,12 @@ import hashlib
 
 LOG10_PERTURBATION_HALF_WIDTHS = {
     "Rs": 1.0,
-    "R": 2.0,
-    "Rg": 2.0,
-    "Q": 2.0,
-    "sigma": 2.0,
-    "L": 2.0,
-    "tau": 2.0,
+    "R": 5.0,
+    "Rg": 5.0,
+    "Q": 5.0,
+    "sigma": 5.0,
+    "L": 5.0,
+    "tau": 5.0,
 }
 
 ALPHA_INITIAL_RANGE = (0.3, 0.98)

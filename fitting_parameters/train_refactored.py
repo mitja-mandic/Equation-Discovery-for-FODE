@@ -3,6 +3,7 @@
 import numpy as np
 from scipy.optimize import least_squares
 from time import perf_counter
+from fitting_parameters.model_selection import select_refinement_candidates
 
 from fitting_parameters.initialize_parameters import (
     get_parameter_names,
@@ -15,8 +16,9 @@ from collections.abc import Iterable
 
 from Circuit_generation.circuit_class import CircuitNode
 
-# Fitting configuration: "unscaled", "scatter", or "relative" (data-based).
-RESIDUAL_SCALE = "unscaled"
+# Fitting configuration: "unscaled", "scatter", "relative", or "magnitude".
+# "magnitude" uses max(|Z|, 10% of median positive |Z|) for both components.
+RESIDUAL_SCALE = "relative"
 
 NUMBER_INITIAL_STARTS = 6
 RANDOM_SEED = 42
@@ -29,6 +31,7 @@ LEAST_SQUARES_SETTINGS = {
     "f_scale": 0.001, #Larger f_scale → more residuals behave quadratically; less robust, smaller f_scale → more residuals are downweighted; more robust.
     "max_nfev": 100,
     "loss": "soft_l1",
+    #"loss": "linear",
     "method": "trf"
 }
 
@@ -116,8 +119,18 @@ def _residual_scales(measured_impedance, real_scatter, imag_scatter, scale_type)
         )
         # An entirely zero component has no relative scale; use unit weight.
         scales = tuple(np.where(scale > 0, scale, 1.0) for scale in scales)
+    elif scale_type == "magnitude":
+        magnitude = np.abs(measured_impedance)
+        positive = magnitude[magnitude > 0]
+        # Positive-only median also handles spectra with many zero values.
+        # An entirely zero spectrum has no relative scale; use unit weight.
+        floor = 0.1 * np.median(positive) if positive.size else 1.0
+        shared_scale = np.maximum(magnitude, floor)
+        scales = (shared_scale, shared_scale)
     else:
-        raise ValueError("scale_type must be 'unscaled', 'scatter', or 'relative'")
+        raise ValueError(
+            "scale_type must be 'unscaled', 'scatter', 'relative', or 'magnitude'"
+        )
     validated = []
     for scale in scales:
         scale = np.broadcast_to(np.asarray(scale, dtype=float), measured_impedance.shape)
@@ -140,6 +153,8 @@ def _make_fitter(
     def residual(values):
         parameters = dict(zip(names, to_physical(values)))
         error = evaluate_impedance(circuit, frequency, parameters) - measured_impedance
+        #print(f"real: {np.median(error.real)}")
+        #print(f"imag: {np.median(error.imag)}")
         return np.concatenate([error.real / real_scale, error.imag / imag_scale])
 
     def fit(initial_values):
@@ -165,11 +180,12 @@ def fit_circuit_parameters_random_start(
     imag_scatter,
     least_squares_settings=LEAST_SQUARES_SETTINGS,
     *, scale_type=RESIDUAL_SCALE,
+    number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED,
 ):
     """Fit every starting point and return the attempt with the lowest MSE."""
     starting_values = generate_initial_values(
-        circuit, number_starts=NUMBER_INITIAL_STARTS,
-        random_seed=RANDOM_SEED, deterministic=False,
+        circuit, number_starts=number_starts,
+        random_seed=random_seed, deterministic=False,
     )
     fit = _make_fitter(
         circuit, frequency, measured_impedance,
@@ -187,11 +203,12 @@ def fit_circuit_parameters_random_start(
 def finalize_fit(
     frequency, measured_impedance, circuit, parameters: dict[str, float],
     sigma_real, sigma_imag, *, scale_type=RESIDUAL_SCALE,
+    least_squares_settings=FINAL_LEAST_SQUARES_SETTINGS,
 ):
     """Refine parameters with tighter tolerances, preserving parameter order."""
     fit = _make_fitter(
         circuit, frequency, measured_impedance,
-        list(parameters), FINAL_LEAST_SQUARES_SETTINGS,
+        list(parameters), least_squares_settings,
         sigma_real, sigma_imag, scale_type,
     )
     return fit(parameters)
@@ -208,7 +225,7 @@ def _summarize_fit(
     predicted = evaluate_impedance(circuit, frequency, parameters)
     mse = optimization["score"]
     lp_error = compute_weighted_lp(
-        measured_impedance, predicted, real_scatter, imag_scatter,
+        measured_impedance, predicted, 1, 1,
         p=2 if manual else 0.5,
     )
     n = len(predicted - measured_impedance) * 2
@@ -223,6 +240,10 @@ def _summarize_fit(
         "wbic": compute_bic(n, lp_error, num_parameters),
         "ebic": 0 if manual else compute_ebic(
             len(measured_impedance), mse, num_parameters,
+            number_circuit_per_size[num_parameters], gamma=gamma,
+        ),
+        "ewbic": 0 if manual else compute_ebic(
+            len(measured_impedance), lp_error, num_parameters,
             number_circuit_per_size[num_parameters], gamma=gamma,
         ),
         "success": result.success,
@@ -240,13 +261,21 @@ def compare_circuits(
     circuits, number_circuit_per_size, frequency, measured_impedance,
     real_scatter, imag_scatter, manual_entry, optimizer="least_squares",
     *, scale_type=RESIDUAL_SCALE,
+    reoptimization_error_margin: float = 0.20,
+    least_squares_settings=LEAST_SQUARES_SETTINGS,
+    final_least_squares_settings=FINAL_LEAST_SQUARES_SETTINGS,
+    number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED,
+    sort_first = "wmse", sort_second = "wbic"
 ):
-    """Rank candidates by MSE, refine the top five, and rank those by EBIC.
+    """Rank by MSE and refine candidates within a fractional margin of the best.
 
     Scatter and optimizer arguments retain the original public interface.
-    scale_type selects unscaled, repeated-measurement scatter, or relative
-    data-based residuals for every fitting stage. Ranking metrics are unchanged.
+    scale_type selects unscaled, repeated-measurement scatter, component-relative,
+    or shared impedance-magnitude residuals for every fitting stage.
+    Ranking metrics are unchanged.
     """
+    if not np.isfinite(reoptimization_error_margin) or reoptimization_error_margin < 0:
+        raise ValueError("reoptimization_error_margin must be finite and nonnegative")
     results = []
     circuit_count = len(circuits)
     progress_interval = max(10, min(50, circuit_count // 20))
@@ -262,7 +291,8 @@ def compare_circuits(
     for circuit_index, circuit in enumerate(circuits, start=1):
         optimization = fit_circuit_parameters_random_start(
             circuit, frequency, measured_impedance, real_scatter, imag_scatter,
-            scale_type=scale_type,
+            scale_type=scale_type, least_squares_settings=least_squares_settings,
+            number_starts=number_starts, random_seed=random_seed,
         )
         rand_start = "False" if optimization["start_index"] == 0 else "True"
         results.append(summarize(circuit, optimization, rand_start))
@@ -278,23 +308,28 @@ def compare_circuits(
                 flush=True,
             )
 
-    results.sort(key=lambda result: result["mse"])
+    results.sort(key=lambda result: result[sort_first])
     best_results = []
-    for result in results[:5]:
+    refinement_candidates = select_refinement_candidates(results, reoptimization_error_margin, sort_first)
+    print(f"\nReoptimizing {len(refinement_candidates)}/{len(results)} circuits "
+          f"within {reoptimization_error_margin:.1%} of the best first-round {sort_first.upper()}.", flush=True)
+    for result in refinement_candidates:
         circuit = result["circuit"]
         optimized = finalize_fit(
             frequency, measured_impedance, circuit, result["parameters"],
             real_scatter, imag_scatter, scale_type=scale_type,
+            least_squares_settings=final_least_squares_settings,
         )
         best_results.append(
             summarize(circuit, optimized, result["rand_start"], gamma=0.5)
         )
-    best_results.sort(key=lambda result: result["ebic"])
+    best_results.sort(key=lambda result: result[sort_second])
 
     if manual_entry:
         manual_result = fit_circuit_parameters_random_start(
             manual_entry, frequency, measured_impedance, real_scatter,
-            imag_scatter, FINAL_LEAST_SQUARES_SETTINGS, scale_type=scale_type,
+            imag_scatter, final_least_squares_settings, scale_type=scale_type,
+            number_starts=number_starts, random_seed=random_seed,
         )
         best_results.append(summarize(manual_entry, manual_result, "True", manual=True))
 

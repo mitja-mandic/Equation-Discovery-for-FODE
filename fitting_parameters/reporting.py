@@ -121,6 +121,99 @@ def plot_circuit_fits(
     return output_path
 
 
+def plot_fit_residuals(
+    frequency: np.ndarray,
+    measured_impedance: np.ndarray,
+    results: Sequence[Mapping[str, Any]],
+    output_path: str | Path,
+    *,
+    real_scale: np.ndarray | float,
+    imag_scale: np.ndarray | float,
+    f_scale: float,
+    scale_type: str,
+    plot_title: str,
+    save_output: bool,
+    show: bool = False,
+) -> Path:
+    """Plot raw errors and optimizer-scaled residuals, with shared raw limits."""
+    import matplotlib.pyplot as plt
+
+    if not results:
+        raise ValueError("At least one fit result is required to create a plot")
+    frequency = np.asarray(frequency)
+    measured_impedance = np.asarray(measured_impedance)
+    if (
+        frequency.ndim != 1
+        or frequency.size == 0
+        or frequency.shape != measured_impedance.shape
+        or not np.all(np.isfinite(frequency) & (frequency > 0))
+    ):
+        raise ValueError("Frequencies must be positive and match the impedance array")
+    if not np.isfinite(f_scale) or f_scale <= 0:
+        raise ValueError("f_scale must be finite and strictly positive")
+    scales = [
+        np.broadcast_to(np.asarray(scale, dtype=float), frequency.shape)
+        for scale in (real_scale, imag_scale)
+    ]
+    if any(not np.all(np.isfinite(scale) & (scale > 0)) for scale in scales):
+        raise ValueError("Residual scales must be finite and strictly positive")
+    errors = []
+    for result in results[:5]:
+        predicted = np.asarray(result["predicted_impedance"])
+        if predicted.shape != measured_impedance.shape:
+            raise ValueError("Predicted impedance must match the measured array")
+        errors.append(predicted - measured_impedance)
+
+    order = np.argsort(frequency)
+    figure, panels = plt.subplots(2, 2, figsize=(15, 9), sharex=True)
+    raw_axes = panels[:, 0]
+    axes = panels[:, 1]
+    raw_axes[1].sharey(raw_axes[0])
+    for index, (result, error) in enumerate(zip(results[:5], errors), start=1):
+        for axis, component in zip(raw_axes, (error.real, error.imag)):
+            axis.plot(
+                frequency[order], component[order],
+                label=_circuit_plot_label(index, result["circuit"]),
+                linestyle="-" if index == 1 else "--",
+                linewidth=2.5 if index == 1 else 1.3,
+            )
+        for axis, component, scale in zip(axes, (error.real, error.imag), scales):
+            axis.plot(
+                frequency[order], (component / scale)[order],
+                label=_circuit_plot_label(index, result["circuit"]),
+                linestyle="-" if index == 1 else "--",
+                linewidth=2.5 if index == 1 else 1.3,
+            )
+    for axis, component in zip(axes, ("Real", "Imaginary")):
+        axis.axhline(0, color="0.5", linewidth=0.8)
+        axis.axhline(f_scale, color="black", linestyle=":", label="±f_scale")
+        axis.axhline(-f_scale, color="black", linestyle=":")
+        axis.set_xscale("log")
+        axis.set_ylabel(f"{component} residual ({scale_type})")
+        axis.grid(True, alpha=0.3)
+    for axis, component in zip(raw_axes, ("Real", "Imaginary")):
+        axis.axhline(0, color="0.5", linewidth=0.8)
+        axis.set_xscale("log")
+        axis.set_ylabel(f"{component} error (Ω)")
+        axis.grid(True, alpha=0.3)
+    raw_axes[0].set_title("Raw errors — shared vertical scale")
+    axes[0].set_title(f"Normalized residuals ({scale_type})")
+    raw_axes[0].legend(fontsize="small")
+    axes[0].legend(handles=axes[0].lines[-2:-1], fontsize="small")
+    for axis in panels[1]:
+        axis.set_xlabel("Frequency (Hz)")
+    figure.suptitle(f"{plot_title}\nModel − data; f_scale = {f_scale:g}")
+    figure.tight_layout()
+    output_path = Path(output_path)
+    if save_output:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        figure.savefig(output_path, dpi=300, bbox_inches="tight")
+    if show:
+        plt.show()
+    plt.close(figure)
+    return output_path
+
+
 def export_fit_summary(
     results: Sequence[Mapping[str, Any]],
     output_path: str | Path,

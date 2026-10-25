@@ -25,58 +25,46 @@ frequency sweep and noise settings, and run the file. The default sweep covers
 1 mHz to 1 MHz. It saves an NPZ compatible with the existing spectrum loader and
 Nyquist/Bode plots. See [the simulator guide](data/simulation/README.md).
 
-## Export generated circuits to Modelica
-
-`alt_parse.py` generates normalized circuit trees. `modelica_export.py` turns
-those trees into connected, frequency-domain Modelica circuits with real and
-imaginary phasor pins.
-
-Generate Modelica models from the relaxed grammar:
-
-```powershell
-python modelica_export.py --grammar relaxed --depth 5
-```
-
-Limit the first run while checking the workflow:
-
-```powershell
-python modelica_export.py `
-  --grammar relaxed `
-  --depth 5 `
-  --max-candidates 10
-```
-
-The command writes:
-
-- `generated_modelica/GeneratedEISCircuits.mo`: connected candidate circuits;
-- `generated_modelica/check_candidates.mos`: OpenModelica flattening commands;
-- `generated_modelica/candidates.txt`: mapping from model names to circuits.
-
-Run the OpenModelica compiler from the generated directory:
-
-```powershell
-Set-Location generated_modelica
-omc check_candidates.mos
-```
-
-This creates `Candidate001_flat.mo`, `Candidate002_flat.mo`, and so on. Each
-flattened model contains the component and Kirchhoff equations assembled by
-OpenModelica.
-
-Each generated `CandidateNNN` is a two-pin circuit. Its corresponding
-`CandidateNNNImpedance` model connects a unit phasor-current source and ground.
-Consequently, its outputs `Z_re` and `Z_im` are the real and imaginary parts of
-the candidate impedance at angular frequency `omega`.
-
-The current element conventions are:
-
-- `CPE`: `Y = Q*(j*omega)^alpha`;
-- `W`: infinite Warburg, `Z = sigma/sqrt(j*omega)`;
-- `G`: `Z = Rg/sqrt(1 + j*omega*tauG)`;
-- `zarc`: expanded as `R || CPE`;
-- `randles`: expanded as `R || (CPE + W)`.
-
 ## Fit generated circuits to an NPZ recording
+
+From the repository directory, run:
+
+```powershell
+python main.py
+```
+
+Run `python main.py --help` for all options. Source settings remain the defaults;
+command-line arguments override them for one run. Importing `main` does not start
+fitting. Example (PowerShell):
+
+```powershell
+python main.py --data-mode spectrum --data-path data/spectrum/eis_20200226_190006.npz `
+  --grammar no_G_relaxed --elements 5 --residual-scale relative --f-scale 0.01 `
+  --number-starts 6 --random-seed 42 `
+  --save-results --no-show-plots
+```
+
+Use `--circuit-path` to supply a circuit JSON directly, `--channel` for raw/PCL
+battery data, and `--raw-points` to control raw-data downsampling. Relative paths
+are resolved from the terminal's working directory. `--output-root` selects the
+parent of the `Results` directory; filename prefixes/suffixes and plot titles
+are also configurable. `--filename-prefix` replaces the old environment override.
+
+`--f-scale` is the only least-squares setting exposed on the command line and
+applies to both fitting stages. The other least-squares settings remain defined
+in `fitting_parameters/train_refactored.py`. `--reoptimization-error-margin` is
+a fraction (0.2 means 20%). `--residual-scale` and `--scatter-floor` control
+residual preparation. Changing scaling does not automatically recalibrate
+`f_scale`: specify a threshold in the chosen scaled-residual units.
+
+Second-round fitting uses `REOPTIMIZATION_ERROR_MARGIN` in `main.py` (default
+`0.20`). Every candidate with first-round MSE at or below
+`best_mse * (1 + REOPTIMIZATION_ERROR_MARGIN)` is refined, starting from its own
+best first-round parameters. This replaces the fixed candidate-count cutoff in
+both fitting implementations. A margin of zero includes only candidates tied
+for the lowest MSE. The returned refined list includes all selected candidates;
+console previews and plots show only the top five. The margin controls selection
+only; optimizer settings and ranking metrics are unchanged.
 
 Generate cumulative circuit collections before fitting:
 
@@ -88,6 +76,10 @@ Each `*_elements_N.json` file contains all valid circuits with **up to** `N`
 physical elements, including the mandatory series resistance `Rs`. Loading
 `relaxed_elements_5.json` therefore compares the 1-, 2-, 3-, 4-, and 5-element
 models in one BIC ranking.
+
+Note that the 7 element collection already contains nearly 140.000 circuits. Adding an additional 8th element would bring the circuit
+count well over 1 million, making fitting very expensive.
+
 
 Each completed run of `main.py` writes two matching, dataset-specific outputs:
 
@@ -114,3 +106,21 @@ python "fitting parameters/fit_example.py" `
 The default example uses `data/eis_20200224_190006.npz` and the constrained
 `redone` grammar. Use `--help` to change the file, grammar depth, number of
 candidates, multi-start count, or residual weighting.
+# Residual diagnostics
+
+Set `RESIDUAL_SCALE = "magnitude"` in `fitting_parameters/train_refactored.py`
+to divide both real and imaginary errors by the same measured impedance
+magnitude. The divisor is floored at 10% of the median positive magnitude;
+an entirely zero spectrum uses unit divisors. This option applies to every
+fitting stage and the normalized residual plots. The existing `"relative"`
+option continues to use separate component magnitudes. Ranking metrics are unchanged.
+
+Running `main.py` also displays real and imaginary residuals against log frequency
+for the top five circuits, separately for the initial and reoptimized fits.
+Each figure includes raw real and imaginary errors in ohms in the left column,
+with matching vertical scales, and normalized residuals in the right column.
+Residuals are model minus measured impedance, divided by the exact scales used
+by the optimizer (`RESIDUAL_SCALE`). Dotted lines mark ±`f_scale` for that stage
+only in the normalized panels.
+With `SAVE_RESULTS = True`, these figures are saved under `Results/Plots/Residuals`.
+Relative scaling gives relative errors, not measurement-standard-deviation units.

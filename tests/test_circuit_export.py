@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from Circuit_generation.custom_generation import LimitedCircuitGenerator
-from circuit_export import (
+from Circuit_generation.circuit_export import (
     count_element_types,
     export_element_range,
     export_large_relaxed_count,

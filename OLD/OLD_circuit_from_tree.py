@@ -14,7 +14,7 @@ from typing import Any, Mapping, Protocol
 if __package__:
     from .OLD_generate_trees import Tree
 else:
-    from Circuit_generation.OLD_generate_trees import Tree
+    from OLD.OLD_generate_trees import Tree
 
 
 ParameterValues = Mapping[str, Any]

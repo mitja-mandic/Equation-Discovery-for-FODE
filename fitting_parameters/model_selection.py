@@ -1,5 +1,20 @@
 import numpy as np
 
+
+def select_refinement_candidates(results: list[dict], error_margin: float, sorting_metric) -> list[dict]:
+    """Select finite MSEs <= best MSE * (1 + margin), preserving input order.
+
+    The margin is a nonnegative fraction (0.20 means 20%). A zero best MSE
+    admits only exact zero-error fits; empty input returns an empty list.
+    """
+    if not np.isfinite(error_margin) or error_margin < 0:
+        raise ValueError("error_margin must be finite and nonnegative")
+    finite_results = [result for result in results if np.isfinite(result["mse"])]
+    if not finite_results:
+        return []
+    cutoff = min(result[sorting_metric] for result in finite_results) * (1 + error_margin)
+    return [result for result in finite_results if result[sorting_metric] <= cutoff]
+
 def compute_bic(n, mse, num_params):
     bic = n * np.log(mse) + num_params * np.log(n)
     return bic
@@ -22,6 +37,7 @@ def cumulative_absolute_error(measured,  predicted):
 def compute_mse(measured, predicted):
     error = predicted - measured
     return np.mean(error.real**2 + error.imag**2)
+
 
 def compute_relative_mse(measured, predicted):
     error = predicted - measured

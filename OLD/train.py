@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import least_squares, minimize
 from time import perf_counter
+from fitting_parameters.model_selection import select_refinement_candidates
 
 from fitting_parameters.initialize_parameters import (
     get_parameter_names,
@@ -23,7 +24,7 @@ LEAST_SQUARES_SETTINGS = {
     "ftol": 1e-6,
     "xtol": 1e-6,
     "gtol": 1e-6,
-    "f_scale": 0.001, #Larger f_scale → more residuals behave quadratically; less robust, smaller f_scale → more residuals are downweighted; more robust.
+    "f_scale": 0.01, #Larger f_scale → more residuals behave quadratically; less robust, smaller f_scale → more residuals are downweighted; more robust.
     "max_nfev": 100,
     "loss": "soft_l1",
     "method": "trf"
@@ -114,7 +115,7 @@ def fit_circuit_parameters_random_start(
         physical[~is_alpha] = np.exp(values[~is_alpha])
         return physical
 
-    def residual(values, scale_type=None):
+    def residual(values, scale_type="relative"):
         parameters = dict(zip(names, to_physical(values)))
         predicted = evaluate_impedance(
             circuit,
@@ -270,7 +271,11 @@ def compare_circuits(
     imag_scatter,
     manual_entry,
     optimizer="least_squares",
+    *, reoptimization_error_margin: float = 0.20,
 ):
+    """Refine all candidates within the fractional MSE margin of the best fit."""
+    if not np.isfinite(reoptimization_error_margin) or reoptimization_error_margin < 0:
+        raise ValueError("reoptimization_error_margin must be finite and nonnegative")
     results = []
     circuit_count = len(circuits)
     progress_interval = max(10, min(50, circuit_count // 20))
@@ -343,7 +348,10 @@ def compare_circuits(
 
     best_results = []
 
-    for result in results[:5]:
+    refinement_candidates = select_refinement_candidates(results, reoptimization_error_margin)
+    print(f"Reoptimizing {len(refinement_candidates)}/{len(results)} circuits "
+          f"within {reoptimization_error_margin:.1%} of the best first-round MSE.", flush=True)
+    for result in refinement_candidates:
         rand_string = result['rand_start']
         circuit = result['circuit']
 
@@ -389,7 +397,7 @@ def compare_circuits(
             "rand_start": rand_string
         })
 
-    best_results.sort(key=lambda best_result: best_result["ebic"])
+    best_results.sort(key=lambda best_result: best_result["mse"])
     if manual_entry:
         manual_result = fit_circuit_parameters_random_start(manual_entry,frequency,measured_impedance,real_scatter,imag_scatter, FINAL_LEAST_SQUARES_SETTINGS)
         manual_parameters = manual_result['parameters']
