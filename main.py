@@ -29,7 +29,7 @@ SAVE_RESULTS = False
 # Use "spectrum" for files containing F and Z.
 # Use "simulated" for output from data/simulation/run_simulation.py.
 # Use "pcl" for processed battery dictionaries with frequency/Z at indices 0/1.
-DATA_MODE = "pcl"
+DATA_MODE = "spectrum"
 
 
 # ---------------------------------------------------------------------------
@@ -65,10 +65,10 @@ SPECTRUM_DATA_PATH = (
     / "data"
     / "spectrum"
     #/ "eis_20200224_190006.npz" #tu se re-fitting cudno obnasa
-    #/ "eis_20200227_030006.npz"
+    / "eis_20200227_030006.npz"
     #/ "eis_20200226_150005.npz"
     #/ "eis_20200227_070006.npz"
-    / "eis_20200226_190006.npz"
+    #/ "eis_20200226_190006.npz"
 
 )
 
@@ -90,7 +90,7 @@ grammar_type ="no_G_relaxed"
 nr_elements = 5
 
 
-OPTIMIZER = "least_squares"
+OPTIMIZER = "linear"
 # Refine every circuit with MSE <= best first-round MSE * (1 + this margin).
 REOPTIMIZATION_ERROR_MARGIN = 0.20  # 20%; plots still show only the top five.
 FILENAME_PREFIX = ""
@@ -169,8 +169,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--final-filename-suffix", default=FILENAME_SUFFIX_REOPTIMIZED)
     parser.add_argument("--plot-title", default="Nyquist plot with stratified random starting values and normalized residuals")
     parser.add_argument("--final-plot-title", default="Top circuits after MSE-margin reoptimization")
-    parser.add_argument("--sort-first-round", default="wmse", help="Metric by which the first round of optimization is sorted", choices=("bic", "wbic", "ebic", "mse", "wmse"))
-    parser.add_argument("--sort-second-round", default="wbic", help="Metric by which the second round of optimization is sorted", choices=("bic", "wbic", "ebic", "mse", "wmse"))
+    parser.add_argument("--sort-first-round", default="mse", help="Metric by which the first round of optimization is sorted", choices=("bic", "lp_bic", "lp_ebic", "ebic", "mse", "lp_error"))
+    parser.add_argument("--sort-second-round", default="bic", help="Metric by which the second round of optimization is sorted", choices=("bic", "lp_bic", "lp_ebic", "ebic", "mse", "lp_error"))
     return parser
 
 
@@ -269,10 +269,14 @@ def main(argv: list[str] | None = None) -> None:
     # ---------------------------------------------------------------------------
     # FIT AND RANK THE CIRCUITS
     # ---------------------------------------------------------------------------
-
+    
+    #this is only relevant in scatter scaling
+    
     floor = args.scatter_floor
     real_smooth_scatter = normalize_sigma(real_scatter, percentage_floor=floor)#, floor)
     imag_smooth_scatter = normalize_sigma(imag_scatter, percentage_floor=floor)#, floor)
+
+    #add manual circuits here
 
     manual_circuit_1 = Series(children=(
         SeriesResistance("Rs"),

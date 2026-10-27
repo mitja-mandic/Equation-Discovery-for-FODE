@@ -50,6 +50,14 @@ are resolved from the terminal's working directory. `--output-root` selects the
 parent of the `Results` directory; filename prefixes/suffixes and plot titles
 are also configurable. `--filename-prefix` replaces the old environment override.
 
+There are four different options for residual scaling in the optimization algorithm:
+`unscaled, scatter, relative. magnitude`. Unscaled leaves the residuals unchanged,
+scatter scaling takes median across repeated measurements of the same battery pack/SOFC
+in the dataset. Relative scaling divides the real (imaginary) part of the error with maximum
+absolute value of the real (imaginary) part of the impedance measurement. Magnitude scaling does
+the same as relative scaling, but it divides the errors with largest absolute value of the impedance
+measurement (not separated into real and imaginary parts).
+
 `--f-scale` is the only least-squares setting exposed on the command line and
 applies to both fitting stages. The other least-squares settings remain defined
 in `fitting_parameters/train_refactored.py`. `--reoptimization-error-margin` is

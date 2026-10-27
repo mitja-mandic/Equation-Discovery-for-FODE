@@ -9,7 +9,7 @@ from fitting_parameters.initialize_parameters import (
     get_parameter_names,
     generate_initial_values
 )
-from fitting_parameters.model_selection import compute_bic, compute_mse, compute_relative_mse, compute_weighted_lp, compute_ebic
+from fitting_parameters.model_selection import compute_bic, compute_mse, compute_relative_mse, compute_weighted_lp,compute_weighted_mse, compute_ebic
 
 from collections import Counter
 from collections.abc import Iterable
@@ -226,7 +226,7 @@ def _summarize_fit(
     mse = optimization["score"]
     lp_error = compute_weighted_lp(
         measured_impedance, predicted, 1, 1,
-        p=2 if manual else 0.5,
+        p=0.5,
     )
     n = len(predicted - measured_impedance) * 2
     num_parameters = len(parameters)
@@ -234,15 +234,15 @@ def _summarize_fit(
         "circuit": circuit,
         "parameters": parameters,
         "predicted_impedance": predicted,
-        "wmse": lp_error,
+        "lp_error": lp_error,
         "mse": mse,
         "bic": compute_bic(n, mse, num_parameters),
-        "wbic": compute_bic(n, lp_error, num_parameters),
+        "lp_bic": compute_bic(n, lp_error, num_parameters),
         "ebic": 0 if manual else compute_ebic(
             len(measured_impedance), mse, num_parameters,
             number_circuit_per_size[num_parameters], gamma=gamma,
         ),
-        "ewbic": 0 if manual else compute_ebic(
+        "lp_ebic": 0 if manual else compute_ebic(
             len(measured_impedance), lp_error, num_parameters,
             number_circuit_per_size[num_parameters], gamma=gamma,
         ),
@@ -265,7 +265,7 @@ def compare_circuits(
     least_squares_settings=LEAST_SQUARES_SETTINGS,
     final_least_squares_settings=FINAL_LEAST_SQUARES_SETTINGS,
     number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED,
-    sort_first = "wmse", sort_second = "wbic"
+    sort_first = "lp_error", sort_second = "lp_bic"
 ):
     """Rank by MSE and refine candidates within a fractional margin of the best.
 

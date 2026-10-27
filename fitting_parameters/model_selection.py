@@ -1,18 +1,24 @@
 import numpy as np
 
 
-def select_refinement_candidates(results: list[dict], error_margin: float, sorting_metric) -> list[dict]:
+def select_refinement_candidates(results: list[dict], error_margin: float, sorting_metric, bic_delta = 10) -> list[dict]:
     """Select finite MSEs <= best MSE * (1 + margin), preserving input order.
 
     The margin is a nonnegative fraction (0.20 means 20%). A zero best MSE
     admits only exact zero-error fits; empty input returns an empty list.
     """
+    if sorting_metric not in ("mse","lp_error","bic","ebic","lp_bic", "lp_ebic"):
+        raise ValueError("sorting_metric must be one of: mse, lp_error, bic, ebic, lp_ebic")
     if not np.isfinite(error_margin) or error_margin < 0:
         raise ValueError("error_margin must be finite and nonnegative")
-    finite_results = [result for result in results if np.isfinite(result["mse"])]
+    finite_results = [result for result in results if np.isfinite(result[sorting_metric])]
     if not finite_results:
         return []
-    cutoff = min(result[sorting_metric] for result in finite_results) * (1 + error_margin)
+    if sorting_metric == "mse" or sorting_metric == "lp_error":
+        cutoff = min(result[sorting_metric] for result in finite_results) * (1 + error_margin)
+    elif sorting_metric == "ebic" or sorting_metric == "bic" or sorting_metric == "lp_ebic":
+        cutoff = min(result[sorting_metric] for result in finite_results) + bic_delta
+
     return [result for result in finite_results if result[sorting_metric] <= cutoff]
 
 def compute_bic(n, mse, num_params):
