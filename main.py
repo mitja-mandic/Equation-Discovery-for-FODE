@@ -87,7 +87,7 @@ SIMULATED_DATA_PATH = (
 
 #grammar_type = "compact_hybrid"
 grammar_type ="no_G_relaxed"
-nr_elements = 5
+nr_elements = 4
 
 
 OPTIMIZER = "linear"

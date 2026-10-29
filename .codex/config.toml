@@ -1,0 +1,18 @@
+default_permissions = "project_on_request"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+
+[permissions.project_on_request]
+description = "Project read/write access with network"
+
+[permissions.project_on_request.filesystem]
+":root" = "read"
+
+[permissions.project_on_request.filesystem.":workspace_roots"]
+"." = "write"
+
+[permissions.project_on_request.network]
+enabled = true
+
+[windows]
+sandbox = "elevated"
