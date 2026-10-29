@@ -27,9 +27,10 @@ SAVE_RESULTS = False
 
 # Use "raw" for bank4 files containing curr, batt_1, batt_2, etc.
 # Use "spectrum" for files containing F and Z.
-# Use "simulated" for output from data/simulation/run_simulation.py.
+# Use "simulated" for output from data/simulation/run_simulation.py. The
+# bundled sample keeps a clean clone runnable without external measurements.
 # Use "pcl" for processed battery dictionaries with frequency/Z at indices 0/1.
-DATA_MODE = "spectrum"
+DATA_MODE = "simulated"
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +78,7 @@ SIMULATED_DATA_PATH = (
     / "data"
     / "simulation"
     / "generated"
-    / "simulated_spectrum_001.npz"
+    / "simulated_spectrum.npz"
 )
 
 

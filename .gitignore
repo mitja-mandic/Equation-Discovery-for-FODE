@@ -211,10 +211,16 @@ tempCodeRunnerFile.py
 
 # Local datasets
 data/*
+!data/circuits/
+data/circuits/*
+!data/circuits/no_G_relaxed_elements_4.json
 !data/simulation/
 data/simulation/*
 !data/simulation/*.py
 !data/simulation/README.md
+!data/simulation/generated/
+data/simulation/generated/*
+!data/simulation/generated/simulated_spectrum.npz
 
 # Intermediate results
 Results/

@@ -15,8 +15,9 @@ measurement uncertainty is inferred from those arrays. Invalid shapes,
 nonpositive/nonfinite frequencies, and nonfinite impedances raise an error.
 Only load trusted pickle files, since unpickling can execute code.
 
-The existing `raw`, `spectrum`, and `simulated` modes remain available, and the
-default mode remains `spectrum`.
+The existing `raw`, `spectrum`, and `simulated` modes remain available. The
+default mode is `simulated` so a clean clone can run with the small bundled
+sample dataset; select `spectrum` explicitly when fitting measured NPZ data.
 
 ## Simulate circuit data from the IDE
 
@@ -32,6 +33,10 @@ From the repository directory, run:
 ```powershell
 python main.py
 ```
+
+This default run uses `data/simulation/generated/simulated_spectrum.npz` and
+the bundled `data/circuits/no_G_relaxed_elements_4.json` circuit collection, so
+no external measurement files are required.
 
 Run `python main.py --help` for all options. Source settings remain the defaults;
 command-line arguments override them for one run. Importing `main` does not start
