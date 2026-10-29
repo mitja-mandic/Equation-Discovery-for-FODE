@@ -27,8 +27,8 @@ S·s^alpha, Gerischer time constant in seconds. Warburg follows the project's
 `sigma / sqrt(j*omega)` convention (sigma in ohm·s^-1/2).
 Values must be positive, and CPE exponents must lie in [0, 1].
 
-The default sweep spans **0.001–1,000,000 Hz** with 30 intervals per decade
-(271 points including endpoints). Adjust both bounds and the sampling density
+The default sweep spans **0.01–100,000 Hz** with 30 intervals per decade
+(211 points including endpoints). Adjust both bounds and the sampling density
 for the time scales of your circuit; a fixed range cannot capture every possible
 parameter choice. Frequency is converted internally from Hz to rad/s.
 
@@ -52,16 +52,15 @@ produce identical data in the new files; use `RANDOM_SEED = None` for fresh nois
 The NPZ stores `F` in Hz and complex `Z` in ohms with shape
 `(1, number_frequencies, repeats)`, plus `Z_clean`, `noise_std_ohm`, and
 `metadata_json` recording the circuit, parameters, and noise settings. It needs
-no pickle loading. To fit it using the existing `main.py`, set:
+no pickle loading. The repository already contains the base sample. To fit a
+newly generated numbered file, pass its path on the command line:
 
-```python
-DATA_MODE = "simulated"
-SIMULATED_DATA_PATH = PROJECT_DIR / "data" / "simulation" / "generated" / "simulated_spectrum.npz"
+```bash
+python main.py --data-mode simulated --data-path data/simulation/generated/simulated_spectrum_001.npz
 ```
 
-Generate the dataset with `run_simulation.py` before running the fitter. Set
-`SIMULATED_DATA_PATH` to the actual filename printed by the simulator (including
-its numbered suffix). The fitter does not automatically select the latest file.
+Use the actual filename printed by the simulator, including its numbered suffix.
+The fitter does not automatically select the latest file.
 
 The existing loader computes measurement medians and robust scatter. Noiseless
 data or a single repeat yields zero scatter; use the fitter's uncertainty floor

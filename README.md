@@ -1,139 +1,240 @@
-# Equation-Discovery-for-FODE
-Repository for working on equation discovery for fractional order systems
+# Equation Discovery for Fractional-Order Systems
 
-## Load processed battery EIS pickles
+Generate, fit, and rank equivalent-circuit models for electrochemical impedance
+spectroscopy (EIS) data.
 
-In `main.py`, set `DATA_MODE = "pcl"`, choose `PCL_DATA_PATH`, and set
-`PCL_BATTERY_CHANNEL` (for example, `"batt_1"`). The example path points to
-`data/battery/EIS_mitja/eis_bank1_20250703-161359.pcl`.
+## Requirements
 
-Each file is a dictionary of battery channels. For the selected channel, array
-0 is interpreted as frequency in Hz and array 1 as complex impedance. All
-points are retained without averaging or coherence filtering; the other arrays
-are unused. Equal real and imaginary residual weights are used because no
-measurement uncertainty is inferred from those arrays. Invalid shapes,
-nonpositive/nonfinite frequencies, and nonfinite impedances raise an error.
-Only load trusted pickle files, since unpickling can execute code.
+- Python 3.11 or newer
+- The packages pinned in `requirements.txt`
 
-The existing `raw`, `spectrum`, and `simulated` modes remain available. The
-default mode is `simulated` so a clean clone can run with the small bundled
-sample dataset; select `spectrum` explicitly when fitting measured NPZ data.
+Create and activate an isolated environment from the repository root on Linux
+or macOS:
 
-## Simulate circuit data from the IDE
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-Open `data/simulation/run_simulation.py`, edit its circuit, component values,
-frequency sweep and noise settings, and run the file. The default sweep covers
-1 mHz to 1 MHz. It saves an NPZ compatible with the existing spectrum loader and
-Nyquist/Bode plots. See [the simulator guide](data/simulation/README.md).
-
-## Fit generated circuits to an NPZ recording
-
-From the repository directory, run:
+On Windows PowerShell, use:
 
 ```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+Then install the dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+## Quick start
+
+The repository includes a small simulated EIS dataset and a collection of 92
+circuits (all circuits with up to 4 elements), so a clean clone can run without external measurement files:
+
+```bash
 python main.py
 ```
 
-This default run uses `data/simulation/generated/simulated_spectrum.npz` and
-the bundled `data/circuits/no_G_relaxed_elements_4.json` circuit collection, so
-no external measurement files are required.
+For a non-interactive or headless run:
 
-Run `python main.py --help` for all options. Source settings remain the defaults;
-command-line arguments override them for one run. Importing `main` does not start
-fitting. Example (PowerShell):
-
-```powershell
-python main.py --data-mode spectrum --data-path data/spectrum/eis_20200226_190006.npz `
-  --grammar no_G_relaxed --elements 5 --residual-scale relative --f-scale 0.01 `
-  --number-starts 6 --random-seed 42 `
-  --save-results --no-show-plots
+```bash
+python main.py --no-show-plots --no-show-residual-plots
 ```
 
-Use `--circuit-path` to supply a circuit JSON directly, `--channel` for raw/PCL
-battery data, and `--raw-points` to control raw-data downsampling. Relative paths
-are resolved from the terminal's working directory. `--output-root` selects the
-parent of the `Results` directory; filename prefixes/suffixes and plot titles
-are also configurable. `--filename-prefix` replaces the old environment override.
+The bundled inputs are:
 
-There are four different options for residual scaling in the optimization algorithm:
-`unscaled, scatter, relative. magnitude`. Unscaled leaves the residuals unchanged,
-scatter scaling takes median across repeated measurements of the same battery pack/SOFC
-in the dataset. Relative scaling divides the real (imaginary) part of the error with maximum
-absolute value of the real (imaginary) part of the impedance measurement. Magnitude scaling does
-the same as relative scaling, but it divides the errors with largest absolute value of the impedance
-measurement (not separated into real and imaginary parts).
+- `data/simulation/generated/simulated_spectrum.npz`
+- `data/circuits/no_G_relaxed_elements_4.json`
 
-`--f-scale` is the only least-squares setting exposed on the command line and
-applies to both fitting stages. The other least-squares settings remain defined
-in `fitting_parameters/train_refactored.py`. `--reoptimization-error-margin` is
-a fraction (0.2 means 20%). `--residual-scale` and `--scatter-floor` control
-residual preparation. Changing scaling does not automatically recalibrate
-`f_scale`: specify a threshold in the chosen scaled-residual units.
+The default run fits every bundled circuit from six reproducible starting
+points, refines the best candidates, and prints the highest-ranked results. It
+does not save output files unless `--save-results` is supplied.
 
-Second-round fitting uses `REOPTIMIZATION_ERROR_MARGIN` in `main.py` (default
-`0.20`). Every candidate with first-round MSE at or below
-`best_mse * (1 + REOPTIMIZATION_ERROR_MARGIN)` is refined, starting from its own
-best first-round parameters. This replaces the fixed candidate-count cutoff in
-both fitting implementations. A margin of zero includes only candidates tied
-for the lowest MSE. The returned refined list includes all selected candidates;
-console previews and plots show only the top five. The margin controls selection
-only; optimizer settings and ranking metrics are unchanged.
+Run `python main.py --help` for the complete command-line interface. Settings in
+`main.py` provide defaults; command-line arguments override them for one run.
+Importing `main` does not start fitting.
 
-Generate cumulative circuit collections before fitting:
+## Input data
 
-```powershell
-python circuit_export.py --grammar relaxed --element-range 3 5
+### Simulated or measured NPZ spectra
+
+The `simulated` and `spectrum` modes use NPZ files containing frequency `F` in
+Hz and complex impedance measurements `Z` in ohms. The loader reduces repeated
+measurements to component-wise medians and estimates robust real and imaginary
+scatter from their median absolute deviations.
+
+To fit a user-supplied measured spectrum with the bundled circuits:
+
+```bash
+python main.py --data-mode spectrum --data-path path/to/measurement.npz --circuit-path data/circuits/no_G_relaxed_elements_4.json --no-show-plots
 ```
 
-Each `*_elements_N.json` file contains all valid circuits with **up to** `N`
-physical elements, including the mandatory series resistance `Rs`. Loading
-`relaxed_elements_5.json` therefore compares the 1-, 2-, 3-, 4-, and 5-element
-models in one BIC ranking.
+Measurement files under `data/spectrum` are intentionally not included in Git;
+provide your own path when using `spectrum` mode.
 
-Note that the 7 element collection already contains nearly 140.000 circuits. Adding an additional 8th element would bring the circuit
-count well over 1 million, making fitting very expensive.
+### Processed battery pickles
 
+Use `pcl` mode for a trusted pickle containing a dictionary of battery channels:
 
-Each completed run of `main.py` writes two matching, dataset-specific outputs:
-
-- `Results/Plots/Nyquists/<dataset>_<grammar>_<N>_best_5.png`, containing the five
-  highest-ranked fits;
-- `Results/fit_results/<dataset>_<grammar>_<N>_fit_summary.json`, containing the fit
-  settings, circuit counts, plot reference, and ten highest-ranked circuits.
-
-The fitter reduces one raw recording to a robust median impedance at each
-frequency, generates candidate circuits, tunes their parameters with bounded
-multi-start least squares, and ranks the fitted models using BIC. To avoid
-over-interpreting tiny score improvements, it prefers the simplest topology
-within six BIC units of the minimum by default.
-
-Install the dependencies and run the learning example from the repository root:
-
-```powershell
-python -m pip install -r requirements.txt
-python "fitting parameters/fit_example.py" `
-  --plot fit_diagnostic.png `
-  --output-json fit_results.json
+```bash
+python main.py --data-mode pcl --data-path path/to/measurement.pcl --channel batt_1 --no-show-plots
 ```
 
-The default example uses `data/eis_20200224_190006.npz` and the constrained
-`redone` grammar. Use `--help` to change the file, grammar depth, number of
-candidates, multi-start count, or residual weighting.
-# Residual diagnostics
+For the selected channel, array 0 is interpreted as frequency in Hz and array 1
+as complex impedance. All points are retained; remaining arrays are unused.
+Because no measurement uncertainty is inferred from this format, unit real and
+imaginary scales are returned. Invalid shapes, nonpositive or nonfinite
+frequencies, and nonfinite impedances raise an error.
 
-Set `RESIDUAL_SCALE = "magnitude"` in `fitting_parameters/train_refactored.py`
-to divide both real and imaginary errors by the same measured impedance
-magnitude. The divisor is floored at 10% of the median positive magnitude;
-an entirely zero spectrum uses unit divisors. This option applies to every
-fitting stage and the normalized residual plots. The existing `"relative"`
-option continues to use separate component magnitudes. Ranking metrics are unchanged.
 
-Running `main.py` also displays real and imaginary residuals against log frequency
-for the top five circuits, separately for the initial and reoptimized fits.
-Each figure includes raw real and imaginary errors in ohms in the left column,
-with matching vertical scales, and normalized residuals in the right column.
-Residuals are model minus measured impedance, divided by the exact scales used
-by the optimizer (`RESIDUAL_SCALE`). Dotted lines mark ±`f_scale` for that stage
-only in the normalized panels.
-With `SAVE_RESULTS = True`, these figures are saved under `Results/Plots/Residuals`.
-Relative scaling gives relative errors, not measurement-standard-deviation units.
+### Raw recordings
+
+The legacy `raw` mode remains present in the source, but its command-line
+downsampling argument is currently incomplete.
+
+## Simulate circuit data
+
+Edit the configuration sections in `data/simulation/run_simulation.py`, then run:
+
+```bash
+python data/simulation/run_simulation.py
+```
+
+The current default sweep covers 0.01 Hz to 100 kHz with 30 intervals per
+decade. The script saves a loader-compatible NPZ and a Nyquist/Bode plot under
+`data/simulation/generated`. Existing files are preserved by adding `_001`,
+`_002`, and later suffixes. See the
+[simulator guide](data/simulation/README.md) for circuit definitions, units,
+noise settings, and output details.
+
+Fit a newly generated file without editing `main.py`:
+
+```bash
+python main.py --data-mode simulated --data-path data/simulation/generated/simulated_spectrum_001.npz --no-show-plots
+```
+
+Use the actual filename printed by the simulator.
+
+## Generate circuit collections
+
+The bundled `no_G_relaxed` collection can be used directly. To generate a new
+cumulative collection with one of the exporter-supported grammars (`relaxed`,
+`compact_hybrid`, or `compact_only_blocks`), run:
+
+```bash
+python -m Circuit_generation.circuit_export --grammar relaxed --element-range 3 5 --output-directory data/circuits
+```
+
+Each `*_elements_N.json` file contains all valid circuits with up to `N`
+physical elements, including the mandatory series resistance `Rs`. For example,
+`relaxed_elements_5.json` contains models with one through five elements.
+Collection sizes grow combinatorially, so inspect smaller exports before fitting
+larger element limits.
+
+To fit a generated collection, either match its name and maximum element count:
+
+```bash
+python main.py --grammar relaxed --elements 5 --no-show-plots
+```
+
+or pass its path explicitly with `--circuit-path`.
+
+## Fitting options
+
+This example uses the bundled data and circuits while overriding common fitting
+and reporting settings:
+
+```bash
+python main.py --data-mode simulated --data-path data/simulation/generated/simulated_spectrum.npz --circuit-path data/circuits/no_G_relaxed_elements_4.json --residual-scale relative --f-scale 0.01 --number-starts 6 --random-seed 42 --save-results --no-show-plots
+```
+
+Useful options include:
+
+- `--data-mode` and `--data-path` to select the input format and file;
+- `--circuit-path`, or `--grammar` with `--elements`, to select circuits;
+- `--channel` to select a raw/PCL battery channel;
+- `--number-starts` and `--random-seed` to control initial values;
+- `--residual-scale`, `--scatter-floor`, and `--f-scale` to control fitting;
+- `--sort-first-round` and `--sort-second-round` to control ranking;
+- `--save-results` and `--output-root` to control saved artifacts;
+- `--show-plots` and `--show-residual-plots` to control interactive figures.
+
+Relative paths are resolved from the terminal's working directory. The other
+least-squares settings are defined in `fitting_parameters/train_refactored.py`.
+Changing residual scaling does not automatically recalibrate `f_scale`; specify
+it in the selected scaled-residual units.
+
+### Residual scaling
+
+`--residual-scale` accepts four modes:
+
+- `unscaled` leaves real and imaginary residuals in ohms;
+- `scatter` divides them by separate robust real and imaginary scatter estimates
+  from repeated measurements;
+- `relative` divides each component by its measured component magnitude, floored
+  at 10% of that component's median absolute magnitude;
+- `magnitude` divides both components by the same measured `|Z|`, floored at 10%
+  of the median positive magnitude.
+
+An entirely zero component or spectrum uses unit divisors where a relative scale
+cannot be inferred. `--scatter-floor` applies an additional floor, expressed as
+a fraction of the median scatter, before scatter scaling.
+
+The optimizer uses scaled residuals, while the reported MSE, relative MSE, BIC,
+and EBIC values retain their existing ranking definitions.
+
+### Refinement and ranking
+
+By default, the first round is sorted by MSE. Every candidate with
+
+```text
+MSE <= best MSE * (1 + reoptimization error margin)
+```
+
+is refined from its own best first-round parameters. The default margin is 0.20
+(20%); a margin of zero includes only candidates tied for the lowest MSE. Should you
+choose to sort by BIC-related metric in the first round, a hard coded delta of 10 is
+implemented in the model_selection.py file.
+
+The refined results are sorted by BIC by default. Console previews and plots show at
+most the top five circuits.
+
+Use `--reoptimization-error-margin`, `--sort-first-round`, and
+`--sort-second-round` to override these defaults.
+
+## Inserting a manual circuit
+
+You can insert a circuit manually in main.py by defining it (two examples already pre-defined)
+and changing the value on line 310 to the name of the variable under which you stored the circuit.
+This circuit will then be inserted on top of the grammar-selected circuits, its parameters will be
+estimated with the same algorithm as the refinement part.
+
+
+## Results and residual diagnostics
+
+Use `--save-results` to write artifacts under `Results`. A saved run produces
+first-round and reoptimized versions of:
+
+- Nyquist plots under `Results/Plots/Nyquists`;
+- residual plots under `Results/Plots/Residuals`;
+- JSON summaries under `Results/fit_results`.
+
+The Nyquist plots contain the five highest-ranked fits. Each JSON summary records
+fit settings, circuit counts, its associated plot, and up to ten ranked circuits.
+Filename suffixes default to `first_round` and `reoptimized` and can be changed
+with `--filename-suffix` and `--final-filename-suffix`.
+
+Display residual plots interactively with:
+
+```bash
+python main.py --show-residual-plots
+```
+
+Each residual figure shows raw real and imaginary errors in ohms beside the
+matching normalized residuals. Residuals are model minus measurement. Dotted
+lines mark `+/- f_scale` in the normalized panels. Residual figures are saved
+whenever `--save-results` is enabled, even if interactive residual plots are not
+shown.
