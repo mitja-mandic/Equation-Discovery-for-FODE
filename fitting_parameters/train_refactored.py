@@ -29,7 +29,7 @@ LEAST_SQUARES_SETTINGS = {
     "xtol": 1e-6,
     "gtol": 1e-6,
     "f_scale": 0.001, #Larger f_scale → more residuals behave quadratically; less robust, smaller f_scale → more residuals are downweighted; more robust.
-    "max_nfev": 100,
+    #"max_nfev": 50,
     "loss": "soft_l1",
     #"loss": "linear",
     "method": "trf"
@@ -167,6 +167,7 @@ def _make_fitter(
             "parameters": parameters,
             "result": result,
             "score": compute_mse(measured_impedance, predicted),
+            "optimizer_max_nfev": settings.get("max_nfev"),
         }
 
     return fit
@@ -187,9 +188,10 @@ def fit_circuit_parameters_random_start(
         circuit, number_starts=number_starts,
         random_seed=random_seed, deterministic=False,
     )
+    nr_pars = len(get_parameter_names(circuit))
     fit = _make_fitter(
         circuit, frequency, measured_impedance,
-        get_parameter_names(circuit), least_squares_settings,
+        get_parameter_names(circuit), {"max_nfev": nr_pars*5, **least_squares_settings},
         real_scatter, imag_scatter, scale_type,
     )
     attempts = []
@@ -250,6 +252,7 @@ def _summarize_fit(
         "optimizer_status": int(result.status),
         "optimizer_message": str(result.message),
         "function_evaluations": int(result.nfev),
+        "optimizer_max_nfev": optimization.get("optimizer_max_nfev"),
         "rand_start": rand_start,
     }
     if not manual:

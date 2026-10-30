@@ -173,18 +173,22 @@
 
 \begin{document}
 
-%\section{Introduction}
-%
-%In this report we present progress of formal grammar based equation discovery applied to EIS data in frequency domain,
-%both from solid oxide fuel cells and batteries.
+\section{Introduction}
 
-%\section{Uvod}
-%
-%Po prejšnjem poročilu in okvirnem potrdilu, da se premikam v pravo smer, sem se lotil izboljšav algoritma. Dodal sem normalizacijo residualov (na vsakem koraku jih 
-%delim s fiksno vrednostjo), in pa implementacija testiranja več začetnih vrednosti za vsako vezje. Rezultati so vzpodbudni, predvsem so se izboljšali pri vezjih brez 
-%omejitev. %Znova bom razdelil poročilo na dva dela glede na dve gramatiki, ki jih testiram.
+In the following paper we are interested in fitting equivalent circuits to electrical impedance spectroscopy data in frequency domain with the help of formal grammars. We believe this
+to be interesting, as it provides a straightforward way to exhaustively search the space of possible circuits up to a certain complexity. This offers flexibility not only
+in the sense of fitting parameters, but also when it comes to building the underlying circuit.
 
-\section{The grammar}
+\subsection{Electrical impedance spectroscopy (EIS) and equivalent circuit modeling (ECM)}
+
+%explain what EIS data is briefly and why we use ECM
+EIS data is when you perturb the battery/sofc slightly and observe the response. The way in which the observed cell response gives some insight into what's happening inside.
+Equivalent circuit modeling (ECM)looks at the measurement from a purely mathematical point of view, in the way that it is not concerned with the physical component from which it was obtained.
+It aims to create a circuit from a predefined set of mostly simple elements that reproduces the measurements, in the hope of gaining some more understanding in the chemical process occurring
+in the device that produced the data.
+
+
+\section{Grammar based modeling}
 
 We use a formal grammar to define candidate circuits which we then fit on the data. The grammar we use does not impose any structural
 assumptions on the circuit. Each element can appear at any position, the only restriction being that a resistor $\term{Rs}$ is in series
@@ -1221,5 +1225,7 @@ $\alpha_2$ & 0.602733
 
 %\bibliography{references} 
 
+% TODO: Document the fitting, refinement, and ranking settings used for each
+% reported run; distinguish the final method from exploratory combinations.
 
 \end{document}

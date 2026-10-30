@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 import numpy as np
-from Circuit_generation.circuit_class import SeriesResistance
+from Circuit_generation.circuit_class import Resistor, Series, SeriesResistance
 from fitting_parameters import train_refactored as train
 
 
@@ -73,6 +73,25 @@ class ResidualScalingTests(unittest.TestCase):
                 self.assertEqual(len(best), 2)
                 self.assertEqual(scales.call_count, 3)
                 self.assertTrue(all(call.args[-1] == mode for call in scales.call_args_list))
+
+    def test_effective_evaluation_limit_is_retained_with_each_fit(self):
+        frequency = np.array([1., 2., 3.])
+        measured = np.array([1.+0j, 1.+0j, 1.+0j])
+        for circuit, expected_limit in (
+            (SeriesResistance(), 5),
+            (Series((SeriesResistance(), Resistor("R1"))), 10),
+        ):
+            with self.subTest(circuit=str(circuit)):
+                initial = train.fit_circuit_parameters_random_start(
+                    circuit, frequency, measured, np.ones(3), np.ones(3),
+                    number_starts=1,
+                )
+                self.assertEqual(initial["optimizer_max_nfev"], expected_limit)
+        refined = train.finalize_fit(
+            frequency, measured, SeriesResistance(), {"Rs": 1.},
+            np.ones(3), np.ones(3),
+        )
+        self.assertEqual(refined["optimizer_max_nfev"], 10000)
 
 
 if __name__ == '__main__':

@@ -38,7 +38,14 @@ class MainEntrypointTests(unittest.TestCase):
             plot = stack.enter_context(patch.object(main, "plot_circuit_fits"))
             residual_plot = stack.enter_context(patch.object(main, "plot_fit_residuals"))
             report = stack.enter_context(patch.object(main, "export_fit_summary"))
-            main.main(["--data-path", str(SCRIPT.parent.parent / "external.npz"), "--residual-scale", "scatter", "--f-scale", "1.5", "--number-starts", "3", "--random-seed", "7", "--save-results", "--no-show-plots"])
+            main.main([
+                "--data-path", str(SCRIPT.parent.parent / "external.npz"),
+                "--residual-scale", "scatter", "--scatter-floor", "0.2",
+                "--f-scale", "1.5", "--number-starts", "3", "--random-seed", "7",
+                "--sort-first-round", "lp_error", "--sort-second-round", "mse",
+                "--reoptimization-error-margin", "0.3",
+                "--save-results", "--no-show-plots",
+            ])
         kwargs = compare.call_args.kwargs
         self.assertEqual(kwargs["scale_type"], "scatter")
         self.assertEqual(kwargs["number_starts"], 3)
@@ -52,6 +59,18 @@ class MainEntrypointTests(unittest.TestCase):
         self.assertFalse(plot.call_args.kwargs["show"])
         self.assertEqual(residual_plot.call_args.kwargs["f_scale"], 1.5)
         self.assertEqual(report.call_count, 2)
+        initial_report, refined_report = report.call_args_list
+        self.assertEqual(initial_report.kwargs["ranking_metric"], "lp_error")
+        self.assertEqual(refined_report.kwargs["ranking_metric"], "mse")
+        for call in (initial_report, refined_report):
+            self.assertEqual(call.kwargs["optimizer"], "least_squares")
+            self.assertEqual(call.kwargs["run_settings"]["residual_scale"], "scatter")
+            self.assertEqual(call.kwargs["run_settings"]["scatter_floor"], 0.2)
+            self.assertEqual(call.kwargs["run_settings"]["number_starts"], 3)
+            self.assertEqual(call.kwargs["run_settings"]["random_seed"], 7)
+            self.assertEqual(call.kwargs["run_settings"]["first_round_ranking_metric"], "lp_error")
+            self.assertEqual(call.kwargs["run_settings"]["second_round_ranking_metric"], "mse")
+            self.assertEqual(call.kwargs["run_settings"]["reoptimization_error_margin"], 0.3)
         self.assertIn(
             main.FILENAME_SUFFIX_REOPTIMIZED,
             str(report.call_args.kwargs["plot_path"]),

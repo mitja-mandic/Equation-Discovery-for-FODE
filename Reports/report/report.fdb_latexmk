@@ -1,12 +1,12 @@
 # Fdb version 4
-["biber report"] 0 "report.bcf" "report.bbl" "report" 1793283178.8113 -1
+["biber report"] 0 "report.bcf" "report.bbl" "report" 1793366155.87344 -1
   "references.bib" 1790933718.25551 8511 1266a41d688ac4977b501741d15be9c3 ""
-  "report.bcf" 1793283178.66703 108012 4046fdc4ae864cf26d9f3a21d147783a "pdflatex"
+  "report.bcf" 1793366155.70572 108012 4046fdc4ae864cf26d9f3a21d147783a "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1793283171.77932 "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" "report.pdf" "report" 1793283178.81161 0
+["pdflatex"] 1793366148.17193 "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" "report.pdf" "report" 1793366155.8739 0
   "../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png" 1788771948.66959 430812 e5bfdbf96ce48bf08682087fad509f2a ""
   "../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png" 1788791318.52559 441271 c230dcdf553d66ffbcdb75dfe05eb99d ""
   "../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png" 1788874555.39402 470520 abdc2362fa0e94b4118508a9a3757e9b ""
@@ -16,7 +16,7 @@
   "../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png" 1788791752.58281 484229 e9bbef569029ce94ea884772eda2d4a5 ""
   "../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png" 1791794640.15372 309354 11039d9cd409610cad38be3e82d6ee07 ""
   "/etc/texmf/web2c/texmf.cnf" 1793282983.1144 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" 1793282718.62701 34471 cd20e1a6378e8cb5d250d24bb6970d3e ""
+  "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" 1793366147.90373 35203 5341084b14f0c23b6fe0bb0abac7ae3a ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/ecrm1095.tfm" 1136768653 3584 929cdff2b7a8c11bd4d49fd68cb0ae70 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1246382020 916 f87d7c45f9c908e672703b83b72241a3 ""
@@ -297,11 +297,11 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1769369718 41603 27f93b3067076450172040dcd57ca8b3 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1793282999 165211 6b08d096f3d0fe5ff6b266061a2b45e0 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1793283026 2265762 8a99365332350f84a42eb10a0c5a364d ""
-  "report.aux" 1793283178.66303 11366 c0908e0033ad5ff04ceef8279e9e3c5a "pdflatex"
+  "report.aux" 1793366155.69972 11689 805be0135664b9cf2f9c95842dc252d5 "pdflatex"
   "report.bbl" 1793221404.90042 32645 e2ab49730530f08b17ee4747bd2c38df "biber report"
-  "report.out" 1793283178.66603 1665 7e30998c19ddf459943291014e8b928c "pdflatex"
-  "report.run.xml" 1793283178.66846 2360 15e519fbd8c5620b53dc38bef756a42e "pdflatex"
-  "report.tex" 1793282718.62701 34471 cd20e1a6378e8cb5d250d24bb6970d3e ""
+  "report.out" 1793366155.70372 2306 942852bc46faee98974dc6663a81989d "pdflatex"
+  "report.run.xml" 1793366155.70828 2360 15e519fbd8c5620b53dc38bef756a42e "pdflatex"
+  "report.tex" 1793366147.90373 35203 5341084b14f0c23b6fe0bb0abac7ae3a ""
   (generated)
   "report.aux"
   "report.bcf"

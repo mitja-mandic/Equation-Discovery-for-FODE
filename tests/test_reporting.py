@@ -76,6 +76,7 @@ class FitReportingTests(unittest.TestCase):
                 "optimizer_status": 1,
                 "optimizer_message": "test result",
                 "function_evaluations": rank,
+                "optimizer_max_nfev": rank * 5,
             }
             for rank in range(1, 13)
         ]
@@ -195,11 +196,30 @@ class FitReportingTests(unittest.TestCase):
                 optimizer="least_squares",
                 optimizer_settings={"max_nfev": 100},
                 frequency=self.frequency,
+                ranking_metric="bic",
+                run_settings={
+                    "residual_scale": "scatter",
+                    "scatter_floor": 0.1,
+                    "number_starts": 6,
+                    "random_seed": 42,
+                    "first_round_ranking_metric": "mse",
+                    "second_round_ranking_metric": "bic",
+                    "reoptimization_error_margin": 0.2,
+                },
             )
 
             document = json.loads(output_path.read_text(encoding="utf-8"))
 
             self.assertEqual(document["circuits"]["fitted"], 12)
+            self.assertEqual(document["format_version"], 2)
+            self.assertEqual(document["ranking_metric"], "bic")
+            self.assertEqual(document["run_settings"]["residual_scale"], "scatter")
+            self.assertEqual(document["run_settings"]["scatter_floor"], 0.1)
+            self.assertEqual(document["run_settings"]["number_starts"], 6)
+            self.assertEqual(document["run_settings"]["random_seed"], 42)
+            self.assertEqual(document["run_settings"]["first_round_ranking_metric"], "mse")
+            self.assertEqual(document["run_settings"]["second_round_ranking_metric"], "bic")
+            self.assertEqual(document["run_settings"]["reoptimization_error_margin"], 0.2)
             self.assertEqual(document["circuits"]["successful"], 11)
             self.assertEqual(len(document["top_circuits"]), 10)
             self.assertEqual(
@@ -211,6 +231,7 @@ class FitReportingTests(unittest.TestCase):
                 "Circuit 1: Rs",
             )
             self.assertIsNone(document["top_circuits"][5]["plot_label"])
+            self.assertEqual(document["top_circuits"][0]["optimizer_max_nfev"], 5)
 
 
 if __name__ == "__main__":

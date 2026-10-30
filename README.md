@@ -222,8 +222,12 @@ first-round and reoptimized versions of:
 - residual plots under `Results/Plots/Residuals`;
 - JSON summaries under `Results/fit_results`.
 
-The Nyquist plots contain the five highest-ranked fits. Each JSON summary records
-fit settings, circuit counts, its associated plot, and up to ten ranked circuits.
+The Nyquist plots contain the five highest-ranked fits. Each version 2 JSON
+summary records its ranking metric, residual scale, scatter floor, initial
+starts, seed, both sorting choices, refinement margin, optimizer settings,
+circuit counts, its associated plot, and up to ten ranked circuits. Each listed
+circuit also records its effective `optimizer_max_nfev`, which may depend on
+its parameter count. Older saved summaries retain their original metadata.
 Filename suffixes default to `first_round` and `reoptimized` and can be changed
 with `--filename-suffix` and `--final-filename-suffix`.
 

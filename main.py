@@ -19,7 +19,7 @@ from Circuit_generation.circuit_class import (
 )
 
 PROJECT_DIR = Path(__file__).resolve().parent
-SAVE_RESULTS = False
+SAVE_RESULTS = True
 
 # ---------------------------------------------------------------------------
 # SELECT INPUT FORMAT
@@ -30,7 +30,7 @@ SAVE_RESULTS = False
 # Use "simulated" for output from data/simulation/run_simulation.py. The
 # bundled sample keeps a clean clone runnable without external measurements.
 # Use "pcl" for processed battery dictionaries with frequency/Z at indices 0/1.
-DATA_MODE = "simulated"
+DATA_MODE = "spectrum"
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ SIMULATED_DATA_PATH = (
     / "data"
     / "simulation"
     / "generated"
-    / "simulated_spectrum.npz"
+    / "simulated_spectrum_001.npz"
 )
 
 
@@ -88,15 +88,15 @@ SIMULATED_DATA_PATH = (
 
 #grammar_type = "compact_hybrid"
 grammar_type ="no_G_relaxed"
-nr_elements = 4
+nr_elements = 5
 
 
 OPTIMIZER = "linear"
 # Refine every circuit with MSE <= best first-round MSE * (1 + this margin).
 REOPTIMIZATION_ERROR_MARGIN = 0.20  # 20%; plots still show only the top five.
-FILENAME_PREFIX = ""
+FILENAME_PREFIX = "lin_opt_no_scale"
 FILENAME_SUFFIX = "first_round" #fixed_starting_values_no_normalization
-FILENAME_SUFFIX_REOPTIMIZED = "reoptimized" #fixed_starting_values_no_normalization
+FILENAME_SUFFIX_REOPTIMIZED = "reoptimized_leastSquares" #fixed_starting_values_no_normalization
 PLOT_TITLE = "Nyquist plot with stratified random starting values, normalized residuals and more robust solver"
 PLOT_TITLE_REOPTIMIZED = "Top circuits after reoptimization"
 
@@ -407,6 +407,15 @@ def main(argv: list[str] | None = None) -> None:
             print(f"Saved residual plot: {residual_path}")
 
     if SAVE_RESULTS:
+        run_settings = {
+            "residual_scale": RESIDUAL_SCALE,
+            "scatter_floor": args.scatter_floor,
+            "number_starts": args.number_starts,
+            "random_seed": args.random_seed,
+            "first_round_ranking_metric": sort_first_round,
+            "second_round_ranking_metric": sort_second_round,
+            "reoptimization_error_margin": args.reoptimization_error_margin,
+        }
         export_fit_summary(
             results=results,
             output_path=summary_path,
@@ -415,9 +424,11 @@ def main(argv: list[str] | None = None) -> None:
             circuit_path=CIRCUIT_PATH,
             grammar_name=collection_name,
             maximum_elements=nr_elements,
-            optimizer=OPTIMIZER,
+            optimizer="least_squares",
             optimizer_settings=initial_settings,
             frequency=frequency,
+            ranking_metric=sort_first_round,
+            run_settings=run_settings,
         )
         export_fit_summary(
             results=besties,
@@ -427,9 +438,11 @@ def main(argv: list[str] | None = None) -> None:
             circuit_path=CIRCUIT_PATH,
             grammar_name=collection_name,
             maximum_elements=nr_elements,
-            optimizer=OPTIMIZER,
+            optimizer="least_squares",
             optimizer_settings=final_settings,
             frequency=frequency,
+            ranking_metric=sort_second_round,
+            run_settings=run_settings,
         )
 
         print(f"Saved plot first round: {plot_path}")

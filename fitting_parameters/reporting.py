@@ -226,8 +226,10 @@ def export_fit_summary(
     optimizer: str,
     optimizer_settings: Mapping[str, Any],
     frequency: np.ndarray,
+    ranking_metric: str,
+    run_settings: Mapping[str, Any],
 ) -> Path:
-    """Write fit metadata and the ten best ranked circuits to JSON."""
+    """Write run settings and the ten best ranked circuits to JSON."""
     if not results:
         raise ValueError("At least one fit result is required to create a summary")
 
@@ -264,11 +266,18 @@ def export_fit_summary(
                 "optimizer_status": result.get("optimizer_status"),
                 "optimizer_message": result.get("optimizer_message"),
                 "function_evaluations": result.get("function_evaluations"),
+                "optimizer_max_nfev": result.get(
+                    "optimizer_max_nfev", optimizer_settings.get("max_nfev")
+                ),
             }
         )
 
     document = {
-        "format_version": 1,
+        "format_version": 2,
+        "ranking_metric": ranking_metric,
+        "run_settings": {
+            key: _json_value(value) for key, value in run_settings.items()
+        },
         "dataset": str(dataset_path),
         "circuit_collection": str(circuit_path),
         "grammar": grammar_name,
@@ -290,7 +299,6 @@ def export_fit_summary(
             "successful": successful_count,
             "unsuccessful": len(results) - successful_count,
         },
-        "ranking_metric": "mse",
         "associated_plot": str(plot_path),
         "circuits_shown_in_plot": min(5, len(results)),
         "top_circuits": top_circuits,
