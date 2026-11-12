@@ -37,36 +37,59 @@ def load_pcl_spectrum(file_path, channel="batt_1"):
     return frequency, impedance, np.ones_like(frequency), np.ones_like(frequency)
 
 
-def load_spectrum(file_path):
-    """
-    Load one EIS NPZ file and produce one median impedance value
-    for every frequency.
+def load_spectrum(file_path: str | Path) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Load component-wise median impedance and repeat scatter from an EIS NPZ."""
+    frequency, impedance, sigma_real, sigma_imag, _ = _load_spectrum(file_path)
+    return frequency, impedance, sigma_real, sigma_imag
 
-    Returns
-    -------
-    frequency : np.ndarray
-        One-dimensional array of frequencies.
 
-    impedance : np.ndarray
-        One-dimensional array of complex median impedances.
+def load_spectrum_direct(
+    file_path: str | Path, *, column_index: int | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[int]]:
+    """Use one raw repeat column per block, defaulting to each block's midpoint.
+
+    Scatter is still estimated from all repeats. Return the chosen column index
+    for each block so saved results identify the exact samples used.
     """
+    if column_index is not None and column_index < 0:
+        raise ValueError("column_index must be nonnegative")
+    return _load_spectrum(file_path, direct=True, column_index=column_index)
+
+
+def _load_spectrum(
+    file_path: str | Path, *, direct: bool = False, column_index: int | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[int]]:
+    """Read the common F/Z block format for median and direct spectrum modes."""
     file_path = Path(file_path)
 
     with np.load(file_path, allow_pickle=True) as data:
         frequency = np.asarray(data["F"], dtype=float)
         impedance_blocks = data["Z"]
 
-        median_blocks = []
+        impedance_results = []
         sigma_real_overall = []
         sigma_imag_overall = []
-        for block in impedance_blocks:
+        selected_columns = []
+        for block_number, block in enumerate(impedance_blocks):
             block = np.asarray(block)
+            if block.ndim != 2 or block.shape[1] == 0:
+                raise ValueError(f"Impedance block {block_number} must have frequency rows and repeat columns")
 
             median_real = np.nanmedian(block.real, axis=1)
             median_imag = np.nanmedian(block.imag, axis=1)
 
             median_impedance = median_real + 1j * median_imag
-            median_blocks.append(median_impedance)
+            if direct:
+                selected = block.shape[1] // 2 if column_index is None else column_index
+                if selected >= block.shape[1]:
+                    raise ValueError(
+                        f"Column {selected} is outside impedance block {block_number} "
+                        f"with {block.shape[1]} columns"
+                    )
+                impedance_results.append(block[:, selected])
+                selected_columns.append(selected)
+            else:
+                impedance_results.append(median_impedance)
 
             sigma_real = 1.4826 * np.nanmedian(
                 np.abs(block.real - median_real[:, None]),
@@ -79,7 +102,7 @@ def load_spectrum(file_path):
             )
             sigma_imag_overall.extend(sigma_imag)
             sigma_real_overall.extend(sigma_real)
-    impedance = np.concatenate(median_blocks)
+    impedance = np.concatenate(impedance_results)
 
     if len(frequency) != len(impedance):
         raise ValueError(
@@ -96,7 +119,10 @@ def load_spectrum(file_path):
     sigma_real_overall = np.asarray(sigma_real_overall)
     sigma_imag_overall = np.asarray(sigma_imag_overall)
 
-    return frequency[valid], impedance[valid], sigma_real_overall[valid], sigma_imag_overall[valid]
+    if not np.any(valid):
+        raise ValueError("No finite impedance points remain in the selected spectrum")
+
+    return frequency[valid], impedance[valid], sigma_real_overall[valid], sigma_imag_overall[valid], selected_columns
 
 def raw_impedance(path, channel="batt_1", period_seconds=100):
     with np.load(path, allow_pickle=False) as data:

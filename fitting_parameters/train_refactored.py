@@ -9,7 +9,15 @@ from fitting_parameters.initialize_parameters import (
     get_parameter_names,
     generate_initial_values
 )
-from fitting_parameters.model_selection import compute_bic, compute_mse, compute_relative_mse, compute_weighted_lp,compute_weighted_mse, compute_ebic
+from fitting_parameters.model_selection import (
+    compute_aic,
+    compute_bic,
+    compute_ebic,
+    compute_mse,
+    compute_relative_mse,
+    compute_weighted_lp,
+    compute_weighted_mse,
+)
 
 from collections import Counter
 from collections.abc import Iterable
@@ -22,6 +30,7 @@ RESIDUAL_SCALE = "relative"
 
 NUMBER_INITIAL_STARTS = 6
 RANDOM_SEED = 42
+INITIAL_MAX_NFEV_PER_PARAMETER = 7
 
 LEAST_SQUARES_SETTINGS = {
     "x_scale": "jac",
@@ -159,6 +168,7 @@ def _make_fitter(
 
     def fit(initial_values):
         x0 = to_optimizer(initial_values)
+        fit_started = perf_counter()
         result = least_squares(residual, x0, bounds=bounds, **settings)
         parameters = dict(zip(names, to_physical(result.x)))
         predicted = evaluate_impedance(circuit, frequency, parameters)
@@ -167,7 +177,10 @@ def _make_fitter(
             "parameters": parameters,
             "result": result,
             "score": compute_mse(measured_impedance, predicted),
+            # SciPy's cost includes a factor of 1/2; report loss per complex frequency.
+            "optimizer_value": 2 * float(result.cost) / len(frequency),
             "optimizer_max_nfev": settings.get("max_nfev"),
+            "fit_elapsed_seconds": perf_counter() - fit_started,
         }
 
     return fit
@@ -183,7 +196,7 @@ def fit_circuit_parameters_random_start(
     *, scale_type=RESIDUAL_SCALE,
     number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED,
 ):
-    """Fit every starting point and return the attempt with the lowest MSE."""
+    """Fit every starting point and return the lowest optimizer-cost attempt."""
     starting_values = generate_initial_values(
         circuit, number_starts=number_starts,
         random_seed=random_seed, deterministic=False,
@@ -191,7 +204,10 @@ def fit_circuit_parameters_random_start(
     nr_pars = len(get_parameter_names(circuit))
     fit = _make_fitter(
         circuit, frequency, measured_impedance,
-        get_parameter_names(circuit), {"max_nfev": nr_pars*5, **least_squares_settings},
+        get_parameter_names(circuit), {
+            "max_nfev": nr_pars * INITIAL_MAX_NFEV_PER_PARAMETER,
+            **least_squares_settings,
+        },
         real_scatter, imag_scatter, scale_type,
     )
     attempts = []
@@ -199,7 +215,14 @@ def fit_circuit_parameters_random_start(
         attempt = fit(initial_values)
         attempt.update(start_index=start_index, initial_values=initial_values)
         attempts.append(attempt)
-    return min(attempts, key=lambda attempt: attempt["score"])
+    best = min(attempts, key=lambda attempt: attempt["optimizer_value"])
+    best.update(
+        attempt_count=len(attempts),
+        successful_attempt_count=sum(bool(attempt["result"].success) for attempt in attempts),
+        total_function_evaluations=sum(int(attempt["result"].nfev) for attempt in attempts),
+        total_fit_elapsed_seconds=sum(float(attempt["fit_elapsed_seconds"]) for attempt in attempts),
+    )
+    return best
 
 
 def finalize_fit(
@@ -232,12 +255,20 @@ def _summarize_fit(
     )
     n = len(predicted - measured_impedance) * 2
     num_parameters = len(parameters)
+    parameter_bounds = {name: physical_bounds(name) for name in parameters}
+    parameters_at_bounds = [
+        name for name, value in parameters.items()
+        if any(np.isclose(value, bound, rtol=1e-6, atol=0) for bound in parameter_bounds[name])
+    ]
     summary = {
         "circuit": circuit,
         "parameters": parameters,
         "predicted_impedance": predicted,
         "lp_error": lp_error,
         "mse": mse,
+        "optimizer_value": optimization["optimizer_value"],
+        "relative_mse": compute_relative_mse(measured_impedance, predicted),
+        "aic": compute_aic(n, mse, num_parameters),
         "bic": compute_bic(n, mse, num_parameters),
         "lp_bic": compute_bic(n, lp_error, num_parameters),
         "ebic": 0 if manual else compute_ebic(
@@ -248,15 +279,29 @@ def _summarize_fit(
             len(measured_impedance), lp_error, num_parameters,
             number_circuit_per_size[num_parameters], gamma=gamma,
         ),
+        "ebic_gamma": None if manual else gamma,
         "success": result.success,
         "optimizer_status": int(result.status),
         "optimizer_message": str(result.message),
         "function_evaluations": int(result.nfev),
+        "total_function_evaluations": int(optimization.get("total_function_evaluations", result.nfev)),
+        "fit_elapsed_seconds": float(optimization.get("fit_elapsed_seconds", 0.0)),
+        "total_fit_elapsed_seconds": float(
+            optimization.get("total_fit_elapsed_seconds", optimization.get("fit_elapsed_seconds", 0.0))
+        ),
+        "attempt_count": int(optimization.get("attempt_count", 1)),
+        "successful_attempt_count": int(optimization.get("successful_attempt_count", bool(result.success))),
+        "selected_start_index": optimization.get("start_index"),
+        "initial_values": (
+            dict(optimization["initial_values"])
+            if isinstance(optimization.get("initial_values"), dict)
+            else dict(zip(parameters, optimization.get("initial_values", ())))
+        ),
+        "parameter_bounds": parameter_bounds,
+        "parameters_at_bounds": parameters_at_bounds,
         "optimizer_max_nfev": optimization.get("optimizer_max_nfev"),
         "rand_start": rand_start,
     }
-    if not manual:
-        summary["relative_mse"] = compute_relative_mse(measured_impedance, predicted)
     return summary
 
 
@@ -268,14 +313,15 @@ def compare_circuits(
     least_squares_settings=LEAST_SQUARES_SETTINGS,
     final_least_squares_settings=FINAL_LEAST_SQUARES_SETTINGS,
     number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED,
-    sort_first = "lp_error", sort_second = "lp_bic"
+    sort_first = "optimizer_value", sort_second = "bic"
 ):
-    """Rank by MSE and refine candidates within a fractional margin of the best.
+    """Rank and refine candidates within a margin of the chosen first-round metric.
 
     Scatter and optimizer arguments retain the original public interface.
     scale_type selects unscaled, repeated-measurement scatter, component-relative,
     or shared impedance-magnitude residuals for every fitting stage.
-    Ranking metrics are unchanged.
+    optimizer_value is SciPy's loss per complex frequency and is the default
+    first-round ranking metric; other ranking metrics remain available.
     """
     if not np.isfinite(reoptimization_error_margin) or reoptimization_error_margin < 0:
         raise ValueError("reoptimization_error_margin must be finite and nonnegative")
@@ -323,6 +369,7 @@ def compare_circuits(
             real_scatter, imag_scatter, scale_type=scale_type,
             least_squares_settings=final_least_squares_settings,
         )
+        optimized["start_index"] = result.get("selected_start_index")
         best_results.append(
             summarize(circuit, optimized, result["rand_start"], gamma=0.5)
         )

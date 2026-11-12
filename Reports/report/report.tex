@@ -179,20 +179,46 @@ In the following paper we are interested in fitting equivalent circuits to elect
 to be interesting, as it provides a straightforward way to exhaustively search the space of possible circuits up to a certain complexity. This offers flexibility not only
 in the sense of fitting parameters, but also when it comes to building the underlying circuit.
 
-\subsection{Electrical impedance spectroscopy (EIS) and equivalent circuit modeling (ECM)}
+\subsection{Solid Oxide Fuel Cells (SOFCs) and batteries}
+
+Alternative sources of electrical energy are becoming increasingly relevant with the strong focus on shifting away from fossil fuel technology. In the present work we focus on data obtained
+from two important options in the energy landscape - fuel cells, specifically SOFCs and batteries (Li-ion). In this section we briefly explain their working mechanics.
+
+\subsubsection{Solid Oxide Fuel Cells}
+
+Fuel cells can be viewed as factories for producing electricity. In a typical hydrogen fuel cell, hydrogen splits into protons and electron on the anode. The electrons
+flow through an external circuit, while the protons cross the electrolyte layer and react with oxygen on the cathode, producing water and heat. SOFCs work differently; 
+their high operating temperature enables the oxygen ions to move through a solid ceramic electrolyte from the cathode to the anode. There they react with the fuel such as hydrogen or carbon monoxide,
+releasing electrons and heat and producing water or carbon dioxide, respectively.
+
+Compared to standard fuel cells, SOFCs offer larger fuel flexibility and higher efficiency, while their high operating temperature also makes the waste heat useful, if handled correctly. Their main
+drawbacks are slow startup and component wear. \cite{OHayre2016FuelCellFundamentals}
+
+\subsubsection{Lithium Ion Batteries}
+
+Lithium-ion batteries store energy chemically and release it as electricity. During discharge, lithium ions move from the negative electrode through the electrolyte to the positive electrode, 
+while electrons flow through an external circuit to power a device. Charging drives both flows in the opposite direction, allowing the battery to be used again. 
+Their main advantages are high energy density and rechargeability, though their capacity gradually declines with use.
+
+\subsection{Electrochemical impedance spectroscopy (EIS) and equivalent circuit modeling (ECM)}
 
 %explain what EIS data is briefly and why we use ECM
-EIS data is when you perturb the battery/sofc slightly and observe the response. The way in which the observed cell response gives some insight into what's happening inside.
-Equivalent circuit modeling (ECM)looks at the measurement from a purely mathematical point of view, in the way that it is not concerned with the physical component from which it was obtained.
-It aims to create a circuit from a predefined set of mostly simple elements that reproduces the measurements, in the hope of gaining some more understanding in the chemical process occurring
-in the device that produced the data.
+Electrochemical impedance spectroscopy is a modelling technique where we aim to understand the processes that occur in the battery or fuel cell better. In simple terms, we 
+keep the cell at a certain potential, perturb the voltage slightly at a given frequency and measure the current's response. We then repeat this measurement at many frequencies, since the
+electrochemical components behave differently at various frequencies.
 
+Equivalent circuit modeling (ECM) looks at the measurement from a purely mathematical point of view, in the way that it is not concerned with the physical component from which it was obtained.
+It aims to create a circuit from a predefined set of mostly simple elements that reproduces the measurements, in the hope of gaining some more understanding in the chemical process occurring
+in the device that produced the data. 
 
 \section{Grammar based modeling}
 
-We use a formal grammar to define candidate circuits which we then fit on the data. The grammar we use does not impose any structural
+%Grammar based is good because it gives structure and it guarantees the circuits are ok. We can also give more rules
+%based on domain knowledge
+
+We use a formal context-free grammar to define candidate circuits which we then fit on the data. The grammar we use does not impose any structural
 assumptions on the circuit. Each element can appear at any position, the only restriction being that a resistor $\term{Rs}$ is in series
-with the rest of the circuit. The circuit elements present are standard equivalent circuit modeling (ECM) elements, which we present in Section \ref{circuit_gen} below.
+with the rest of the circuit. The circuit elements present are standard (ECM) elements, which we present in Section \ref{circuit_gen} below.
 
 \begin{equation}
 \label{eq:grammar-relaxed}
@@ -232,7 +258,39 @@ Here we describe the core procedure.
 
 Circuit generation from formal grammars feels almost like solving a puzzle backwards. We consequently connect elements in series or parallel
 and in the end map each $\nt{Element}$ to either a resistor, inductor, Warburg element or a CPE. We replace two resistors (inductors) in series or in parallel with a single resistor (inductor),
-which helps to keep the total number of circuits down.
+which helps to keep the total number of circuits down. This simplification is performed during generation to limit the computation time.
+
+When generating circuits from grammars one has to define a certain complexity metric for each circuit. We decided to limit the number of elements in the circuit, as this more intuitively 
+tells us how complex the circuit is, compared to, for example, grammar tree depth. We outline the generation algorithm for circuits up to a certain depth $N$ in Algorithm \ref{circuitGenAlgo}.
+Function \texttt{Normalize} merges collapsible elements, namely resistors and inductors. Each circuit is also assumed to contain one resistor in series with the remainder.
+
+\begin{algorithm}[H]\label{circuitGenAlgo}
+\caption{Generate circuits with at most $N$ elements}
+\begin{algorithmic}[1]
+\Require Maximum element count $N$; allowed primitive elements or blocks $P$
+\State $B_1,\ldots,B_{N-1} \gets \varnothing$; $C \gets \{\term{Rs}\}$ \Comment{Each circuit contains $\term{Rs}$}
+\ForAll{$p \in P$}
+    \State $q \gets \Call{Normalize}{p}$
+    \If{$|q| < N$} \State $B_{|q|} \gets B_{|q|} \cup \{q\}$ \Comment{Normalized primitive blocks are building buckets of size 1} \EndIf 
+\EndFor
+\For{$n = 1,\ldots,N-1$}
+    \For{$l = 1,\ldots,\lfloor n/2\rfloor$} \Comment{Circuit with $n$ elements is split in two sub-circuits with $l$ and $r$ elements}
+        \State $r \gets n-l$
+        \ForAll{$(u,v) \in B_l \times B_r$}
+            \ForAll{$o \in \{\text{series},\text{parallel}\}$}
+                \State $w \gets \Call{Normalize}{o(u,v)}$ \Comment{Normalize two connected already normalized buckets}
+                \If{$|w| = n$} \State $B_n \gets B_n \cup \{w\}$ \Comment{If size of connected buckets is smaller than $n$ we skip it as it already exists}
+                \EndIf 
+            \EndFor
+        \EndFor
+    \EndFor
+    \ForAll{$w \in B_n$}
+        \State $C \gets C \cup \{\Call{Normalize}{\text{series}(\term{Rs},w)}\}$
+    \EndFor
+\EndFor
+\State \Return $C$
+\end{algorithmic}
+\end{algorithm}
 
 %Two resistors (inductors) in series or in parallel can be replaced by a single resistor (inductor),
 %which
@@ -276,15 +334,21 @@ element with impedance defined as
 As described above, frequency domain impedance equations are directly generated from the circuits by simply summing up elements
 impedance formulas when they are connected in series, and summing up their reciprocal values when they are connected in parallel circuits.
 
-We set a ceiling of the number of elements that may feature in the circuits. We run the optimization algorithm (more on that in a later section)
-up to a certain threshold, and for the circuits within a certain cutoff margin we re-run the optimization algorithm with 
-stricter thresholds to obtain results as close to full convergence as possible. 
+Before we start the fitting procedure, we need to decide how complex circuits (i.e. how many elements they contain) are we fitting. Number of
+candidates increases rapidly, which needs to be taken into account: there are 92 4 element circuits, 601 5 element circuits and several thousand 6 element
+circuits. In the following work we focus on circuits up to 5 elements, as we deem they strike a balance between modest computation time and sufficient
+accuracy.
 
-We sort these 5 based on standard BIC to include some penalty for circuit complexity.
+Search for optimal parameter values can be split in two parts. In the first part we test all candidates, then select the best performing ones and 
+continue optimizing the result.
+%We run the optimization algorithm (more on that in a later section)
+%up to a certain threshold, and for the circuits within a certain cutoff margin we re-run the optimization algorithm with 
+%stricter thresholds to obtain results as close to full convergence as possible. 
+
 
 \subsubsection{Initial value selection}
 
-We opted for a multi start stratified approach. Each circuit gets fitted 6 times in the initial evaluation. First fit is using deterministic
+We opted for a multi-start stratified approach. Each circuit gets fitted 6 times in the initial evaluation. First fit is using deterministic
 fixed values $p_{fixed}$:
 
 \begin{itemize}
@@ -306,96 +370,142 @@ For the remaining 5 starts we selected the values as follows:
 This way we get a decent spread of initial values. We chose a narrower band for $R_s$ as it is more directly constrained by the higher frequencies,
 and kept a broader band to allow for more uncertainty in initial values.
 
+\subsubsection{Normalising residuals}\label{normalisation}
+
+
+%We obtain one scale value per frequency in either of the two types of data used. For SOFC data, since each dataset is comprised of
+%several measurements across 233 frequencies, we take a median of impedances. This leaves us with a 233 point dataset. To calculate the scales, we
+%take the median absolute deviation (MAD) of impedances of each frequency.
+%
+%For the battery data, we first need to derive the impedances from the raw data available. Since there are many datapoints available we randomly
+%sample 300 points for the data
+%
+%We noticed that in some cases the scales can be quite small, which makes dividing residual values (which can also be small) with them unstable.
+%To this end, we replace the smallest 10 \% of the values of the scale with a fixed value. It should be noted that we calculate separate scale values
+%for imaginary and real parts of the impedances.
+
+Residual normalisation is a standard procedure in robust statistics where we expect a certain amount of noise in the data.
+To prevent large impedance measurements from dominating the result we decided to normalise the residuals during the optimization algorithm.
+We tested three ways of normalising the residuals. Firstly, when we have repeated measurements of the same battery at the same conditions, we can take the MAD
+across measurements at every frequency and use that as a normalising factor. We call that the \texttt{scatter} method.
+
+To make methods comparable across different structures of datasets, we decided to try normalisation that does not depend on such dataset structure. \texttt{Magnitude} scaling
+uses $|Z|$ at each frequency, with a lower bound of 10\% of the median $|Z|$. \texttt{Relative} scaling
+divides real parts of errors with $|\text{Re}(Z)|$ and imaginary with $|\text{Im}(Z)$. The latter is the default option in our numerical algorithm.
+
+%\begin{itemize}
+%    \item \texttt{scatter}
+%    \begin{itemize}
+%        \item Useful if we have repeated measurements of the same battery at the same conditions
+%        \item Take the MAD across measurements at every frequency and use that as a normalising factor
+%    \end{itemize}
+%    \item \texttt{magnitude} 
+%    \begin{itemize}
+%        \item Divide the residuals by the largest absolute value of the measured impedance
+%    \end{itemize}
+%    \item \texttt{relative}
+%    \begin{itemize}
+%        \item Divide real and imaginary parts of the residuals with respective largest real and imaginary parts of the impedances
+%    \end{itemize}
+%\end{itemize}
+
 \subsubsection{Numerical algorithm}\label{numalg}
 
-In order to improve results of the algorithm we tried to improve robustness of SciPy's \texttt{least\_squares} algorithm. 
-For the initial optimization run we use:
+We fit parameters using several versions of least squares algorithms implemented in library SciPy \cite{2020SciPy-NMeth}. We test
+the non-robust version which uses the ``linear'' loss function (standard least squares formulation),
+and a version of the algorithm with the \texttt{soft\_l1} loss function in Equation \ref{soft_l1},
 
-\begin{table}[]
-\centering
-\begin{tabular}{l|l}
-Parameter & value \\ \hline
-\texttt{x\_scale} & \texttt{jac} \\
-\texttt{ftol} &  10{-6}\\
-\texttt{xtol} &  10{-6}\\
-\texttt{gtol} &  10{-6}\\
-\texttt{f\_scale} &  0.001\\
-\texttt{max\_nfev} &  100\\
-\texttt{loss} &  \texttt{soft\_l1}\\
-\texttt{method} & \texttt{trf}
-\end{tabular}
-\label{parsopt1}
-\caption{Parameters for the SciPy.optimize least\_squares algorithm in the first optimization}
-\end{table}
+%In order to improve results of the algorithm we tried to improve robustness of SciPy's \texttt{least\_squares} algorithm. 
+%For the initial optimization run we use:
+%
+%\begin{table}[]
+%\centering
+%\begin{tabular}{l|l}
+%Parameter & value \\ \hline
+%\texttt{x\_scale} & \texttt{jac} \\
+%\texttt{ftol} &  10{-6}\\
+%\texttt{xtol} &  10{-6}\\
+%\texttt{gtol} &  10{-6}\\
+%\texttt{f\_scale} &  0.001\\
+%\texttt{max\_nfev} &  100\\
+%\texttt{loss} &  \texttt{soft\_l1}\\
+%\texttt{method} & \texttt{trf}
+%\end{tabular}
+%\label{parsopt1}
+%\caption{Parameters for the SciPy.optimize least\_squares algorithm in the first optimization}
+%\end{table}
 
-TRF method means we use the \textit{Trust region field} method of nonlinear least squares, and JAC scale is a specific 
-way of calculating matrix column scales. Tolerance fields (f-,x-,g-) stop the iteration if function values, parameters or function's derivatives
-move less than the threshold. Soft L1 loss with corresponding f-scale parameter means that instead of minimizing squared residuals, the optimizer
-is instead minimizing the following objective function:
+%TRF method means we use the \textit{Trust region field} method of nonlinear least squares, and JAC scale is a specific 
+%way of calculating matrix column scales. Tolerance fields (f-,x-,g-) stop the iteration if function values, parameters or function's derivatives
+%move less than the threshold. Soft L1 loss with corresponding f-scale parameter means that instead of minimizing squared residuals, the optimizer
+%is instead minimizing the following objective function:
 
-\begin{equation}
+
+\begin{equation}\label{soft_l1}
     F(\boldsymbol{x})
     = \frac{C^2}{2}
       \sum_{i=1}^{m}
       \rho\left(\frac{r_i(\boldsymbol{x})^2}{C^2}\right),
 \end{equation}
-where $r_i(\boldsymbol{x})$ denotes the $i$th residual.
-For the \texttt{soft\_l1} loss with \texttt{f\_scale = 0.001},
+where $r_i(\boldsymbol{x})$ denotes the $i$th residual and
 \begin{equation}
-    \rho(z) = 2\left(\sqrt{1+z}-1\right),
-    \qquad C = 10^{-3}.
+    \rho(z) = 2\left(\sqrt{1+z}-1\right).
 \end{equation}
 
-Simply put, more residuals behave quadratically with a larger f-scale, while a smaller f-scale means most of the function is behaving like
-the L1 loss. For the first optimization round, so for all circuits generated, the stopping point was the 100 function evaluations.
+Parameter $C$ is called \texttt{f-scale} and is user defined. Residuals that are smaller than $C$
+behave quadratically, as in standard formulation, but those that are larger only have an absolute effect
+on the cost function - parameter $C$ intuitively presents a cutoff between quadratic and L1 loss.
 
-Substituting these expressions gives the optimization problem
-\begin{equation}
-    \boxed{
-        \min_{\boldsymbol{x}} F(\boldsymbol{x})
-        =
-        \min_{\boldsymbol{x}}
-        10^{-6}\sum_{i=1}^{m}
-        \left[
-            \sqrt{1+10^{6}r_i(\boldsymbol{x})^2}-1
-        \right].
-    }
-\end{equation}
+The parameter estimations were obtained via two-stage optimization procedure.
+We tested all candidate circuits in the first stage until they either stopped improving or
+they were evaluated 100 times. For the second stage we kept those, that were within 20\%
+of best performing one according to either MSE or optimizer cost function, depending on 
+the experiment. We continue evaluating these circuits until they they reach a plateau and
+perform final sorting via a measure, that takes model complexity into account.
 
-In the second optimization round, that is, for 5 circuits with smallest MSE values, we again used the same algorithm, but with stricter
-optimization values presented in Table \ref{parsopt2}. Main difference is the increased number of steps and stricter function evaluation.
-In this case, for each of the circuits one of the tolerances was reached before we hit the step limit.
-\begin{table}[]
-\centering
-\begin{tabular}{l|l}
-Parameter & value \\ \hline
-\texttt{x\_scale} & \texttt{jac} \\
-\texttt{ftol} &  10{-8}\\
-\texttt{xtol} &  10{-8}\\
-\texttt{gtol} &  10{-8}\\
-\texttt{f\_scale} &  0.001\\
-\texttt{max\_nfev} &  10000\\
-\texttt{loss} &  \texttt{soft\_l1}\\
-\texttt{method} & \texttt{trf}
-\end{tabular}
-\caption{Parameters for the SciPy.optimize least\_squares algorithm in the second optimization round}
-\label{parsopt2}
-\end{table}
+Standard definition of BIC includes the MSE. Since we we normalise the residuals as
+we fit the parameters we decided to use the \texttt{weighted\_BIC}, where instead of raw 
+we use weighted residuals to compute BIC.
 
-\subsubsection{Normalising residuals}\label{normalisation}
+%\subsection{}
 
-We obtain one scale value per frequency in either of the two types of data used. For SOFC data, since each dataset is comprised of
-several measurements across 233 frequencies, we take a median of impedances. This leaves us with a 233 point dataset. To calculate the scales, we
-take the median absolute deviation (MAD) of impedances of each frequency.
 
-For the battery data, we first need to derive the impedances from the raw data available. Since there are many datapoints available we randomly
-sample 300 points for the data
+%Simply put, more residuals behave quadratically with a larger f-scale, while a smaller f-scale means most of the function is behaving like
+%the L1 loss. For the first optimization round, so for all circuits generated, the stopping point was the 100 function evaluations.
+%
+%Substituting these expressions gives the optimization problem
+%\begin{equation}
+%    \boxed{
+%        \min_{\boldsymbol{x}} F(\boldsymbol{x})
+%        =
+%        \min_{\boldsymbol{x}}
+%        10^{-6}\sum_{i=1}^{m}
+%        \left[
+%            \sqrt{1+10^{6}r_i(\boldsymbol{x})^2}-1
+%        \right].
+%    }
+%\end{equation}
+%
+%In the second optimization round, that is, for 5 circuits with smallest MSE values, we again used the same algorithm, but with stricter
+%optimization values presented in Table \ref{parsopt2}. Main difference is the increased number of steps and stricter function evaluation.
+%In this case, for each of the circuits one of the tolerances was reached before we hit the step limit.
+%\begin{table}[]
+%\centering
+%\begin{tabular}{l|l}
+%Parameter & value \\ \hline
+%\texttt{x\_scale} & \texttt{jac} \\
+%\texttt{ftol} &  10{-8}\\
+%\texttt{xtol} &  10{-8}\\
+%\texttt{gtol} &  10{-8}\\
+%\texttt{f\_scale} &  0.001\\
+%\texttt{max\_nfev} &  10000\\
+%\texttt{loss} &  \texttt{soft\_l1}\\
+%\texttt{method} & \texttt{trf}
+%\end{tabular}
+%\caption{Parameters for the SciPy.optimize least\_squares algorithm in the second optimization round}
+%\label{parsopt2}
+%\end{table}
 
-We noticed that in some cases the scales can be quite small, which makes dividing residual values (which can also be small) with them unstable.
-To this end, we replace the smallest 10 \% of the values of the scale with a fixed value. It should be noted that we calculate separate scale values
-for imaginary and real parts of the impedances.
-
-%In practice
 
 \section{Results}
 
@@ -404,27 +514,160 @@ of the algorithm (additional settings for the SciPy's least-squares solver, norm
 
 The plots presented in the graphs are the Nyquist graphs of the 5 circuits which we fitted until convergence, ordered by their BIC values.
 
+\subsection{Simulation study}
+
+We first test the above method on two simulated datasets, one coming from an ECM that is typical for SOFCs, and the second reproducing an impedance
+dataset that resembles a battery. 
+
+\[
+\begin{aligned}
+\textnormal{SOFC circuit}
+    &= R_s
+    \seriesconn
+    \left[
+        R_1
+        \parallel
+        \CPEel{Q_2}{\alpha_2}
+    \right]
+    \seriesconn
+    \left[
+        R_3
+        \parallel
+        \CPEel{Q_4}{\alpha_4}
+    \right]
+    ,
+    \\[1.5ex]
+\textnormal{Battery circuit}
+    &= R_s
+    \seriesconn
+    \left[
+        R_1
+        \parallel
+        \CPEel{Q_2}{\alpha_2}
+    \right]
+    \seriesconn
+    W(\sigma_3).
+\end{aligned}
+\]
+
+We simulated the spectra by evaluating the above circuits at 351 logarithmically spaced points between 0.1 and 100.000 Hz. At each frequency point we
+simulated 20 measurements by adding independent Gaussian with standard deviation $\sqrt{(0.15|Z|^2) + (0.05\Omega)^2}$ to both
+real and imaginary component.
+
+\begin{figure}[htbp]
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{/home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png}
+        \caption{Simulated battery data fit results}
+        \label{batterySim}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{/home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png}
+        \caption{Simulated SOFC data fit results}
+        \label{sofcSim}
+    \end{subfigure}
+    \caption{Comparison of the two fits.}
+    \label{simData}
+\end{figure}
+
+In the Figure \ref{simData} we see that even with substantial noise, our grammar based method manages to recreate the Nyquist plots. Looking especially
+at Figure \ref{sofcSim} it becomes clear that several circuits are capable of recreating the data. The selected circuit exactly matches the simulating one 
+in the battery data case, which is not the case in the SOFC simulated data, where a completely different circuit structure matches the Nyquist plot. This already
+raises the question of identifiability.
+
+
+\[
+\textnormal{Selected SOFC circuit}
+    = R_s
+    \seriesconn
+    \left[
+    \CPEel{Q_1}{\alpha_1}
+    \parallel
+    \left(
+        R_2
+        \seriesconn
+        \left(
+            R_3
+            \parallel
+            \CPEel{Q_4}{\alpha_4}
+        \right)
+    \right)
+    \right]
+\]
+
+\begin{table}[htbp]
+\centering
+\caption{True and selected parameters for simulated battery spectrum}
+\label{tab:sim006-parameters}
+\begin{tabular}{@{}lrlr@{}}
+\toprule
+\textbf{True parameter} & \textbf{Value}
+& \textbf{Selected parameter} & \textbf{Estimate} \\
+\midrule
+$R_s$       & 0.100000 & $R_s$         & 0.098178 \\
+$R_1$       & 0.400000 & $R_1$         & 0.400238 \\
+$Q_2$       & 0.020000 & $Q_2$         & 0.020729 \\
+$\alpha_2$  & 0.850000 & $\alpha_2$    & 0.852767 \\
+$\sigma_3$    & 0.500000 & $\sigma_3$    & 0.497347 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In Table \ref{tab:sim006-parameters} we see that our method successfully found the correct model with parameter estimation that very closely
+matches the simulator values.
+
+%\begin{table}[htbp]
+%\centering
+%\caption{True and selected parameters for simulated SOFC spectrum 007.
+%The selected circuit has a different topology, so values placed on the
+%same row should not be interpreted as estimates of the same component.}
+%\label{tab:sim007-parameters}
+%\begin{tabular}{@{}lrlr@{}}
+%\toprule
+%\textbf{True parameter} & \textbf{Value}
+%& \textbf{Selected parameter} & \textbf{Estimate} \\
+%\midrule
+%$R_s$       & 0.100000 & $R_s$       & 0.099206 \\
+%$R_1$       & 0.400000 & $R_2$       & 0.407632 \\
+%$Q_1$       & 0.020000 & $Q_1$       & 0.019695 \\
+%$\alpha_1$  & 0.850000 & $\alpha_1$  & 0.860670 \\
+%$R_2$       & 0.800000 & $R_3$       & 0.698284 \\
+%$Q_2$       & 5.000000 & $Q_4$       & 5.625948 \\
+%$\alpha_2$  & 0.700000 & $\alpha_4$  & 0.771703 \\
+%\bottomrule
+%\end{tabular}
+%\end{table}
+
 \subsection{SOFC data}
+We continue testing our algorithm on real world data, first from a solid oxide fuel cell and in the following Section \ref{battery} we present results from battery data.
+For SOFC we chose \texttt{eis\_20200226\_230006.npz} dataset from repository \\\href{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}.
+In this dataset, 233 measurements are repeated several times at each frequency and we calculate their median to obtain one impedance value per frequency.
 
-We took \texttt{eis\_20200227\_070006.npz} dataset from repository \\\href{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}{https://portal.ijs.si/nextcloud/s/xTa2cmtfxXn2jSz}.
-As mentioned in Section \ref{normalisation}, we have several repeated measurements of impedance at each frequency. We take the median of them to get 
-one impedance value per frequency.
-
-In Figure \ref{sofc4el} we see results of fitting circuits with up to 4 elements. They do not capture any of the details of the data.
+In Figure \ref{sofc4el} we see results of fitting circuits with up to 4 elements on the SOFC dataset, which delivers poor results as the details of the data are not 
+captured in the fit.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 4 elements}
+\includegraphics[width=\textwidth]{../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png}
+\caption{Nyquist graphs of 5 best fitting circuits on SOFC dataset with up to 4 elements after MSE margin reoptimization}
 \label{sofc4el}
 \end{figure}
-%Nadaljeval sem z ocenjevanjem parametrov, vendar pa tudi s 5 elementi rezultati niso bili najboljši, kot je razvidno iz Grafa \ref{sofc5el_nonorm}.
 
-Results with an additional circuit element are only marginally better (Figure \ref{sofc5el_nonorm}).
+
+%\begin{figure}[h]
+%\centering
+%\includegraphics[width=\textwidth]{../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png}
+%\caption{Nyquist graphs of 5 best fitting circuits on SOFC dataset with up to 4 elements after MSE margin reoptimization}
+%\label{sofc4el}
+%\end{figure}
+
+
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png}
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png}
 \caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements}
 \label{sofc5el_nonorm}
 \end{figure}
@@ -436,7 +679,7 @@ several parameters are close to their limits (especially $\alpha$).
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png}
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png}
 \caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and normalised residuals.}
 \label{sofc5el}
 \end{figure}
@@ -446,7 +689,7 @@ in results in Graph \ref{sofc5elnum}.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png}
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png}
 \caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
 \label{sofc5elnum}
 \end{figure}
@@ -782,19 +1025,20 @@ $\alpha_4$ &
 
 
 
-\subsection{Battery data}
+\subsection{Battery data}\label{battery}
 
 We apply the methods to data from batteries as well. We used data from 
 \href{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}.
 
-%Enake metode sem uporabil tudi na podatkih iz baterij iz repozitorija \\\href{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}.
-%Tej so predvsem v nizkih frekvencah bolj razpršeni, zato je grafe vizualno morda težje ocenjevati.
-
+The \texttt{eis\_bank1\_20251016-084621.pcl} battery spectrum contains 128 complex impedance values for channel \texttt{batt\_1}, spanning 0.00141 to 1000 Hz.
+The real part ranges from 0.0165 to 0.0392 $\Omega$. The imaginary part remains negative across the entire spectrum, reaching -0.0295 $\Omega$ at the lowest frequency. 
+Both components increase in magnitude toward low frequencies, producing a pronounced low-frequency tail that is normal in batteries and implies low frequency
+diffusion. In this case measurements are not repeated (different channels mean different physical battery packs) so we do not perform any imputation of the data.
 
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png}
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png}
 \caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 4 elements}
 \end{figure}
 
@@ -802,12 +1046,12 @@ We apply the methods to data from batteries as well. We used data from
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png}
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png}
 \caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements}\end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png}
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png}
 \caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
 \end{figure}
 
@@ -1099,13 +1343,13 @@ $\alpha_4$
 %\centering
 %\begin{subfigure}{.5\textwidth}
 %  \centering
-%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png}
+%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_4_best_5.png}
 %  \caption{A subfigure}
 %  \label{fig:sub1}
 %\end{subfigure}%
 %\begin{subfigure}{.5\textwidth}
 %  \centering
-%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png}
+%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png}
 %  \caption{A subfigure}
 %  \label{fig:sub2}
 %\end{subfigure}
@@ -1119,7 +1363,7 @@ $\alpha_4$
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png}
+\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png}
 \caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
 \end{figure}
 

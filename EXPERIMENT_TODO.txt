@@ -1,0 +1,43 @@
+TODO: Numerical-method results for PCL and measured spectrum data
+
+Goal
+Show separately how much fit quality improves when (1) the allowed circuit
+complexity increases and (2) the numerical fitting method improves, especially
+through residual normalization. Use colleagues' extended simulations as a
+separate validation section.
+
+Dataset selection
+[ ] Select representative measured spectrum and PCL datasets, including at
+    least one difficult fit. Record the PCL channel for each pickle.
+[ ] Record each dataset's frequency range, number of points, preprocessing,
+    and any reason for excluding it from the comparison.
+
+Controlled comparison (run on the same dataset at every step)
+[ ] A: Fit circuits with up to 4 elements using the baseline method.
+[ ] B: Fit circuits with up to 5 elements using the baseline method.
+        B versus A isolates the gain from allowing more circuit complexity.
+[ ] C: Fit circuits with up to 5 elements with residual normalization added.
+        C versus B isolates the gain from normalization.
+[ ] D: Fit circuits with up to 5 elements with the remaining numerical
+        improvements added. D versus C shows their additional gain.
+[ ] Keep the grammar, input points, ranking rules, and starting seeds fixed
+    across steps. Record the number of starts and evaluation budget. If a step
+    uses more computation, report the extra cost alongside its fit gain.
+[ ] Save the exact settings, circuit collection, fit summaries, plots, and logs
+    for every step. Use the same evaluation metrics even when the fitting
+    objective changes.
+
+Results to calculate and show
+[ ] Make one comparison table per dataset with relative MSE, BIC, fit success
+    across matched seeds, function evaluations or runtime, and the number of
+    fitted parameters at their bounds. Compare BIC only within a dataset.
+[ ] Plot measured impedance and fitted curves on a Nyquist plot for A-D, using
+    consistent axis limits and clear labels.
+[ ] Plot error against frequency for A-D. Show the same raw real and imaginary
+    residuals on common axes, plus a relative-error view to reveal where
+    normalization helps. Use a logarithmic frequency axis.
+[ ] Describe which frequency regions improve, whether added complexity or
+    normalization accounts for most of the gain, and where fits remain poor.
+[ ] Repeat the four-step comparison on a few more selected datasets to check
+    whether the pattern is consistent. Keep full top-five circuit plots,
+    parameter tables, and other per-dataset details in the appendix.

@@ -402,6 +402,9 @@ INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr12.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx12.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx10.tfm
+INPUT /var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map
+INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc
 INPUT /usr/share/texmf/tex/latex/lm/ot1lmr.fd
 INPUT /usr/share/texmf/tex/latex/lm/ot1lmr.fd
 INPUT /usr/share/texmf/tex/latex/lm/ot1lmr.fd
@@ -462,40 +465,50 @@ INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmtt8.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmri10.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmri8.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmri7.tfm
-INPUT /var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map
-INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr9.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmcsc10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmcsc10.tfm
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmcsc10.tfm
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx10.tfm
 INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
 INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
 INPUT /usr/share/texmf/tex/latex/lm/ts1lmr.fd
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ts1-lmr10.tfm
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmri10.tfm
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc
 INPUT /usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmr10.tfm
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png
+INPUT /home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png
+INPUT ../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png
+INPUT ../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png
+INPUT ../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png
+INPUT ../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png
+INPUT ../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmr10.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmr7.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/rm-lmr5.tfm
@@ -524,27 +537,27 @@ INPUT /usr/share/texmf/fonts/tfm/public/lm/lmbsy10.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/lmbsy7.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/lmbsy5.tfm
 INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmbx10.tfm
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
-INPUT ../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
-INPUT ../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
-INPUT ../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
-INPUT ../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
-INPUT ../../Results/Plots/Nyquists/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
-INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmcsc10.tfm
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
+INPUT ../../Results/Plots/Nyquists/bulk/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png
+INPUT /usr/share/texmf/fonts/tfm/public/lm/ec-lmri10.tfm
 INPUT report.aux
 INPUT ./report.out
 INPUT ./report.out
@@ -563,8 +576,10 @@ INPUT /usr/share/texmf/fonts/type1/public/lm/lmr5.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmr6.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmr7.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmr8.pfb
+INPUT /usr/share/texmf/fonts/type1/public/lm/lmr9.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmri10.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmsy7.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmsy8.pfb
 INPUT /usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb

@@ -224,6 +224,7 @@ data/simulation/generated/*
 
 # Intermediate results
 Results/
+experiments/local_plan.csv
 
 # Ruff stuff:
 .ruff_cache/

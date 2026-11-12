@@ -1,4 +1,5 @@
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 import numpy as np
 from Circuit_generation.circuit_class import Resistor, Series, SeriesResistance
@@ -71,6 +72,12 @@ class ResidualScalingTests(unittest.TestCase):
                 )
                 self.assertEqual(len(results), 1)
                 self.assertEqual(len(best), 2)
+                self.assertEqual(results[0]["ebic_gamma"], 1)
+                self.assertEqual(best[0]["ebic_gamma"], 0.5)
+                self.assertIsNone(best[1]["ebic_gamma"])
+                self.assertIn("relative_mse", best[1])
+                self.assertIn("optimizer_value", results[0])
+                self.assertIn("optimizer_value", best[0])
                 self.assertEqual(scales.call_count, 3)
                 self.assertTrue(all(call.args[-1] == mode for call in scales.call_args_list))
 
@@ -78,8 +85,8 @@ class ResidualScalingTests(unittest.TestCase):
         frequency = np.array([1., 2., 3.])
         measured = np.array([1.+0j, 1.+0j, 1.+0j])
         for circuit, expected_limit in (
-            (SeriesResistance(), 5),
-            (Series((SeriesResistance(), Resistor("R1"))), 10),
+            (SeriesResistance(), 7),
+            (Series((SeriesResistance(), Resistor("R1"))), 14),
         ):
             with self.subTest(circuit=str(circuit)):
                 initial = train.fit_circuit_parameters_random_start(
@@ -92,6 +99,61 @@ class ResidualScalingTests(unittest.TestCase):
             np.ones(3), np.ones(3),
         )
         self.assertEqual(refined["optimizer_max_nfev"], 10000)
+
+    def test_selected_fit_keeps_aggregate_cost_without_each_attempt(self):
+        initial = train.fit_circuit_parameters_random_start(
+            SeriesResistance(), np.array([1., 2., 3.]),
+            np.ones(3, dtype=complex), np.ones(3), np.ones(3),
+            number_starts=3,
+        )
+        self.assertEqual(initial["attempt_count"], 3)
+        self.assertGreaterEqual(initial["total_function_evaluations"], initial["result"].nfev)
+        self.assertGreaterEqual(initial["total_fit_elapsed_seconds"], initial["fit_elapsed_seconds"])
+        self.assertIn(initial["start_index"], range(3))
+
+    def test_optimizer_value_matches_scipy_cost_and_linear_mse(self):
+        frequency = np.array([1., 2., 3.])
+        measured = np.array([1. + 0.2j, 1.5 + 0.3j, 2. + 0.4j])
+        settings = {"loss": "linear", "method": "trf"}
+        fit = train._make_fitter(
+            SeriesResistance(), frequency, measured, ["Rs"], settings,
+            np.ones(3), np.ones(3), "unscaled",
+        )
+        optimization = fit({"Rs": 1.})
+        self.assertAlmostEqual(
+            optimization["optimizer_value"], 2 * optimization["result"].cost / len(frequency)
+        )
+        self.assertAlmostEqual(optimization["optimizer_value"], optimization["score"])
+
+        robust_fit = train._make_fitter(
+            SeriesResistance(), frequency, measured, ["Rs"],
+            {"loss": "soft_l1", "f_scale": 0.1, "method": "trf"},
+            np.ones(3), np.ones(3), "unscaled",
+        )
+        robust = robust_fit({"Rs": 1.})
+        residuals = robust["result"].fun
+        expected = np.sum(2 * 0.1**2 * (np.sqrt(1 + (residuals / 0.1)**2) - 1)) / len(frequency)
+        self.assertAlmostEqual(robust["optimizer_value"], expected)
+
+    def test_best_start_uses_optimizer_value_even_when_mse_disagrees(self):
+        attempts = [
+            {
+                "optimizer_value": value,
+                "score": mse,
+                "result": SimpleNamespace(success=True, nfev=1),
+                "fit_elapsed_seconds": 0.1,
+            }
+            for value, mse in ((0.3, 0.1), (0.2, 0.2))
+        ]
+        with patch.object(train, "generate_initial_values", return_value=[{"Rs": 1.}, {"Rs": 2.}]), patch.object(
+            train, "_make_fitter", return_value=lambda _: attempts.pop(0)
+        ):
+            selected = train.fit_circuit_parameters_random_start(
+                SeriesResistance(), np.array([1.]), np.array([1. + 0j]),
+                np.ones(1), np.ones(1), number_starts=2,
+            )
+        self.assertEqual(selected["start_index"], 1)
+        self.assertEqual(selected["optimizer_value"], 0.2)
 
 
 if __name__ == '__main__':

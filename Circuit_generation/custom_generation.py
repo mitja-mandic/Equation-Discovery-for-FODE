@@ -402,7 +402,8 @@ def _record_node_sizes(node: CircuitNode, node_sizes: dict[int, int]) -> int:
 
 if __name__ == "__main__":
     # Generate circuits containing no more than n physical elements.
-    config = GeneratorConfig(max_elements=7)
+    #config = GeneratorConfig(max_elements=7)
+    config = GeneratorConfig(max_elements=4)
     generator = LimitedCircuitGenerator(config)
 
     circuits = generator.generate()

@@ -3,6 +3,7 @@ import math
 from pathlib import Path
 
 from fitting_parameters.reporting import (
+    build_fit_dataset_info,
     build_fit_output_paths,
     export_fit_summary,
     plot_circuit_fits,
@@ -10,16 +11,19 @@ from fitting_parameters.reporting import (
 )
 
 from fitting_parameters.train_refactored import LEAST_SQUARES_SETTINGS, FINAL_LEAST_SQUARES_SETTINGS, compare_circuits, count_models_by_num_params
-from fitting_parameters.train_refactored import RESIDUAL_SCALE, _residual_scales, NUMBER_INITIAL_STARTS, RANDOM_SEED
+from fitting_parameters.train_refactored import (
+    INITIAL_MAX_NFEV_PER_PARAMETER, NUMBER_INITIAL_STARTS, RANDOM_SEED,
+    RESIDUAL_SCALE, _residual_scales,
+)
 from Circuit_generation.circuit_export import load_circuits
-from fitting_parameters.load_data import raw_impedance, load_spectrum, load_pcl_spectrum, uniform_frequency_indices
+from fitting_parameters.load_data import raw_impedance, load_spectrum, load_spectrum_direct, load_pcl_spectrum, uniform_frequency_indices
 from fitting_parameters.model_selection import normalize_sigma
 from Circuit_generation.circuit_class import (
     CPE, Inductor, Parallel, Resistor, Series, SeriesResistance, Warburg,
 )
 
 PROJECT_DIR = Path(__file__).resolve().parent
-SAVE_RESULTS = True
+SAVE_RESULTS = False
 
 # ---------------------------------------------------------------------------
 # SELECT INPUT FORMAT
@@ -27,6 +31,7 @@ SAVE_RESULTS = True
 
 # Use "raw" for bank4 files containing curr, batt_1, batt_2, etc.
 # Use "spectrum" for files containing F and Z.
+# Use "spectrum_direct" to fit one unaggregated Z column per frequency block.
 # Use "simulated" for output from data/simulation/run_simulation.py. The
 # bundled sample keeps a clean clone runnable without external measurements.
 # Use "pcl" for processed battery dictionaries with frequency/Z at indices 0/1.
@@ -56,7 +61,8 @@ PCL_DATA_PATH = (
     #/ "eis_bank1_20251126-004055.pcl"
     #/ "eis_bank1_20251112-103715.pcl"
     #/ "eis_bank1_20251027-171541.pcl" #zelo cuden dataset
-    / "eis_bank1_20251112-103715.pcl"
+    #/ "eis_bank1_20251112-103715.pcl"
+    / "eis_bank1_20251016-084621.pcl" #REPORT BASELINE DATA
 )
 #eis_bank1_20251112-103715
 PCL_BATTERY_CHANNEL = "batt_1"
@@ -66,10 +72,11 @@ SPECTRUM_DATA_PATH = (
     / "data"
     / "spectrum"
     #/ "eis_20200224_190006.npz" #tu se re-fitting cudno obnasa
-    / "eis_20200227_030006.npz"
+    #/ "eis_20200227_030006.npz"
     #/ "eis_20200226_150005.npz"
     #/ "eis_20200227_070006.npz"
     #/ "eis_20200226_190006.npz"
+    / "eis_20200226_230006.npz" #REPORT BASELINE DATA
 
 )
 
@@ -78,7 +85,7 @@ SIMULATED_DATA_PATH = (
     / "data"
     / "simulation"
     / "generated"
-    / "simulated_spectrum_001.npz"
+    / "simulated_spectrum_007.npz"
 )
 
 
@@ -91,7 +98,6 @@ grammar_type ="no_G_relaxed"
 nr_elements = 5
 
 
-OPTIMIZER = "linear"
 # Refine every circuit with MSE <= best first-round MSE * (1 + this margin).
 REOPTIMIZATION_ERROR_MARGIN = 0.20  # 20%; plots still show only the top five.
 FILENAME_PREFIX = "lin_opt_no_scale"
@@ -143,9 +149,10 @@ def nonnegative_int(value: str) -> int:
 def build_parser() -> argparse.ArgumentParser:
     """Expose data, fitting, and reporting options without changing globals."""
     parser = argparse.ArgumentParser(description="Fit and rank impedance circuits.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--data-mode", choices=("raw", "spectrum", "simulated", "pcl"), default=DATA_MODE)
+    parser.add_argument("--data-mode", choices=("raw", "spectrum", "spectrum_direct", "simulated", "pcl"), default=DATA_MODE)
     parser.add_argument("--data-path", type=Path, help="Input file; defaults to the configured path for the selected mode")
     parser.add_argument("--channel", help="Battery channel for raw/PCL data")
+    parser.add_argument("--spectrum-column-index", type=nonnegative_int, help="Repeat column for spectrum_direct; defaults to the middle column of each block")
     parser.add_argument("--circuit-path", type=Path, help="Circuit JSON; otherwise derived from grammar and elements")
     parser.add_argument("--grammar", default=grammar_type, help="Circuit collection name")
     parser.add_argument("--elements", type=positive_int, default=nr_elements)
@@ -153,12 +160,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scatter-floor", type=nonnegative_float, default=0, help="Floor passed to normalize_sigma. Only used in data-scaling")
     parser.add_argument("--number-starts", type=positive_int, help = "Number of stratified initial values. Default 5",default=NUMBER_INITIAL_STARTS)
     parser.add_argument("--random-seed", type=nonnegative_int, default=RANDOM_SEED, metavar="SEED")
-    parser.add_argument("--reoptimization-error-margin", type=nonnegative_float, help = "What percentage of highest MSE circuits are considered for reoptimization",default=REOPTIMIZATION_ERROR_MARGIN)
+    parser.add_argument("--reoptimization-error-margin", type=nonnegative_float, help = "Fractional margin for first-round error metrics when selecting circuits for refinement",default=REOPTIMIZATION_ERROR_MARGIN)
     parser.add_argument(
         "--f-scale",
         type=positive_float,
         default=LEAST_SQUARES_SETTINGS["f_scale"],
-        help="Soft-L1 transition scale used in both fitting stages",
+        help="Robust-loss transition scale used in both fitting stages; ignored by linear loss",
+    )
+    parser.add_argument(
+        "--loss", choices=("soft_l1", "linear"),
+        default=LEAST_SQUARES_SETTINGS["loss"],
+        help="Least-squares loss used in both fitting stages",
     )
 
     parser.add_argument("--save-results", action=argparse.BooleanOptionalAction, default=SAVE_RESULTS)
@@ -169,9 +181,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--filename-suffix", default=FILENAME_SUFFIX)
     parser.add_argument("--final-filename-suffix", default=FILENAME_SUFFIX_REOPTIMIZED)
     parser.add_argument("--plot-title", default="Nyquist plot with stratified random starting values and normalized residuals")
-    parser.add_argument("--final-plot-title", default="Top circuits after MSE-margin reoptimization")
-    parser.add_argument("--sort-first-round", default="mse", help="Metric by which the first round of optimization is sorted", choices=("bic", "lp_bic", "lp_ebic", "ebic", "mse", "lp_error"))
-    parser.add_argument("--sort-second-round", default="bic", help="Metric by which the second round of optimization is sorted", choices=("bic", "lp_bic", "lp_ebic", "ebic", "mse", "lp_error"))
+    parser.add_argument("--final-plot-title", default="Top circuits after reoptimization")
+    ranking_choices = ("optimizer_value", "bic", "lp_bic", "lp_ebic", "ebic", "mse", "lp_error")
+    parser.add_argument("--sort-first-round", default="optimizer_value", help="Metric for first-round ranking and refinement selection", choices=ranking_choices)
+    parser.add_argument("--sort-second-round", default="bic", help="Metric for ranking refined circuits", choices=ranking_choices)
     return parser
 
 
@@ -183,15 +196,21 @@ def main(argv: list[str] | None = None) -> None:
     RESIDUAL_SCALE = args.residual_scale
     grammar_type, nr_elements = args.grammar, args.elements
     filename_prefix = args.filename_prefix
+    output_filename_prefix = (
+        f"{filename_prefix}spectrum_direct_"
+        if DATA_MODE == "spectrum_direct" else filename_prefix
+    )
     collection_name = f"{filename_prefix}{grammar_type}"
     CIRCUIT_PATH = (args.circuit_path or PROJECT_DIR / "data" / "circuits" / f"{grammar_type}_elements_{nr_elements}.json").resolve()
-    defaults = {"raw": RAW_DATA_PATH, "pcl": PCL_DATA_PATH, "spectrum": SPECTRUM_DATA_PATH, "simulated": SIMULATED_DATA_PATH}
+    defaults = {"raw": RAW_DATA_PATH, "pcl": PCL_DATA_PATH, "spectrum": SPECTRUM_DATA_PATH, "spectrum_direct": SPECTRUM_DATA_PATH, "simulated": SIMULATED_DATA_PATH}
     data_path = (args.data_path or defaults[DATA_MODE]).resolve()
     output_root = args.output_root.resolve()
     initial_settings = dict(LEAST_SQUARES_SETTINGS)
     final_settings = dict(FINAL_LEAST_SQUARES_SETTINGS)
     initial_settings["f_scale"] = args.f_scale
     final_settings["f_scale"] = args.f_scale
+    initial_settings["loss"] = args.loss
+    final_settings["loss"] = args.loss
     sort_first_round = args.sort_first_round
     sort_second_round = args.sort_second_round
     if not SAVE_RESULTS:
@@ -210,14 +229,18 @@ def main(argv: list[str] | None = None) -> None:
     # LOAD THE SELECTED DATA FORMAT
     # ---------------------------------------------------------------------------
 
+    selected_channel = None
+    selected_spectrum_columns = None
     if DATA_MODE == "raw":
         # Raw time-domain data:
         # fs, curr, batt_1, batt_2, ...
+        selected_channel = args.channel or BATTERY_CHANNEL
         frequency, measured_impedance, coherence, real_scatter, imag_scatter = raw_impedance(
             data_path,
-            channel=args.channel or BATTERY_CHANNEL,
+            channel=selected_channel,
         )
         selected_data_path = data_path
+        preprocessing = "FFT of repeated time-domain recordings; coherence filter and frequency downsampling"
 
         selected = uniform_frequency_indices(frequency, args.raw_points)
         #selected = logarithmic_frequency_indices(
@@ -235,6 +258,7 @@ def main(argv: list[str] | None = None) -> None:
     elif DATA_MODE in ("spectrum", "simulated"):
         # Measured and simulated spectra share the F/Z format.
         selected_data_path = data_path
+        preprocessing = "Component-wise median over repeats; remove frequencies without valid impedance"
         frequency, measured_impedance, real_scatter, imag_scatter = load_spectrum(
             selected_data_path
         )
@@ -244,19 +268,36 @@ def main(argv: list[str] | None = None) -> None:
 
         print(f"Loaded {DATA_MODE} F/Z impedance data from {selected_data_path}")
 
-    elif DATA_MODE == "pcl":
+    elif DATA_MODE == "spectrum_direct":
         selected_data_path = data_path
-        frequency, measured_impedance, real_scatter, imag_scatter = load_pcl_spectrum(
-            selected_data_path, channel=args.channel or PCL_BATTERY_CHANNEL,
+        frequency, measured_impedance, real_scatter, imag_scatter, selected_spectrum_columns = load_spectrum_direct(
+            selected_data_path, column_index=args.spectrum_column_index,
+        )
+        preprocessing = (
+            "One direct impedance column per block; remove frequencies without valid impedance; "
+            "repeat scatter estimated from all columns"
         )
         coherence = None
-        print(f"Loaded PCL impedance data from {selected_data_path} ({args.channel or PCL_BATTERY_CHANNEL})")
+        print(
+            f"Loaded direct F/Z impedance data from {selected_data_path} "
+            f"(columns {selected_spectrum_columns})"
+        )
+
+    elif DATA_MODE == "pcl":
+        selected_data_path = data_path
+        selected_channel = args.channel or PCL_BATTERY_CHANNEL
+        preprocessing = "Selected channel frequency and impedance arrays; no repeat-based uncertainty estimate"
+        frequency, measured_impedance, real_scatter, imag_scatter = load_pcl_spectrum(
+            selected_data_path, channel=selected_channel,
+        )
+        coherence = None
+        print(f"Loaded PCL impedance data from {selected_data_path} ({selected_channel})")
         
 
     else:
         raise ValueError(
             f"Unknown DATA_MODE {DATA_MODE!r}; "
-            "choose 'raw', 'spectrum', 'simulated', or 'pcl'"
+            "choose 'raw', 'spectrum', 'spectrum_direct', 'simulated', or 'pcl'"
         )
 
 
@@ -276,6 +317,26 @@ def main(argv: list[str] | None = None) -> None:
     floor = args.scatter_floor
     real_smooth_scatter = normalize_sigma(real_scatter, percentage_floor=floor)#, floor)
     imag_smooth_scatter = normalize_sigma(imag_scatter, percentage_floor=floor)#, floor)
+    real_residual_scale, imag_residual_scale = _residual_scales(
+        measured_impedance, real_smooth_scatter, imag_smooth_scatter, RESIDUAL_SCALE,
+    )
+    if SAVE_RESULTS:
+        dataset_info = build_fit_dataset_info(
+            source_path=selected_data_path,
+            mode=DATA_MODE,
+            channel=selected_channel,
+            preprocessing=preprocessing,
+            frequency=frequency,
+            measured_impedance=measured_impedance,
+            loader_real_scale=real_scatter,
+            loader_imag_scale=imag_scatter,
+            normalized_real_scale=real_smooth_scatter,
+            normalized_imag_scale=imag_smooth_scatter,
+            fitting_real_divisor=real_residual_scale,
+            fitting_imag_divisor=imag_residual_scale,
+            coherence=coherence,
+            selected_spectrum_columns=selected_spectrum_columns,
+        )
 
     #add manual circuits here
 
@@ -308,7 +369,7 @@ def main(argv: list[str] | None = None) -> None:
         #real_scatter=real_scatter,
         #imag_scatter=imag_scatter,
         manual_entry=None,
-        optimizer=OPTIMIZER,
+        #optimizer=OPTIMIZER,
         reoptimization_error_margin=args.reoptimization_error_margin,
         scale_type=RESIDUAL_SCALE,
         least_squares_settings=initial_settings,
@@ -321,7 +382,7 @@ def main(argv: list[str] | None = None) -> None:
     # PRINT THE BEST RESULTS
     # ---------------------------------------------------------------------------
 
-    print(f"\nBest fitted circuits and sorted according to {sort_first_round.upper}:\n")
+    print(f"\nBest fitted circuits and sorted according to {sort_first_round.upper()}:\n")
 
     for rank, result in enumerate(results[:5], start=1):
         print(f"{rank}. {result['circuit']}")
@@ -330,6 +391,7 @@ def main(argv: list[str] | None = None) -> None:
         #print(f"   Random start: {result['rand_start']}")
         print(f"   EBIC: {result['ebic']:.6g}")
         print(f"   MSE: {result['mse']:.6g}")
+        print(f"   Optimizer value: {result['optimizer_value']:.6g}")
         print(f"   RelMSE: {result['relative_mse']:.6g}")
         print(f"   Success: {result['success']}")
         print(f"   Parameters: {result['parameters']}")
@@ -344,6 +406,7 @@ def main(argv: list[str] | None = None) -> None:
         #print(f"   Random start: {result['rand_start']}")
         print(f"   RelMSE: {result['relative_mse']:.6g}")
         print(f"   MSE: {result['mse']:.6g}")
+        print(f"   Optimizer value: {result['optimizer_value']:.6g}")
         print(f"   Success: {result['success']}")
         #print(f"   Parameters: {result['parameters']}")
         #print()
@@ -357,8 +420,9 @@ def main(argv: list[str] | None = None) -> None:
         dataset_path=selected_data_path,
         grammar_name=grammar_type,
         maximum_elements=nr_elements,
-        filename_prefix=filename_prefix,
-        filename_suffix=args.filename_suffix
+        filename_prefix=output_filename_prefix,
+        filename_suffix=args.filename_suffix,
+        channel=selected_channel,
     )
 
     plot_path_converged, summary_path_converged = build_fit_output_paths(
@@ -366,8 +430,9 @@ def main(argv: list[str] | None = None) -> None:
         dataset_path=selected_data_path,
         grammar_name=grammar_type,
         maximum_elements=nr_elements,
-        filename_prefix=filename_prefix,
-        filename_suffix=args.final_filename_suffix
+        filename_prefix=output_filename_prefix,
+        filename_suffix=args.final_filename_suffix,
+        channel=selected_channel,
     )
 
 
@@ -387,21 +452,21 @@ def main(argv: list[str] | None = None) -> None:
         plot_title=args.final_plot_title
     )
 
-    real_residual_scale, imag_residual_scale = _residual_scales(
-        measured_impedance, real_smooth_scatter, imag_smooth_scatter, RESIDUAL_SCALE,
-    )
-    for stage_results, stage_path, stage_settings, stage_title in (
-        (results, plot_path, initial_settings, "First-round residuals"),
-        (besties, plot_path_converged, final_settings, "Reoptimized residuals"),
+    residual_paths = {}
+    for stage_name, stage_results, stage_path, stage_settings, stage_title in (
+        ("first_round", results, plot_path, initial_settings, "First-round residuals"),
+        ("refined", besties, plot_path_converged, final_settings, "Reoptimized residuals"),
     ):
         residual_path = output_root / "Results" / "Plots" / "Residuals" / (
             stage_path.stem + "_residuals.png"
         )
+        residual_paths[stage_name] = residual_path
         plot_fit_residuals(
             frequency, measured_impedance, stage_results, residual_path,
             real_scale=real_residual_scale, imag_scale=imag_residual_scale,
             f_scale=stage_settings["f_scale"], scale_type=RESIDUAL_SCALE,
             plot_title=stage_title, save_output=SAVE_RESULTS, show=args.show_residual_plots,
+            loss=stage_settings["loss"],
         )
         if SAVE_RESULTS:
             print(f"Saved residual plot: {residual_path}")
@@ -409,9 +474,12 @@ def main(argv: list[str] | None = None) -> None:
     if SAVE_RESULTS:
         run_settings = {
             "residual_scale": RESIDUAL_SCALE,
+            "loss": args.loss,
             "scatter_floor": args.scatter_floor,
+            "spectrum_column_index": args.spectrum_column_index,
             "number_starts": args.number_starts,
             "random_seed": args.random_seed,
+            "initial_max_nfev_per_parameter": INITIAL_MAX_NFEV_PER_PARAMETER,
             "first_round_ranking_metric": sort_first_round,
             "second_round_ranking_metric": sort_second_round,
             "reoptimization_error_margin": args.reoptimization_error_margin,
@@ -429,6 +497,9 @@ def main(argv: list[str] | None = None) -> None:
             frequency=frequency,
             ranking_metric=sort_first_round,
             run_settings=run_settings,
+            dataset_info=dataset_info,
+            fit_stage="first_round",
+            residual_plot_path=residual_paths["first_round"],
         )
         export_fit_summary(
             results=besties,
@@ -443,6 +514,9 @@ def main(argv: list[str] | None = None) -> None:
             frequency=frequency,
             ranking_metric=sort_second_round,
             run_settings=run_settings,
+            dataset_info=dataset_info,
+            fit_stage="refined",
+            residual_plot_path=residual_paths["refined"],
         )
 
         print(f"Saved plot first round: {plot_path}")

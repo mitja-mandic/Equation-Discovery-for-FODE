@@ -66,10 +66,22 @@ Hz and complex impedance measurements `Z` in ohms. The loader reduces repeated
 measurements to component-wise medians and estimates robust real and imaginary
 scatter from their median absolute deviations.
 
+Use `spectrum_direct` to fit one measured impedance column from each frequency
+block without taking a median. By default it takes the middle column of each
+block; `--spectrum-column-index 100` chooses column 100 in every block instead.
+Columns are zero-indexed and the chosen index must exist in every block. Invalid
+impedance points are removed. Scatter estimates still use all repeats if you
+select `--residual-scale scatter`. Saved summaries record the chosen columns,
+and direct result filenames include `spectrum_direct_` to keep them separate
+from median results.
+
 To fit a user-supplied measured spectrum with the bundled circuits:
 
 ```bash
 python main.py --data-mode spectrum --data-path path/to/measurement.npz --circuit-path data/circuits/no_G_relaxed_elements_4.json --no-show-plots
+
+# Fit a direct (unaggregated) spectrum from the same file:
+python main.py --data-mode spectrum_direct --data-path path/to/measurement.npz --circuit-path data/circuits/no_G_relaxed_elements_4.json --no-show-plots
 ```
 
 Measurement files under `data/spectrum` are intentionally not included in Git;
@@ -157,7 +169,7 @@ Useful options include:
 - `--circuit-path`, or `--grammar` with `--elements`, to select circuits;
 - `--channel` to select a raw/PCL battery channel;
 - `--number-starts` and `--random-seed` to control initial values;
-- `--residual-scale`, `--scatter-floor`, and `--f-scale` to control fitting;
+- `--residual-scale`, `--scatter-floor`, `--loss`, and `--f-scale` to control fitting;
 - `--sort-first-round` and `--sort-second-round` to control ranking;
 - `--save-results` and `--output-root` to control saved artifacts;
 - `--show-plots` and `--show-residual-plots` to control interactive figures.
@@ -165,7 +177,8 @@ Useful options include:
 Relative paths are resolved from the terminal's working directory. The other
 least-squares settings are defined in `fitting_parameters/train_refactored.py`.
 Changing residual scaling does not automatically recalibrate `f_scale`; specify
-it in the selected scaled-residual units.
+it in the selected scaled-residual units when using `soft_l1`. With `linear`
+loss, `f_scale` has no effect on the optimization.
 
 ### Residual scaling
 
@@ -183,23 +196,30 @@ An entirely zero component or spectrum uses unit divisors where a relative scale
 cannot be inferred. `--scatter-floor` applies an additional floor, expressed as
 a fraction of the median scatter, before scatter scaling.
 
-The optimizer uses scaled residuals, while the reported MSE, relative MSE, BIC,
-and EBIC values retain their existing ranking definitions.
+`optimizer_value = 2 * scipy_cost / number_of_frequencies` is the optimizer's
+loss per complex frequency point. It uses the selected residual scaling, loss,
+and `f_scale`; for linear loss with unscaled residuals it equals MSE. Saved
+summaries include it for every circuit alongside MSE, relative MSE, BIC, and EBIC.
+Compare optimizer values across rounds only when scaling, loss, and `f_scale`
+are the same.
 
 ### Refinement and ranking
 
-By default, the first round is sorted by MSE. Every candidate with
+By default, the first round is sorted by `optimizer_value`. Every candidate with
 
 ```text
-MSE <= best MSE * (1 + reoptimization error margin)
+optimizer_value <= best optimizer_value * (1 + reoptimization error margin)
 ```
 
-is refined from its own best first-round parameters. The default margin is 0.20
-(20%); a margin of zero includes only candidates tied for the lowest MSE. Should you
+is refined from its own best first-round parameters. The best starting point
+for each circuit is also selected by `optimizer_value`. The default margin is
+0.20 (20%); a margin of zero includes only candidates tied for the lowest score. Should you
 choose to sort by BIC-related metric in the first round, a hard coded delta of 10 is
 implemented in the model_selection.py file.
 
-The refined results are sorted by BIC by default. Console previews and plots show at
+The refined results are sorted by BIC by default to account for circuit complexity.
+Pass `--sort-second-round optimizer_value` to rank them by fit loss alone.
+Console previews and plots show at
 most the top five circuits.
 
 Use `--reoptimization-error-margin`, `--sort-first-round`, and
@@ -215,6 +235,10 @@ estimated with the same algorithm as the refinement part.
 
 ## Results and residual diagnostics
 
+For a repeatable series of PCL and measured spectrum runs, see the
+[campaign workflow](experiments/README.md). It keeps one settings file and a
+separate output folder for each selected measurement and PCL channel.
+
 Use `--save-results` to write artifacts under `Results`. A saved run produces
 first-round and reoptimized versions of:
 
@@ -222,12 +246,19 @@ first-round and reoptimized versions of:
 - residual plots under `Results/Plots/Residuals`;
 - JSON summaries under `Results/fit_results`.
 
-The Nyquist plots contain the five highest-ranked fits. Each version 2 JSON
-summary records its ranking metric, residual scale, scatter floor, initial
-starts, seed, both sorting choices, refinement margin, optimizer settings,
-circuit counts, its associated plot, and up to ten ranked circuits. Each listed
-circuit also records its effective `optimizer_max_nfev`, which may depend on
-its parameter count. Older saved summaries retain their original metadata.
+Current fits save directly in these folders; campaign runs keep separate
+folders for each dataset. The Nyquist plots contain the five highest-ranked fits. PCL output names include the selected
+battery channel, so channels from one file remain separate. Each version 3 JSON summary records the
+input mode and channel, source file hash, exact processed frequency and complex
+impedance arrays, loader scales, fitting divisors, optimizer settings, run
+settings, circuit counts, and associated plots. `circuit_metrics` contains the
+best fit for every circuit, including its parameters, optimizer value, MSE, relative MSE, AIC,
+BIC, EBIC, LP metrics, bounds, optimizer status, and evaluation costs. The top
+ten also include predicted impedance arrays for frequency-domain comparisons.
+Aggregate evaluation counts and fit time include all starts without storing
+each start separately. `delta_bic` is measured from the lowest BIC in that
+stage, regardless of the ranking metric. Older saved summaries retain their
+original metadata.
 Filename suffixes default to `first_round` and `reoptimized` and can be changed
 with `--filename-suffix` and `--final-filename-suffix`.
 
@@ -239,6 +270,7 @@ python main.py --show-residual-plots
 
 Each residual figure shows raw real and imaginary errors in ohms beside the
 matching normalized residuals. Residuals are model minus measurement. Dotted
-lines mark `+/- f_scale` in the normalized panels. Residual figures are saved
+lines mark `+/- f_scale` in the normalized panels when using `soft_l1` loss;
+linear-loss plots omit these lines. Residual figures are saved
 whenever `--save-results` is enabled, even if interactive residual plots are not
 shown.

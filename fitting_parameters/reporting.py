@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from math import sqrt
 from pathlib import Path
@@ -12,6 +13,67 @@ import numpy as np
 from Circuit_generation.circuit_class import CircuitNode, Element
 
 
+def build_fit_dataset_info(
+    *,
+    source_path: str | Path,
+    mode: str,
+    channel: str | None,
+    preprocessing: str,
+    frequency: np.ndarray,
+    measured_impedance: np.ndarray,
+    loader_real_scale: np.ndarray,
+    loader_imag_scale: np.ndarray,
+    normalized_real_scale: np.ndarray,
+    normalized_imag_scale: np.ndarray,
+    fitting_real_divisor: np.ndarray | float,
+    fitting_imag_divisor: np.ndarray | float,
+    coherence: np.ndarray | None,
+    selected_spectrum_columns: Sequence[int] | None = None,
+) -> dict[str, Any]:
+    """Snapshot the exact processed data and divisors used in one fit."""
+    source_path = Path(source_path)
+    frequency = np.asarray(frequency, dtype=float)
+    measured_impedance = np.asarray(measured_impedance, dtype=complex)
+    if frequency.ndim != 1 or frequency.shape != measured_impedance.shape:
+        raise ValueError("Frequency and measured impedance must be matching 1D arrays")
+
+    size_bytes = None
+    source_sha256 = None
+    if source_path.is_file():
+        size_bytes = source_path.stat().st_size
+        with source_path.open("rb") as handle:
+            source_sha256 = hashlib.file_digest(handle, "sha256").hexdigest()
+
+    return {
+        "source_path": str(source_path),
+        "source_size_bytes": size_bytes,
+        "source_sha256": source_sha256,
+        "mode": mode,
+        "channel": channel,
+        "preprocessing": preprocessing,
+        "loader_scale_kind": "unit_placeholders" if mode == "pcl" else "component_mad_ohm",
+        "frequency_hz": _json_array(frequency),
+        "measured_impedance_ohm": _complex_json_array(measured_impedance),
+        "loader_scales": {
+            "real": _json_array(loader_real_scale, frequency.shape),
+            "imag": _json_array(loader_imag_scale, frequency.shape),
+        },
+        "normalized_scales": {
+            "real": _json_array(normalized_real_scale, frequency.shape),
+            "imag": _json_array(normalized_imag_scale, frequency.shape),
+        },
+        "fitting_residual_divisors": {
+            "real": _json_array(fitting_real_divisor, frequency.shape),
+            "imag": _json_array(fitting_imag_divisor, frequency.shape),
+        },
+        "coherence": None if coherence is None else _json_array(coherence, frequency.shape),
+        "selected_spectrum_columns": (
+            [int(column) for column in selected_spectrum_columns]
+            if selected_spectrum_columns is not None else None
+        ),
+    }
+
+
 def build_fit_output_paths(
     project_directory: str | Path,
     dataset_path: str | Path,
@@ -19,11 +81,15 @@ def build_fit_output_paths(
     maximum_elements: int,
     filename_suffix: str,
     filename_prefix: str = "",
+    channel: str | None = None,
 ) -> tuple[Path, Path]:
     """Return matching, dataset-specific paths for one plot and summary."""
     project_directory = Path(project_directory)
+    dataset_name = Path(dataset_path).stem
+    if channel:
+        dataset_name = f"{dataset_name}_{channel}"
     run_name = (
-        f"{filename_prefix}{Path(dataset_path).stem}_"
+        f"{filename_prefix}{dataset_name}_"
         f"{grammar_name}_{maximum_elements}"
     )
     plot_path = (
@@ -134,6 +200,7 @@ def plot_fit_residuals(
     plot_title: str,
     save_output: bool,
     show: bool = False,
+    loss: str = "soft_l1",
 ) -> Path:
     """Plot raw errors and optimizer-scaled residuals, with shared raw limits."""
     import matplotlib.pyplot as plt
@@ -186,8 +253,9 @@ def plot_fit_residuals(
             )
     for axis, component in zip(axes, ("Real", "Imaginary")):
         axis.axhline(0, color="0.5", linewidth=0.8)
-        axis.axhline(f_scale, color="black", linestyle=":", label="±f_scale")
-        axis.axhline(-f_scale, color="black", linestyle=":")
+        if loss != "linear":
+            axis.axhline(f_scale, color="black", linestyle=":", label="±f_scale")
+            axis.axhline(-f_scale, color="black", linestyle=":")
         axis.set_xscale("log")
         axis.set_ylabel(f"{component} residual ({scale_type})")
         axis.grid(True, alpha=0.3)
@@ -199,10 +267,12 @@ def plot_fit_residuals(
     raw_axes[0].set_title("Raw errors — shared vertical scale")
     axes[0].set_title(f"Normalized residuals ({scale_type})")
     raw_axes[0].legend(fontsize="small")
-    axes[0].legend(handles=axes[0].lines[-2:-1], fontsize="small")
+    if loss != "linear":
+        axes[0].legend(handles=axes[0].lines[-2:-1], fontsize="small")
     for axis in panels[1]:
         axis.set_xlabel("Frequency (Hz)")
-    figure.suptitle(f"{plot_title}\nModel − data; f_scale = {f_scale:g}")
+    loss_description = "loss = linear" if loss == "linear" else f"loss = {loss}, f_scale = {f_scale:g}"
+    figure.suptitle(f"{plot_title}\nModel − data; {loss_description}")
     figure.tight_layout()
     output_path = Path(output_path)
     if save_output:
@@ -228,67 +298,52 @@ def export_fit_summary(
     frequency: np.ndarray,
     ranking_metric: str,
     run_settings: Mapping[str, Any],
+    dataset_info: Mapping[str, Any] | None = None,
+    fit_stage: str | None = None,
+    residual_plot_path: str | Path | None = None,
 ) -> Path:
-    """Write run settings and the ten best ranked circuits to JSON."""
+    """Write run settings, processed data, and the ten best fits to JSON."""
     if not results:
         raise ValueError("At least one fit result is required to create a summary")
 
     frequency = np.asarray(frequency)
     successful_count = sum(bool(result["success"]) for result in results)
-    best_bic = float(results[0]["bic"])
+    finite_bics = [float(result["bic"]) for result in results if np.isfinite(result["bic"])]
+    best_bic = min(finite_bics) if finite_bics else None
 
+    circuit_metrics = []
     top_circuits = []
-    for rank, result in enumerate(results[:10], start=1):
-        mse = float(result["mse"])
-        parameters = {
-            name: _json_number(value)
-            for name, value in result["parameters"].items()
-        }
-        top_circuits.append(
-            {
-                "rank": rank,
-                "plot_label": (
-                    _circuit_plot_label(rank, result["circuit"])
-                    if rank <= 5
-                    else None
-                ),
-                "circuit": str(result["circuit"]),
-                "rand_start":result['rand_start'],
-                "element_count": _count_elements(result["circuit"]),
-                "parameter_count": len(parameters),
-                "parameters": parameters,
-                "mse": _json_number(mse),
-                "rmse": _json_number(sqrt(mse)),
-#                "aic": _json_number(result["aic"]),
-                "bic": _json_number(result["bic"]),
-                "delta_bic": _json_number(float(result["bic"]) - best_bic),
-                "success": bool(result["success"]),
-                "optimizer_status": result.get("optimizer_status"),
-                "optimizer_message": result.get("optimizer_message"),
-                "function_evaluations": result.get("function_evaluations"),
-                "optimizer_max_nfev": result.get(
-                    "optimizer_max_nfev", optimizer_settings.get("max_nfev")
-                ),
-            }
-        )
+    for rank, result in enumerate(results, start=1):
+        metrics = _fit_metric_record(result, rank, ranking_metric, best_bic, optimizer_settings)
+        circuit_metrics.append(metrics)
+        if rank <= 10:
+            top_circuits.append({
+                **metrics,
+                "plot_label": _circuit_plot_label(rank, result["circuit"]) if rank <= 5 else None,
+                "predicted_impedance_ohm": _complex_json_array(result["predicted_impedance"]),
+            })
 
     document = {
-        "format_version": 2,
+        "format_version": 3,
+        "fit_stage": fit_stage,
         "ranking_metric": ranking_metric,
         "run_settings": {
             key: _json_value(value) for key, value in run_settings.items()
         },
         "dataset": str(dataset_path),
+        "dataset_info": dict(dataset_info) if dataset_info is not None else None,
         "circuit_collection": str(circuit_path),
         "grammar": grammar_name,
         "maximum_elements": maximum_elements,
         "frequency": {
             "points": int(frequency.size),
+            "scalar_observations": int(2 * frequency.size),
             "minimum_hz": _json_number(np.min(frequency)),
             "maximum_hz": _json_number(np.max(frequency)),
         },
         "optimizer": {
             "name": optimizer,
+            "value_definition": "optimizer_value = 2 * scipy_cost / frequency_points",
             "settings": {
                 key: _json_value(value)
                 for key, value in optimizer_settings.items()
@@ -298,9 +353,24 @@ def export_fit_summary(
             "fitted": len(results),
             "successful": successful_count,
             "unsuccessful": len(results) - successful_count,
+            "total_attempts": sum(int(result.get("attempt_count", 1)) for result in results),
+            "successful_attempts": sum(
+                int(result.get("successful_attempt_count", bool(result["success"])))
+                for result in results
+            ),
+            "total_function_evaluations": sum(
+                int(result.get("total_function_evaluations", result.get("function_evaluations") or 0))
+                for result in results
+            ),
+            "total_fit_elapsed_seconds": sum(
+                float(result.get("total_fit_elapsed_seconds") or 0.0)
+                for result in results
+            ),
         },
         "associated_plot": str(plot_path),
+        "associated_residual_plot": str(residual_plot_path) if residual_plot_path is not None else None,
         "circuits_shown_in_plot": min(5, len(results)),
+        "circuit_metrics": circuit_metrics,
         "top_circuits": top_circuits,
     }
 
@@ -322,6 +392,67 @@ def _count_elements(node: CircuitNode) -> int:
     return sum(_count_elements(child) for child in node.children)  # type: ignore[attr-defined]
 
 
+def _fit_metric_record(
+    result: Mapping[str, Any],
+    rank: int,
+    ranking_metric: str,
+    best_bic: float | None,
+    optimizer_settings: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Serialize the best attempt and all scoring metrics for one circuit."""
+    mse = float(result["mse"])
+    relative_mse = result.get("relative_mse")
+    parameters = {name: _json_number(value) for name, value in result["parameters"].items()}
+    return {
+        "rank": rank,
+        "circuit": str(result["circuit"]),
+        "rand_start": result["rand_start"],
+        "element_count": _count_elements(result["circuit"]),
+        "parameter_count": len(parameters),
+        "parameters": parameters,
+        "initial_values": {
+            name: _json_number(value)
+            for name, value in result.get("initial_values", {}).items()
+        },
+        "parameter_bounds": {
+            name: {"lower": _json_number(bounds[0]), "upper": _json_number(bounds[1])}
+            for name, bounds in result.get("parameter_bounds", {}).items()
+        },
+        "parameters_at_bounds": list(result.get("parameters_at_bounds", [])),
+        "mse": _json_number(mse),
+        "optimizer_value": _optional_json_number(result.get("optimizer_value")),
+        "rmse": _json_number(sqrt(mse)),
+        "relative_mse": _optional_json_number(relative_mse),
+        "relative_rmse": _optional_json_number(sqrt(relative_mse) if relative_mse is not None else None),
+        "lp_error": _optional_json_number(result.get("lp_error")),
+        "aic": _optional_json_number(result.get("aic")),
+        "bic": _json_number(result["bic"]),
+        "lp_bic": _optional_json_number(result.get("lp_bic")),
+        "ebic": _optional_json_number(result.get("ebic")),
+        "lp_ebic": _optional_json_number(result.get("lp_ebic")),
+        "ebic_gamma": _optional_json_number(result.get("ebic_gamma")),
+        "ranking_value": _optional_json_number(result.get(ranking_metric)),
+        "delta_bic": _optional_json_number(
+            float(result["bic"]) - best_bic if best_bic is not None else None
+        ),
+        "success": bool(result["success"]),
+        "optimizer_status": result.get("optimizer_status"),
+        "optimizer_message": result.get("optimizer_message"),
+        "function_evaluations": result.get("function_evaluations"),
+        "total_function_evaluations": result.get(
+            "total_function_evaluations", result.get("function_evaluations")
+        ),
+        "fit_elapsed_seconds": result.get("fit_elapsed_seconds"),
+        "total_fit_elapsed_seconds": result.get("total_fit_elapsed_seconds"),
+        "attempt_count": result.get("attempt_count"),
+        "successful_attempt_count": result.get("successful_attempt_count"),
+        "selected_start_index": result.get("selected_start_index"),
+        "optimizer_max_nfev": result.get(
+            "optimizer_max_nfev", optimizer_settings.get("max_nfev")
+        ),
+    }
+
+
 def _circuit_plot_label(rank: int, circuit: CircuitNode) -> str:
     """Return the ranked legend label, including the circuit expression."""
     return f"Circuit {rank}: {circuit}"
@@ -333,6 +464,26 @@ def _json_number(value: Any) -> float | int | None:
         return number
     number = float(number)
     return number if np.isfinite(number) else None
+
+
+def _optional_json_number(value: Any) -> float | int | None:
+    return None if value is None else _json_number(value)
+
+
+def _json_array(values: Any, shape: tuple[int, ...] | None = None) -> list[float | int | None]:
+    array = np.asarray(values, dtype=float)
+    if shape is not None:
+        array = np.broadcast_to(array, shape)
+    if array.ndim != 1:
+        raise ValueError("Exported data arrays must be one-dimensional")
+    return [_json_number(value) for value in array]
+
+
+def _complex_json_array(values: Any) -> dict[str, list[float | int | None]]:
+    array = np.asarray(values, dtype=complex)
+    if array.ndim != 1:
+        raise ValueError("Exported impedance arrays must be one-dimensional")
+    return {"real": _json_array(array.real), "imag": _json_array(array.imag)}
 
 
 def _json_value(value: Any) -> Any:

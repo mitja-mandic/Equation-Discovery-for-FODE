@@ -1,0 +1,85 @@
+\documentclass[aspectratio=169,12pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{tabularx}
+
+\definecolor{ink}{HTML}{19324A}
+\definecolor{accent}{HTML}{176E84}
+\setbeamercolor{normal text}{fg=ink,bg=white}
+\setbeamercolor{frametitle}{fg=ink,bg=white}
+\setbeamercolor{structure}{fg=accent}
+\setbeamercolor{title}{fg=ink}
+\setbeamerfont{frametitle}{size=\LARGE,series=\bfseries}
+\setbeamerfont{normal text}{size=\large}
+\setbeamerfont{title}{size=\Huge,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{itemize items}[circle]
+
+\title{Discovering circuits from impedance data}
+\subtitle{SOFCs, equivalent circuits, and formal grammars}
+\author{Mitja Mandić}
+\institute{IJS E8}
+\date{}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}{What is a solid oxide fuel cell?}
+  \begin{itemize}
+    \setlength{\itemsep}{0.95em}
+    \item A SOFC converts fuel and oxygen into electricity and heat.
+    \item Its hot ceramic electrolyte carries oxygen ions from the cathode to the anode.
+    \item At the anode, the ions react with fuel. Released electrons flow through an external circuit.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Impedance and equivalent circuits}
+  \begin{itemize}
+    \setlength{\itemsep}{0.95em}
+    \item EIS applies a small oscillating voltage and measures the current response across frequencies.
+    \item The resulting impedance spectrum describes how the cell responds at different frequencies.
+    \item An equivalent circuit combines simple elements to reproduce the spectrum.
+    \item CPEs describe imperfect capacitive behavior; Warburg elements represent diffusion.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{How the grammar builds circuits}
+  \begin{itemize}
+    \setlength{\itemsep}{0.8em}
+    \item Every candidate includes a resistor in series with the rest of the circuit.
+    \item Build the network by connecting allowed pieces in series or parallel.
+    \item Merge equivalent resistor and inductor combinations to remove duplicates.
+    \item Set a maximum element count to control the search.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The grammar choices}
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabularx}{\textwidth}{@{}p{0.31\textwidth}X@{}}
+    \toprule
+    \textbf{Grammar} & \textbf{Pieces used to build networks} \\
+    \midrule
+    Relaxed & Individual R, L, CPE, and W elements \\
+    Compact hybrid & Predefined blocks, plus individual L and W \\
+    Compact blocks & Predefined blocks only \\
+    \bottomrule
+  \end{tabularx}
+
+  \vspace{0.8em}
+  Example block: a resistor in parallel with a CPE.
+
+  \vspace{0.35em}
+  W denotes a Warburg element. Reported fits mainly use the relaxed collection
+  without Gerischer elements.
+\end{frame}
+
+% Later sections can add parameter fitting, numerical comparisons, and results.
+\end{document}
