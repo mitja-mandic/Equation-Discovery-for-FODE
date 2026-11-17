@@ -372,42 +372,64 @@ and kept a broader band to allow for more uncertainty in initial values.
 
 \subsubsection{Normalising residuals}\label{normalisation}
 
-
-%We obtain one scale value per frequency in either of the two types of data used. For SOFC data, since each dataset is comprised of
-%several measurements across 233 frequencies, we take a median of impedances. This leaves us with a 233 point dataset. To calculate the scales, we
-%take the median absolute deviation (MAD) of impedances of each frequency.
-%
-%For the battery data, we first need to derive the impedances from the raw data available. Since there are many datapoints available we randomly
-%sample 300 points for the data
-%
-%We noticed that in some cases the scales can be quite small, which makes dividing residual values (which can also be small) with them unstable.
-%To this end, we replace the smallest 10 \% of the values of the scale with a fixed value. It should be noted that we calculate separate scale values
-%for imaginary and real parts of the impedances.
-
 Residual normalisation is a standard procedure in robust statistics where we expect a certain amount of noise in the data.
 To prevent large impedance measurements from dominating the result we decided to normalise the residuals during the optimization algorithm.
-We tested three ways of normalising the residuals. Firstly, when we have repeated measurements of the same battery at the same conditions, we can take the MAD
-across measurements at every frequency and use that as a normalising factor. We call that the \texttt{scatter} method.
+We tested three ways of normalising the residuals which we present below. 
 
-To make methods comparable across different structures of datasets, we decided to try normalisation that does not depend on such dataset structure. \texttt{Magnitude} scaling
-uses $|Z|$ at each frequency, with a lower bound of 10\% of the median $|Z|$. \texttt{Relative} scaling
-divides real parts of errors with $|\text{Re}(Z)|$ and imaginary with $|\text{Im}(Z)$. The latter is the default option in our numerical algorithm.
+Let \(Z_i\) be the measured impedance at frequency \(f_i\), and let
+\(\widehat Z_i(\boldsymbol{\theta})\) be the circuit prediction. Define
+the complex residual and its two real-valued components by
+\begin{align}
+r_i(\boldsymbol{\theta})
+    &= \widehat Z_i(\boldsymbol{\theta})-Z_i, \\
+r_{i,\mathrm{Re}}(\boldsymbol{\theta})
+    &= \Re\!\left[r_i(\boldsymbol{\theta})\right], \\
+r_{i,\mathrm{Im}}(\boldsymbol{\theta})
+    &= \Im\!\left[r_i(\boldsymbol{\theta})\right].
+\end{align}
+The scaled residual supplied to the optimizer is
+\begin{equation}
+\widetilde r_{i,c}(\boldsymbol{\theta})
+    = \frac{r_{i,c}(\boldsymbol{\theta})}{s_{i,c}},
+    \qquad c\in\{\mathrm{Re},\mathrm{Im}\},
+\end{equation}
+where \(s_{i,c}>0\) is the scale for component \(c\) at frequency \(f_i\).
 
-%\begin{itemize}
-%    \item \texttt{scatter}
-%    \begin{itemize}
-%        \item Useful if we have repeated measurements of the same battery at the same conditions
-%        \item Take the MAD across measurements at every frequency and use that as a normalising factor
-%    \end{itemize}
-%    \item \texttt{magnitude} 
-%    \begin{itemize}
-%        \item Divide the residuals by the largest absolute value of the measured impedance
-%    \end{itemize}
-%    \item \texttt{relative}
-%    \begin{itemize}
-%        \item Divide real and imaginary parts of the residuals with respective largest real and imaginary parts of the impedances
-%    \end{itemize}
-%\end{itemize}
+We tested the following choices of scale \(s_{i,c}\):
+\begin{align}
+s_{i,c}^{\mathrm{unscaled}}
+    &= 1,\\
+s_{i,c}^{\mathrm{relative}}
+    &= \max\!\left(
+        |[Z_i]_c|,
+        0.1\,\operatorname{median}_{j}|[Z_j]_c|
+       \right),\\
+s_{i,\mathrm{Re}}^{\mathrm{magnitude}}
+=s_{i,\mathrm{Im}}^{\mathrm{magnitude}}
+    &= \max\!\left(
+        |Z_i|,
+        0.1\,\operatorname{median}_{j:\,|Z_j|>0}|Z_j|
+       \right).
+\end{align}
+
+For spectrum data with repeated measurements \(Z_{ik}\) at frequency \(f_i\),
+the scatter scale is calculated separately for each component:
+\begin{align}
+m_{i,c}
+    &= \operatorname{median}_{k}[Z_{ik}]_c,\\
+a_{i,c}
+    &= 1.4826\,
+       \operatorname{median}_{k}
+       \left|[Z_{ik}]_c-m_{i,c}\right|,\\
+s_{i,c}^{\mathrm{scatter}}
+    &= \max\!\left(
+        a_{i,c},
+        \eta\,\operatorname{median}_{j}a_{j,c}
+       \right),
+\end{align}
+where \(\eta\) is the scatter-floor fraction, which is in place to avoid division with very small numbers.
+
+
 
 \subsubsection{Numerical algorithm}\label{numalg}
 
@@ -445,7 +467,7 @@ and a version of the algorithm with the \texttt{soft\_l1} loss function in Equat
     F(\boldsymbol{x})
     = \frac{C^2}{2}
       \sum_{i=1}^{m}
-      \rho\left(\frac{r_i(\boldsymbol{x})^2}{C^2}\right),
+      \rho\left(\frac{\widetilde r_i(\boldsymbol{x})^2}{C^2}\right),
 \end{equation}
 where $r_i(\boldsymbol{x})$ denotes the $i$th residual and
 \begin{equation}
@@ -459,7 +481,7 @@ on the cost function - parameter $C$ intuitively presents a cutoff between quadr
 The parameter estimations were obtained via two-stage optimization procedure.
 We tested all candidate circuits in the first stage until they either stopped improving or
 they were evaluated 100 times. For the second stage we kept those, that were within 20\%
-of best performing one according to either MSE or optimizer cost function, depending on 
+of best performing one according to either MSE or optimizer cost function value at stopping point, depending on 
 the experiment. We continue evaluating these circuits until they they reach a plateau and
 perform final sorting via a measure, that takes model complexity into account.
 
@@ -467,6 +489,23 @@ Standard definition of BIC includes the MSE. Since we we normalise the residuals
 we fit the parameters we decided to use the \texttt{weighted\_BIC}, where instead of raw 
 we use weighted residuals to compute BIC.
 
+
+
+Let \(N\) be the number of measured frequencies and \(k\) the number of
+fitted circuit parameters. For each frequency \(i\), define
+
+The post-fit error score is
+\[
+E_p=\frac{1}{N}\sum_{i=1}^{N}
+\left(
+|r_{i,\mathrm{Re}}|^p+|r_{i,\mathrm{Im}}|^p
+\right),
+\qquad p=0.5.
+\]
+We rank circuits using
+\[
+\mathrm{lp\_BIC}=2N\log(E_{0.5})+k\log(2N).
+\]
 %\subsection{}
 
 
@@ -550,7 +589,7 @@ dataset that resembles a battery.
 \end{aligned}
 \]
 
-We simulated the spectra by evaluating the above circuits at 351 logarithmically spaced points between 0.1 and 100.000 Hz. At each frequency point we
+We simulated the spectra by evaluating the above circuits at 351 logarithmically spaced points between 0.1 Hz and 100 kHz. At each frequency point we
 simulated 20 measurements by adding independent Gaussian with standard deviation $\sqrt{(0.15|Z|^2) + (0.05\Omega)^2}$ to both
 real and imaginary component.
 
@@ -655,718 +694,203 @@ captured in the fit.
 \label{sofc4el}
 \end{figure}
 
+Including more elements in the search by itself does not improve the result visually as reported in Figure
+\ref{sofc5el_nonorm}. The fit is closer to the data especially in higher frequency range on the left hand side,
+but still fails to capture the general shape of data.
 
-%\begin{figure}[h]
-%\centering
-%\includegraphics[width=\textwidth]{../../Results/campaigns/unified_no_G_relaxed_4_elements/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_4_best_5_refined.png}
-%\caption{Nyquist graphs of 5 best fitting circuits on SOFC dataset with up to 4 elements after MSE margin reoptimization}
-%\label{sofc4el}
-%\end{figure}
+Including relative normalisation brings improvement to the fit, which
+we present in Figure \ref{sofc5el_relScale}. We now have a clear dip around 0.057 on the
+real axis, and low frequency shape on the right of the spectrum is captured closely. 
 
+We can further improve the fit by leveraging data abundance in this case, where measurements of each 
+fuel cell were repeated across frequencies. We present these results in Figure \ref{sofc5el_scatScale},
+where we further improve the high frequency fit. It has to be noted, that even though the circuit appears
+to be fitting closer to the data, the same structure is selected in both relative scaling case and
+scatter scaling case. 
 
+Parameter values for both fits are presented in Table \ref{tab:sofc_relative_scatter_parameters}. 
+First three listed parameters are nearly identical, and in both circuits $\alpha_2$ falls on the upper 
+boundary of the feasible interval, making the CPE in this case behave nearly like a perfect capacitor. 
+There are larger differences in parameter values for the final resistor and CPE. 
 
-\begin{figure}[h!]
-\centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements}
-\label{sofc5el_nonorm}
-\end{figure}
+Looking at the 
+residual plot (INSERT RESIDUAL PLOTS) we can see the largest variation of estimation quality at the both ends of the
+observed spectrum. Scatter scaling uses information from repeated measurements, therefore the scales obtained from
+more datasources can help reduce the influences of high measurement variability.
 
-Before expanding the search space with even more circuits, we decided to try to make the algorithm more robust.
-We first implemented normalising residuals at each step of the algorithm and present results in Figure \ref{sofc5el}. There is noticable
-improvement in how closely the graphs fit the data. When inspecting the results in Table \ref{fig:first-table-circuits} more closely, we see that
-several parameters are close to their limits (especially $\alpha$). 
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and normalised residuals.}
-\label{sofc5el}
-\end{figure}
-
-To improve on unstable solutions we robustify the algorithm with adaptations described in Section \ref{numalg}. This way we get some more diversity
-in results in Graph \ref{sofc5elnum}.
+For \texttt{f\_scale} parameter $0.001$, almost all residuals fall beneath that mark. This makes the loss function behave effectively like
+an L1 loss function, but we choose to keep the \texttt{soft\_l1} formulation to preserve the differentiability and numerical stability provided
+by the SciPy implementation.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_extra_numerics.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
-\label{sofc5elnum}
+\includegraphics[width=\textwidth]{../../Results/campaigns/unified_no_G_relaxed_5_elements_unscaled/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/refined_scaled_lp_bic.png}
+\caption{Nyquist graphs of 5 best fitting circuits on SOFC dataset with up to 4 elements after MSE margin reoptimization}
+\label{sofc5el_nonorm}
 \end{figure}
 
-Comparing the circuits obtained with the standard and robustified numerical procedures we get
-can see that the former contains one parameter less (but same number of elements),
-and none of the parameters are on the border of their permitted range. MSE difference
-between them was minimal. The circuits in question were:
-
-\[
-\begin{aligned}
-\textnormal{Robustified approach}
-    &= R_s
-    \seriesconn
-    \left[
-        \CPEel{Q_1}{\alpha_1}
-        \parallel
-        \left(
-            R_2
-            \seriesconn
-            \left[
-                R_3
-                \parallel
-                \CPEel{Q_4}{\alpha_4}
-            \right]
-        \right)
-    \right],
-    \\[1.5ex]
-\textnormal{Standard approach}
-    &= R_s
-    \seriesconn
-    \left[
-        R_1
-        \parallel
-        \left(
-            \CPEel{Q_2}{\alpha_2}
-            \seriesconn
-            \left[
-                \CPEel{Q_3}{\alpha_3}
-                \parallel
-                \CPEel{Q_4}{\alpha_4}
-            \right]
-        \right)
-    \right].
-\end{aligned}
-\]
-
-\begin{figure}[htbp]
-    \centering
-
-    %------------------------------------------------
-    % Model A
-    %------------------------------------------------
-    \begin{subfigure}[t]{0.47\textwidth}
-        \centering
-        \resizebox{0.95\linewidth}{!}{%
-        \begin{circuitikz}[line width=0.7pt]
-
-            % Series resistance
-            \draw
-            (0,0) node[ocirc, label=left:$a$] {}
-            to[R, l={$R_s$}, fill=gray!10]
-            (1.6,0)
-            -- (2,0) coordinate (A);
-
-            % Outer upper branch: CPE1
-            \draw
-            (A)
-            -- (2,1)
-            to[generic,
-               l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
-               fill=blue!12]
-            (6.6,1)
-            -- (6.6,0) coordinate (B);
-
-            % Outer lower branch: R2
-            \draw
-            (A)
-            -- (2,-1)
-            to[R, l_={$R_2$}, fill=gray!10]
-            (3.6,-1)
-            -- (3.9,-1) coordinate (C);
-
-            % Nested upper branch: R3
-            \draw
-            (C)
-            to[R, l^={$R_3$}, fill=gray!10]
-            (5.6,-1) coordinate (D);
-
-            % Nested lower branch: CPE4
-            \draw
-            (C)
-            -- (3.9,-2.2)
-            to[generic,
-               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
-               fill=blue!12]
-            (5.6,-2.2)
-            -- (D);
-
-            % Rejoin outer branch
-            \draw
-            (D)
-            -- (6.6,-1)
-            -- (B);
-
-            % Output
-            \draw
-            (B)
-            -- (7.2,0)
-            node[ocirc, label=right:$b$] {};
-
-            % Junctions
-            \fill (A) circle (1.7pt);
-            \fill (B) circle (1.7pt);
-            \fill (C) circle (1.7pt);
-            \fill (D) circle (1.7pt);
-
-        \end{circuitikz}%
-        }
-
-        \caption{Result of the robustified approach}
-        \label{fig:first-table-model-a}
-    \end{subfigure}
-    \hfill
-    %------------------------------------------------
-    % Model B
-    %------------------------------------------------
-    \begin{subfigure}[t]{0.47\textwidth}
-        \centering
-        \resizebox{0.95\linewidth}{!}{%
-        \begin{circuitikz}[line width=0.7pt]
-
-            % Series resistance
-            \draw
-            (0,0) node[ocirc, label=left:$a$] {}
-            to[R, l={$R_s$}, fill=gray!10]
-            (1.6,0)
-            -- (2,0) coordinate (A);
-
-            % Outer upper branch: R1
-            \draw
-            (A)
-            -- (2,1)
-            to[R, l^={$R_1$}, fill=gray!10]
-            (6.6,1)
-            -- (6.6,0) coordinate (B);
-
-            % Outer lower branch: CPE2
-            \draw
-            (A)
-            -- (2,-1)
-            to[generic,
-               l_={$\mathrm{CPE}(Q_2,\alpha_2)$},
-               fill=blue!12]
-            (3.6,-1)
-            -- (3.9,-1) coordinate (C);
-
-            % Nested upper branch: CPE3
-            \draw
-            (C)
-            to[generic,
-               l^={$\mathrm{CPE}(Q_3,\alpha_3)$},
-               fill=blue!12]
-            (5.6,-1) coordinate (D);
-
-            % Nested lower branch: CPE4
-            \draw
-            (C)
-            -- (3.9,-2.2)
-            to[generic,
-               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
-               fill=blue!12]
-            (5.6,-2.2)
-            -- (D);
-
-            % Rejoin outer branch
-            \draw
-            (D)
-            -- (6.6,-1)
-            -- (B);
-
-            % Output
-            \draw
-            (B)
-            -- (7.2,0)
-            node[ocirc, label=right:$b$] {};
-
-            % Junctions
-            \fill (A) circle (1.7pt);
-            \fill (B) circle (1.7pt);
-            \fill (C) circle (1.7pt);
-            \fill (D) circle (1.7pt);
-
-        \end{circuitikz}%
-        }
-
-        \caption{Result of the standard approach}
-        \label{fig:first-table-model-b}
-    \end{subfigure}
-
-    \caption{Resulting circuits from two approaches with parameters described in \ref{tab:circuit_comparison_sofc}:
-    (a) robustified algorithm;
-    (b) standard algorithm.}
-    \label{fig:first-table-circuits}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/campaigns/real_pcl_spectrum_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_6starts_20261112/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_5_best_5_refined.png}
+\caption{SOFC 5 el rel scale}
+\label{sofc5el_relScale}
 \end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../Results/campaigns/real_pcl_sofc_no_G_relaxed_5_soft_l1_scatter_fscale_0p001_optimizer_value_lp_bic_6starts_20261113/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_5_best_5_refined.png}
+\caption{SOFC 5 el scat scale}
+\label{sofc5el_scatScale}
+\end{figure}
+
 
 
 \begin{table}[htbp]
 \centering
-\caption{Parameter comparison of the two circuits}
-\label{tab:circuit_comparison_sofc}
-\small
-\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\caption{Comparison of the fitted SOFC circuit parameters obtained with
+relative and scatter residual scaling.}
+\label{tab:sofc_relative_scatter_parameters}
+\begin{tabular}{lrr}
 \toprule
-\textbf{Parameter} & \textbf{Robustified algorithm} & \textbf{Standard approach} \\
+Parameter & Relative scaling & Scatter scaling \\
 \midrule
+\(R_s\) (\si{\ohm})
+    & 0.0474021 & 0.0463463 \\
 
-%Circuit &
-%$\displaystyle
-%R_s +
-%\left[
-%\mathrm{CPE}(Q_1,\alpha_1)
-%\parallel
-%\left(
-%R_2 +
-%\left[
-%R_3 \parallel \mathrm{CPE}(Q_4,\alpha_4)
-%\right]
-%\right)
-%\right]$
-%&
-%$\displaystyle
-%R_s +
-%\left[
-%R_1
-%\parallel
-%\left(
-%\mathrm{CPE}(Q_2,\alpha_2) +
-%\left[
-%\mathrm{CPE}(Q_3,\alpha_3)
-%\parallel
-%\mathrm{CPE}(Q_4,\alpha_4)
-%\right]
-%\right)
-%\right]$
-%\\[2ex]
+\(R_1\) (\si{\ohm})
+    & 0.0241604 & 0.0255941 \\
 
-Element count     & 5 & 5 \\
-Parameter count   & 7 & 8 \\
-%Random start      & Yes & Yes \\
-MSE               & $1.89647\times10^{-6}$ & $1.64223\times10^{-6}$ \\
-BIC & $-3031.73789$ & $-3059.82487$ \\
-%$\mathrm{lp\_error}$ & 0.865611 & Not reported \\
+\(Q_2\) (\si{\siemens\second\tothe{\alpha_2}})
+    & 1.15428 & 1.09144 \\
 
+\(\alpha_2\)
+    & 0.990000 & 0.990000 \\
+
+\(R_3\) (\si{\ohm})
+    & 0.0127951 & 0.0176448 \\
+
+\(Q_4\) (\si{\siemens\second\tothe{\alpha_4}})
+    & 0.308221 & 0.682791 \\
+
+\(\alpha_4\)
+    & 0.958089 & 0.778419 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{SOFC fit comparison for different residual scaling methods.}
+\label{tab:sofc_scaling_comparison}
+\begin{tabular}{lrrr}
+\toprule
+Metric & No normalisation & Relative scaling & Scatter scaling \\
 \midrule
-\multicolumn{3}{@{}l}{\textbf{Circuit parameters}} \\
-\midrule
-
-$R_s$ (\si{\ohm}) &
-0.0463228 &
-0.0461368 \\
-
-$R_1$ (\si{\ohm}) &
---- &
-0.0258082 \\
-
-$R_2$ (\si{\ohm}) &
-0.0129929 &
---- \\
-
-$R_3$ (\si{\ohm}) &
-0.0133333 &
---- \\
-
-$Q_1$ (\si{\siemens\second\tothe{\alpha_1}}) &
-0.542887 &
---- \\
-
-$\alpha_1$ &
-0.795783 &
---- \\
-
-$Q_2$ (\si{\siemens\second\tothe{\alpha_2}}) &
---- &
-1.05020 \\
-
-$\alpha_2$ &
---- &
-0.990000 \\
-
-$Q_3$ (\si{\siemens\second\tothe{\alpha_3}}) &
---- &
-50.8970 \\
-
-$\alpha_3$ &
---- &
-0.0298022 \\
-
-$Q_4$ (\si{\siemens\second\tothe{\alpha_4}}) &
-3.33826 &
-0.469656 \\
-
-$\alpha_4$ &
-0.941526 &
-0.819800 \\
-
-\midrule
-%\multicolumn{3}{@{}l}{\textbf{Rezistenčne lastnosti}} \\
-%\midrule
-%
-%Teoretičen upor vezja pri visokih frekvencah, $R_{\infty}$ (\si{\ohm}) &
-%0.0463228 &
-%0.0461368 \\
-%
-%Teoretičen upor vezja pri nizkih frekvencah, $R_0$ (\si{\ohm}) &
-%0.0726489 &
-%0.0719450 \\
-%
-%Razlika med obema, $R_{\mathrm{pol}}$ (\si{\ohm}) &
-%0.0263261 &
-%0.0258082 \\
-%
-%\bottomrule
-\end{tabularx}
+MSE ($\Omega^2$)       & $2.6974\times10^{-6}$ & $3.2739\times10^{-6}$ & $3.1278\times10^{-6}$ \\
+BIC                    & $-5932.61$ & $-5842.35$ & $-5863.62$ \\
+$\mathrm{lp\_BIC}$     & $-1402.54$ & $-1374.24$ & $-1453.17$ \\
+\bottomrule
+\end{tabular}
 \end{table}
 
 
 
+%\begin{figure}[h!]
+%\centering
+%\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5_fixed_starting_values_no_normalization.png}
+%\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements}
+%\label{sofc5el_nonorm}
+%\end{figure}
+%
+%Before expanding the search space with even more circuits, we decided to try to make the algorithm more robust.
+%We first implemented normalising residuals at each step of the algorithm and present results in Figure \ref{sofc5el}. There is noticable
+%improvement in how closely the graphs fit the data. When inspecting the results in Table \ref{fig:first-table-circuits} more closely, we see that
+%several parameters are close to their limits (especially $\alpha$). 
+%
+%\begin{figure}[h!]
+%\centering
+%\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png}
+%\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and normalised residuals.}
+%\label{sofc5el}
+%\end{figure}
+%
+%To improve on unstable solutions we robustify the algorithm with adaptations described in Section \ref{numalg}. This way we get some more diversity
+%in results in Graph \ref{sofc5elnum}.
 
+
+\begin{table}[htbp]
+\centering
+\caption{SOFC fit comparison for different values of \(f_{\mathrm{scale}}\).}
+\label{tab:sofc_fscale_comparison}
+\begin{tabular}{lrrr}
+\toprule
+Metric
+& \(f_{\mathrm{scale}}=0.001\)
+& \(f_{\mathrm{scale}}=0.01\)
+& \(f_{\mathrm{scale}}=0.1\) \\
+\midrule
+MSE (\(\Omega^2\))
+& \(3.2739\times10^{-6}\)
+& \(2.5932\times10^{-6}\)
+& \(2.6254\times10^{-6}\) \\
+
+BIC
+& \(-5842.35\)
+& \(-5950.97\)
+& \(-5945.22\) \\
+
+\(\mathrm{lp\_BIC}\)
+& \(-1374.24\)
+& \(-1339.74\)
+& \(-1319.68\) \\
+
+\(\mathrm{scaled\_lp\_BIC}\)
+& \(-180.57\)
+& \(-188.34\)
+& \(-174.30\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../Results/campaigns/unified_no_G_relaxed_5_elements_relative_soft_l1_fscale_0p01/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_5_best_5_refined.png}
+        \caption{Results with f-scale set to 0.01}
+        \label{fscale_0.01comp}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../Results/campaigns/unified_no_G_relaxed_5_elements_relative_soft_l1_fscale_0p001/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_5_best_5_refined.png}
+        \caption{Results with f-scale set to 0.001}
+        \label{fscale_0.001comp}
+    \end{subfigure}
+    \caption{Comparison between different f-scale values for the optimizer}
+    \label{fscalecomp}
+\end{figure}
 
 
 \clearpage
 
-
-
 \subsection{Battery data}\label{battery}
-
-We apply the methods to data from batteries as well. We used data from 
-\href{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}{https://portal.ijs.si/nextcloud/s/2TRZjgGGLZygtNs}.
 
 The \texttt{eis\_bank1\_20251016-084621.pcl} battery spectrum contains 128 complex impedance values for channel \texttt{batt\_1}, spanning 0.00141 to 1000 Hz.
 The real part ranges from 0.0165 to 0.0392 $\Omega$. The imaginary part remains negative across the entire spectrum, reaching -0.0295 $\Omega$ at the lowest frequency. 
 Both components increase in magnitude toward low frequencies, producing a pronounced low-frequency tail that is normal in batteries and implies low frequency
-diffusion. In this case measurements are not repeated (different channels mean different physical battery packs) so we do not perform any imputation of the data.
+diffusion. In this case measurements are not repeated (different channels mean different physical battery packs) and we therefore do not take the
+scatter scaling into account as we did for SOFC data.
 
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_4_best_5.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 4 elements}
-\end{figure}
-
-
+In Figure \ref{batt_relScale} the 5 element fit is presented. After the first round, only one circuit was in the 20\% reoptimization range. In this case it is
+more difficult to inspect the fit quality visually, as the measurements are more spread out on the imaginary axis. The prominent tail low frequency tail on the
+right side corresponds to the slower ion diffusion taking place. 
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements}\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/bank3_20260208-084547_1_no_G_relaxed_5_best_5_extra_numerics.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
+\includegraphics[width=\textwidth]{../../Results/campaigns/real_pcl_spectrum_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_6starts_20261112/runs/pcl_eis_bank1_20251016-084621_batt_1/Results/Plots/Nyquists/eis_bank1_20251016-084621_batt_1_no_G_relaxed_5_best_5_refined.png}
+\caption{Battery 5 el rel scale}
+\label{batt_relScale}
 \end{figure}
-
-We compare the 5 element circuits obtained from robustified and standard numerical algorithm. 
-
-\[
-\begin{aligned}
-\textnormal{Robustified approach}
-    &= R_s
-    \seriesconn
-    \left[
-        \left(
-            \CPEel{Q_1}{\alpha_1}
-            \seriesconn
-            \CPEel{Q_2}{\alpha_2}
-        \right)
-        \parallel
-        \left(
-            R_3
-            \seriesconn
-            \CPEel{Q_4}{\alpha_4}
-        \right)
-    \right],
-    \\[1.5ex]
-\textnormal{Standard approach}
-    &= R_s
-    \seriesconn
-    \CPEel{Q_1}{\alpha_1}
-    \seriesconn
-    \left[
-        R_2
-        \parallel
-        \left(
-            \CPEel{Q_3}{\alpha_3}
-            \seriesconn
-            \CPEel{Q_4}{\alpha_4}
-        \right)
-    \right].
-\end{aligned}
-\]
-
-\begin{figure}[htbp]
-    \centering
-
-    %------------------------------------------------
-    % Extra-numerics circuit
-    %------------------------------------------------
-    \begin{subfigure}[t]{0.47\textwidth}
-        \centering
-        \resizebox{0.95\linewidth}{!}{%
-        \begin{circuitikz}[line width=0.7pt]
-
-            % Series resistance
-            \draw
-            (0,0) node[ocirc, label=left:$a$] {}
-            to[R, l={$R_s$}, fill=gray!10]
-            (1.6,0)
-            -- (2,0) coordinate (A);
-
-            % Upper branch: CPE1 + CPE2
-            \draw
-            (A)
-            -- (2,1)
-            to[generic,
-               l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
-               fill=blue!12]
-            (4.2,1)
-            to[generic,
-               l^={$\mathrm{CPE}(Q_2,\alpha_2)$},
-               fill=blue!12]
-            (6.4,1)
-            -- (6.4,0) coordinate (B);
-
-            % Lower branch: R3 + CPE4
-            \draw
-            (A)
-            -- (2,-1)
-            to[R, l_={$R_3$}, fill=gray!10]
-            (4.2,-1)
-            to[generic,
-               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
-               fill=blue!12]
-            (6.4,-1)
-            -- (B);
-
-            % Output
-            \draw
-            (B)
-            -- (7,0)
-            node[ocirc, label=right:$b$] {};
-
-            % Junctions
-            \fill (A) circle (1.7pt);
-            \fill (B) circle (1.7pt);
-
-        \end{circuitikz}%
-        }
-
-        \caption{Extra-numerics fit}
-        \label{fig:second-table-extra}
-    \end{subfigure}
-    \hfill
-    %------------------------------------------------
-    % Standard circuit
-    %------------------------------------------------
-    \begin{subfigure}[t]{0.47\textwidth}
-        \centering
-        \resizebox{0.95\linewidth}{!}{%
-        \begin{circuitikz}[line width=0.7pt]
-
-            % Rs and CPE1 in series
-            \draw
-            (0,0) node[ocirc, label=left:$a$] {}
-            to[R, l={$R_s$}, fill=gray!10]
-            (1.4,0)
-            to[generic,
-               l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
-               fill=blue!12]
-            (3.7,0)
-            -- (4,0) coordinate (A);
-
-            % Upper branch: R2
-            \draw
-            (A)
-            -- (4,1)
-            to[R, l^={$R_2$}, fill=gray!10]
-            (7.1,1)
-            -- (7.1,0) coordinate (B);
-
-            % Lower branch: CPE3 + CPE4
-            \draw
-            (A)
-            -- (4,-1)
-            to[generic,
-               l_={$\mathrm{CPE}(Q_3,\alpha_3)$},
-               fill=blue!12]
-            (5.5,-1)
-            to[generic,
-               l_={$\mathrm{CPE}(Q_4,\alpha_4)$},
-               fill=blue!12]
-            (7.1,-1)
-            -- (B);
-
-            % Output
-            \draw
-            (B)
-            -- (7.7,0)
-            node[ocirc, label=right:$b$] {};
-
-            % Junctions
-            \fill (A) circle (1.7pt);
-            \fill (B) circle (1.7pt);
-
-        \end{circuitikz}%
-        }
-
-        \caption{Standard fit}
-        \label{fig:second-table-standard}
-    \end{subfigure}
-
-    \caption{Side by side cirucit comparison:
-    (a) Robustified approach
-    (b) Standard approach}
-    \label{fig:second-table-circuits}
-\end{figure}
-
-\begin{table}[htbp]
-\centering
-\caption{5 element circuit parameter comparison}
-\label{tab:circuit_comparison}
-\small
-\begin{tabularx}{\textwidth}{@{}lXX@{}}
-\toprule
-\textbf{Parameter}
-& \textbf{Robustified approach}
-& \textbf{Standard approach} \\
-\midrule
-
-%Circuit
-%&
-%$\begin{aligned}
-%R_s + \bigl[
-%&\bigl(
-%\operatorname{CPE}(Q_1,\alpha_1)
-%+\operatorname{CPE}(Q_2,\alpha_2)
-%\bigr)\\
-%&\parallel
-%\bigl(
-%R_3+\operatorname{CPE}(Q_4,\alpha_4)
-%\bigr)
-%\bigr]
-%\end{aligned}$
-%&
-%$\begin{aligned}
-%R_s &+ \operatorname{CPE}(Q_1,\alpha_1)\\
-%&+ \bigl[
-%R_2 \parallel
-%\bigl(
-%\operatorname{CPE}(Q_3,\alpha_3)
-%+\operatorname{CPE}(Q_4,\alpha_4)
-%\bigr)
-%\bigr]
-%\end{aligned}$
-%\\[2ex]
-
-Element count
-& 5
-& 5 \\
-
-Parameter count
-& 8
-& 8 \\
-
-MSE
-& $2.72147\times10^{-8}$
-& $2.33564\times10^{-8}$ \\
-
-BIC
-& $-5180.22$
-& $-5226.09$ \\
-
-\midrule
-\multicolumn{3}{@{}l}{\textbf{Circuit parameters}} \\
-\midrule
-
-%RMSE
-%& $1.64969\times10^{-4}$
-%& $1.52828\times10^{-4}$ \\
-%
-%
-%Function evaluations
-%& 100
-%& 62 \\
-%
-%Termination
-%& Maximum number of evaluations exceeded
-%& \texttt{ftol} condition satisfied \\
-
-
-$R_s$ (\(\Omega\))
-& 0.0160873
-& $8.08927\times10^{-5}$ \\
-
-$R_2$ (\(\Omega\))
-& ---
-& 0.0225741 \\
-
-$R_3$ (\(\Omega\))
-& 0.00747417
-& --- \\
-
-$Q_1$ (\(\mathrm{S\,s}^{\alpha_1}\))
-& 122.545
-& 505.257 \\
-
-$\alpha_1$
-& 0.664787
-& 0.612086 \\
-
-$Q_2$ (\(\mathrm{S\,s}^{\alpha_2}\))
-& 5.36106
-& --- \\
-
-$\alpha_2$
-& 0.640431
-& --- \\
-
-$Q_3$ (\(\mathrm{S\,s}^{\alpha_3}\))
-& ---
-& 4.29185 \\
-
-$\alpha_3$
-& ---
-& 0.166491 \\
-
-$Q_4$ (\(\mathrm{S\,s}^{\alpha_4}\))
-& 859.752
-& 0.122094 \\
-
-$\alpha_4$
-& 0.693547
-& 0.989999 \\
-
-\bottomrule
-\end{tabularx}
-\end{table}
-
-%\begin{figure}
-%\centering
-%\begin{subfigure}{.5\textwidth}
-%  \centering
-%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_4_best_5.png}
-%  \caption{A subfigure}
-%  \label{fig:sub1}
-%\end{subfigure}%
-%\begin{subfigure}{.5\textwidth}
-%  \centering
-%  \includegraphics[width=.4\linewidth]{../../Results/Plots/Nyquists/bulk/eis_20200227_070006_no_G_relaxed_5_best_5.png}
-%  \caption{A subfigure}
-%  \label{fig:sub2}
-%\end{subfigure}
-%\caption{A figure with two subfigures}
-%\label{fig:test}
-%\end{figure}
-
-\clearpage
-
-\section{EIS Battery data}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{../../Results/Plots/Nyquists/bulk/eis_bank1_20251112-103715_no_G_relaxed_5_best_5_extra_numerics_converged.png}
-\caption{Nyquist graphs of 5 best fitting circuits according to our algorithm with up to 5 elements and robustified algorithm}
-\end{figure}
-
 
 
 \begin{table}[htbp]
@@ -1390,77 +914,46 @@ $\alpha_2$ & 0.602733
 \label{tab:best_circuit_sofc}
 \end{table}
 
-% Required packages: circuitikz, graphicx
-\begin{figure}[htbp]
-    \centering
-    \resizebox{0.75\linewidth}{!}{%
-    \begin{circuitikz}[line width=0.7pt]
 
-        % Series resistance
-        \draw
-        (0,0) node[ocirc, label=left:$a$] {}
-        to[R, l={$R_s$}, fill=gray!10]
-        (1.6,0)
-        -- (2,0) coordinate (A);
 
-        % Outer upper branch: CPE1
-        \draw
-        (A)
-        -- (2,1.2)
-        to[generic,
-           l^={$\mathrm{CPE}(Q_1,\alpha_1)$},
-           fill=blue!12]
-        (8,1.2)
-        -- (8,0) coordinate (B);
+\begin{table}[htbp]
+\centering
+\caption{Battery fit comparison for different values of
+\(f_{\mathrm{scale}}\).}
+\label{tab:battery_fscale_comparison}
+\begin{tabular}{lrrr}
+\toprule
+Metric
+& \(f_{\mathrm{scale}}=0.001\)
+& \(f_{\mathrm{scale}}=0.01\)
+& \(f_{\mathrm{scale}}=0.1\) \\
+\midrule
+MSE (\(\Omega^2\))
+& \(2.7692\times10^{-7}\)
+& \(2.6202\times10^{-7}\)
+& \(2.5071\times10^{-7}\) \\
 
-        % Outer lower branch: CPE2
-        \draw
-        (A)
-        -- (2,-1.2)
-        to[generic,
-           l_={$\mathrm{CPE}(Q_2,\alpha_2)$},
-           fill=blue!12]
-        (4.8,-1.2)
-        -- (5.1,-1.2) coordinate (C);
+BIC
+& \(-3826.67\)
+& \(-3840.83\)
+& \(-3852.12\) \\
 
-        % Nested upper branch: R3
-        \draw
-        (C)
-        to[R, l^={$R_3$}, fill=gray!10]
-        (7.2,-1.2) coordinate (D);
+\(\mathrm{lp\_BIC}\)
+& \(-966.10\)
+& \(-953.29\)
+& \(-940.70\) \\
 
-        % Nested lower branch: L4
-        \draw
-        (C)
-        -- (5.1,-2.6)
-        to[L, l_={$L_4$}]
-        (7.2,-2.6)
-        -- (D);
+\(\mathrm{scaled\_lp\_BIC}\)
+& \(\mathbf{-300.82}\)
+& \(-293.54\)
+& \(-284.62\) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-        % Rejoin outer branch
-        \draw
-        (D)
-        -- (8,-1.2)
-        -- (B);
 
-        % Output
-        \draw
-        (B)
-        -- (8.6,0)
-        node[ocirc, label=right:$b$] {};
 
-        % Junctions
-        \fill (A) circle (1.7pt);
-        \fill (B) circle (1.7pt);
-        \fill (C) circle (1.7pt);
-        \fill (D) circle (1.7pt);
 
-    \end{circuitikz}%
-    }
-    \caption{Best-performing equivalent circuit with parameters
-    listed in Table~\ref{tab:best_circuit_sofc}.}
-    \label{fig:best-circuit-sofc}
-\end{figure}
 
 \clearpage
 \nocite{*} 

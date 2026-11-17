@@ -1,0 +1,445 @@
+\documentclass[aspectratio=169,12pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{tabularx}
+
+\newcommand{\seriesconn}{\mathbin{\oplus}}
+\newcommand{\Lel}[1]{\mathrm{L}\!\left(#1\right)}
+\newcommand{\Wel}[1]{\mathrm{W}\!\left(#1\right)}
+\newcommand{\Gel}[2]{\mathrm{G}\!\left(#1,#2\right)}
+\newcommand{\CPEel}[2]{\mathrm{CPE}\!\left(#1,#2\right)}
+
+
+\definecolor{ink}{HTML}{19324A}
+\definecolor{accent}{HTML}{176E84}
+\setbeamercolor{normal text}{fg=ink,bg=white}
+\setbeamercolor{frametitle}{fg=ink,bg=white}
+\setbeamercolor{structure}{fg=accent}
+\setbeamercolor{title}{fg=ink}
+\setbeamerfont{frametitle}{size=\LARGE,series=\bfseries}
+\setbeamerfont{normal text}{size=\large}
+\setbeamerfont{title}{size=\Huge,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{itemize items}[circle]
+
+\title{Discovering circuits from impedance data}
+\subtitle{SOFCs, equivalent circuits, and formal grammars}
+\author{Mitja Mandić}
+\institute{IJS E8}
+\date{}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  {Agenda}
+  \tableofcontents
+%  \begin{itemize}
+%    \item What is a (solid oxide) fuel cell?
+%    \item Intro to electrochemical impedance spectroscopy
+%    \item Connection to formal grammars
+%    \item Our implementation and results
+%  \end{itemize}
+\end{frame}
+
+\section{What is a (solid oxide) fuel cell?}
+
+
+\begin{frame}{What is a solid oxide fuel cell?}
+  \begin{itemize}
+    \setlength{\itemsep}{0.95em}
+    \item Fuel cell is an ``electricity factory''
+    \item A SOFC converts fuel and oxygen into electricity and heat.
+    \item Its hot ceramic electrolyte carries oxygen ions from the cathode to the anode.
+    \item At the anode, the ions react with fuel. Released electrons flow through an external circuit. 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What is a solid oxide fuel cell?}
+  %include sofc graphic
+\end{frame}
+
+\begin{frame}{How is a SOFC different from a battery?}
+  \renewcommand{\arraystretch}{1.55}
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.19\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    \textbf{Aspect} & \textbf{SOFC} & \textbf{Battery} \\
+    \midrule
+    Fuel supply
+      & External fuel and air
+      & Reactants stored inside \\
+    Runtime
+      & Runs while fuel flows
+      & Runs until stored energy is used \\
+    Continue use
+      & Add more fuel
+      & Recharge or replace \\
+    Operation
+      & High temperature, slower startup
+      & Usually near room temperature, quick startup \\
+    \bottomrule
+  \end{tabularx}
+\end{frame}
+\section{Intro to electrochemical impedance spectroscopy}
+\begin{frame}{Impedance and EIS data}
+  \begin{itemize}
+    \setlength{\itemsep}{0.95em}
+    \item \textbf{E}lectrochemical \textbf{I}mpedance \textbf{S}pectroscopy
+    applies a small oscillating voltage and measures the current response across frequencies.
+    \item The resulting impedance spectrum describes how the cell responds at different frequencies.
+    \item High frequencies (10 kHz) show resistive behaviour, lower (1 mHz) capture charge transfer and ion diffusion.
+    \item Non-invasive technique, the idea is to capture the data from a cell as is (without changing the system).
+    %\item An equivalent circuit combines simple elements to reproduce the spectrum.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Physical vs. equivalent circuit modeling (ECM)}
+  \onslide<1->{
+  Option 1: Model the cell as a physical system
+  \begin{itemize}
+    \item Try to capture the processes inside the cell 
+    in a system of equations
+    \item Requires detailed knowledge of the chemical process
+    \item Very complex, lots of variables
+  \end{itemize}}
+  \vspace{0.5cm}
+  \onslide<2>{
+    Option 2: Take the data and fit a ``simple'' explanation
+    \begin{itemize}
+      \item \textit{Data science-y} approach
+      \item Fit a model we understand and draw conclusions from it
+      \item Chosen technique: equivalent circuit modeling
+    \end{itemize}
+  }
+\end{frame}
+
+
+\begin{frame}{ECM building blocks}
+  \renewcommand{\arraystretch}{1.75}
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.19\textwidth}>{\centering}X>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    \textbf{Element} & \textbf{Impedance formula} & \textbf{Meaning in simple terms} \\
+    \midrule
+    \textbf{R}\enspace Resistor
+      & $Z_R = R$ & Opposes current. Its impedance does not change with frequency. \\
+    \textbf{CPE}\enspace Constant phase element
+      & $Z_{CPE} = \frac{1}{(j\omega)^{\alpha}Q}$ & Imperfect capacitor and non-ideal charge storage. \\
+    \textbf{L}\enspace Inductor
+      & $Z_L = j\omega L$ & Inductive behavior at high frequency. \\
+    \textbf{W}\enspace Warburg element
+      & $Z_W = \frac{\sigma}{\sqrt{jw}}$ & Models diffusion and limits from slow mass or ion transport. \\
+    \bottomrule
+  \end{tabularx}
+\end{frame}
+\section{Connection to formal grammars}
+\begin{frame}
+  {Connection to formal grammars}
+\begin{itemize}
+  \item Our idea was to create a formal grammar that would create all possible
+  circuits
+  \item We specify the rules how elements may connect and define how complex 
+  circuits do we consider
+  \item In the frequency domain impedance equations follow immediately; for
+  elements in series we sum their impedances, and in parallel we sum their
+  admittances (reciprocal impedance values) 
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}{Circuit grammar}
+  \begin{center}
+    \renewcommand{\arraystretch}{1.45}
+    \begin{tabular}{@{}rcl@{}}
+      \texttt{Circuit} & \texttt{::=} & \texttt{Rs} \\
+                       &               & \texttt{or Rs + Network} \\[0.5em]
+      \texttt{Network} & \texttt{::=} & \texttt{Element} \\
+                       &               & \texttt{or (Network + Network)} \\
+                       &               & \texttt{or (Network || Network)} \\[0.5em]
+      \texttt{Element} & \texttt{::=} & \texttt{R, CPE, L, or W} \\
+    \end{tabular}
+  \end{center}
+
+  \vspace{0.7em}
+  \begin{itemize}
+    \setlength{\itemsep}{0.5em}
+    \item \texttt{+} connects networks in series and \texttt{||} connects them in parallel.
+    \item This grammar permits all combinations of elements, 
+    with a resistor \texttt{Rs} connected in series
+  \end{itemize}
+\end{frame}
+
+\section{Our implementation and results}
+
+\begin{frame}{Circuit generation process}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.10}
+  \begin{tabularx}{\textwidth}{@{}r>{\ttfamily\raggedright\arraybackslash}X@{}}
+     1 & INPUT maximum element count $N$, primitives or blocks $P$ \\
+     2 & $B[1\ldots N-1] \gets$ empty buckets, $C \gets \{\mathrm{Rs}\}$ \\
+     3 & for each $p \in P$ \\
+     4 & \hspace*{1em}$q \gets \mathrm{Normalize}(p)$, then add $q$ to $B[|q|]$ when $|q| < N$ \\
+     5 & for $n = 1\ldots N-1$ \\
+     6 & \hspace*{1em}for each split $n = l + r$ with $l \le r$ \\
+     7 & \hspace*{2em}for each $(u,v) \in B[l] \times B[r]$ and $o \in \{\mathrm{series},\mathrm{parallel}\}$ \\
+     8 & \hspace*{3em}$w \gets \mathrm{Normalize}(o(u,v))$ \\
+     9 & \hspace*{3em}if $|w| = n$, add $w$ to $B[n]$ \\
+    10 & \hspace*{1em}for each $w \in B[n]$, add $\mathrm{Normalize}(\mathrm{series}(\mathrm{Rs},w))$ to $C$ \\
+    11 & RETURN $C$ \\
+  \end{tabularx}
+\end{frame}
+
+\begin{frame}{Parameter fitting}
+  \begin{itemize}
+    \setlength{\itemsep}{0.65em}
+    \item We fit a predicted impedance $\widehat{Z}(f;\boldsymbol{\theta})$ for each circuit 
+    \item Residuals use separate component-relative scales so that no frequency range
+      dominates only because its impedance values are larger.
+    \item Each circuit uses six initial parameter sets: one fixed start that is the same for all circuits
+    and five stratified random starts. We keep the fit with the lowest optimizer cost.
+    \item Bounded SciPy \texttt{least\_squares} fits the parameters with the TRF method.
+      CPE exponent $\alpha$ remains linear while the other parameters use log space.
+    \item The \texttt{soft\_l1} loss reduces the influence of large residuals.
+      User defined parameter \texttt{f\_scale} sets when this downweighting begins.
+      Best performing value we tested was \texttt{f\_scale}$=10^{-3}$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Candidate screening and refinement}
+  \begin{enumerate}
+    \setlength{\itemsep}{0.8em}
+    \item Fit every generated circuit with the same multi-start procedure and a limited
+      first-round evaluation budget.
+    \item Rank the first-round fits by optimizer cost and retain circuits within 20\%
+      of the best value.
+    \item Restart each retained circuit from its fitted parameters, using tighter
+      tolerances and a much larger evaluation budget.
+    \item Rank the refined circuits with $L_{0.5}$-BIC, which rewards a good fit while
+      penalizing additional parameters.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Simulation study}
+Data generated between 100 kHz and 0.1 Hz from following circuits with added noise:
+\[
+\begin{aligned}
+\textnormal{SOFC circuit}
+    &= R_s
+    \seriesconn
+    \left[
+        R_1
+        \parallel
+        \CPEel{Q_2}{\alpha_2}
+    \right]
+    \seriesconn
+    \left[
+        R_3
+        \parallel
+        \CPEel{Q_4}{\alpha_4}
+    \right]
+    ,
+    \\[1.5ex]
+\textnormal{Battery circuit}
+    &= R_s
+    \seriesconn
+    \left[
+        R_1
+        \parallel
+        \CPEel{Q_2}{\alpha_2}
+    \right]
+    \seriesconn
+    W(\sigma_3).
+\end{aligned}
+\]
+\onslide<2->{
+Battery circuit was correctly identified, however SOFC was not
+\[
+\textnormal{Selected SOFC circuit}
+    = R_s
+    \seriesconn
+    \left[
+    \CPEel{Q_1}{\alpha_1}
+    \parallel
+    \left(
+        R_2
+        \seriesconn
+        \left(
+            R_3
+            \parallel
+            \CPEel{Q_4}{\alpha_4}
+        \right)
+    \right)
+    \right]
+\]
+}
+\end{frame}
+
+\begin{frame}{Simulation study - Battery data}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.75\linewidth]{/home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png}
+  \caption{Simulated SOFC data fit results}    
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Simulation study - SOFC data}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.75\linewidth]{/home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png}
+  \caption{Simulated SOFC data fit results}    
+\end{figure}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{SOFC data}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Battery data}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{TODO}
+  \begin{itemize}
+    \item Parallelization and fitting larger circuits
+    \item Research \& implement alternative numerical algorithms
+    \item Auto-tuning of the numerical algorithm parameters
+    \item Experimental results over several battery cycles
+    \item Compare it to some LLM type shit
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  
+\end{frame}
+
+\appendix
+
+\begin{frame}{Backup: parameters and residuals}
+  For measured impedance $Z_i$ at frequency $f_i$,
+  \[
+    \widehat Z_i(\boldsymbol{\theta})
+      = Z_{\mathrm{circuit}}(2\pi f_i;\boldsymbol{\theta}),
+    \qquad
+    e_i(\boldsymbol{\theta})
+      = \widehat Z_i(\boldsymbol{\theta})-Z_i.
+  \]
+  \[
+    r_{i,\mathrm{Re}}=\Re(e_i),
+    \qquad
+    r_{i,\mathrm{Im}}=\Im(e_i).
+  \]
+  The optimizer receives one real-valued residual vector:
+  \[
+    \widetilde{\mathbf r}(\boldsymbol{\theta})=
+    \bigl(
+      \widetilde r_{1,\mathrm{Re}},\ldots,\widetilde r_{N,\mathrm{Re}},
+      \widetilde r_{1,\mathrm{Im}},\ldots,\widetilde r_{N,\mathrm{Im}}
+    \bigr)^{\mathsf T}.
+  \]
+  Positive parameters use log space, while the CPE exponent stays linear:
+  \[
+    x_j=\log\theta_j,\quad \theta_j=e^{x_j},
+    \qquad x_{\alpha}=\alpha.
+  \]
+\end{frame}
+
+\begin{frame}{Backup: residual scaling}
+  \small
+  For component $c\in\{\mathrm{Re},\mathrm{Im}\}$,
+  \[
+    \widetilde r_{i,c}(\boldsymbol{\theta})
+      = \frac{r_{i,c}(\boldsymbol{\theta})}{s_{i,c}}.
+  \]
+  \textbf{Unscaled and component-relative choices}
+  \[
+    s_{i,c}^{\mathrm{unscaled}}=1,
+    \qquad
+    s_{i,c}^{\mathrm{relative}}
+      =\max\!\left(
+        |[Z_i]_c|,
+        0.1\,\operatorname{median}_{j}|[Z_j]_c|
+      \right).
+  \]
+  \textbf{Repeated-measurement scatter choice}
+  \[
+    m_{i,c}=\operatorname{median}_{k}[Z_{ik}]_c,
+    \qquad
+    a_{i,c}=1.4826\,\operatorname{median}_{k}
+      \left|[Z_{ik}]_c-m_{i,c}\right|,
+  \]
+  \[
+    s_{i,c}^{\mathrm{scatter}}
+      =\max\!\left(
+        a_{i,c},
+        \eta\,\operatorname{median}_{j}a_{j,c}
+      \right).
+  \]
+\end{frame}
+
+\begin{frame}{Backup: robust least squares}
+  \small
+  With $m=2N$ scalar residuals and $C=\texttt{f\_scale}$, SciPy's
+  \texttt{soft\_l1} objective is
+  \[
+    F(\boldsymbol{\theta})
+      =\frac{C^2}{2}\sum_{q=1}^{m}
+       \rho\!\left(
+         \frac{\widetilde r_q(\boldsymbol{\theta})^2}{C^2}
+       \right),
+    \qquad
+    \rho(z)=2\left(\sqrt{1+z}-1\right).
+  \]
+  Our runs use
+  \[
+    C=\texttt{f\_scale}=10^{-3}.
+  \]
+  Residuals below $C$ behave approximately quadratically. Larger residuals
+  receive progressively less weight.
+
+  \vspace{0.5em}
+  The reported first-round optimizer score is
+  \[
+    J_{\mathrm{opt}}=\frac{2F}{N}.
+  \]
+\end{frame}
+
+\begin{frame}{Backup: fit and ranking scores}
+  \small
+  With $N$ frequencies and $k$ fitted circuit parameters,
+  \[
+    \mathrm{MSE}
+      =\frac{1}{N}\sum_{i=1}^{N}
+       \left(r_{i,\mathrm{Re}}^2+r_{i,\mathrm{Im}}^2\right),
+  \]
+  \[
+    E_p
+      =\frac{1}{N}\sum_{i=1}^{N}
+       \left(|r_{i,\mathrm{Re}}|^p+|r_{i,\mathrm{Im}}|^p\right),
+    \qquad p=0.5.
+  \]
+  \[
+    \mathrm{BIC}=2N\log(\mathrm{MSE})+k\log(2N),
+  \]
+  \[
+    L_{0.5}\text{-}\mathrm{BIC}
+      =2N\log(E_{0.5})+k\log(2N).
+  \]
+  First-round fits enter refinement when
+  \[
+    J_i\le(1+0.20)J_{\min}=1.2J_{\min}.
+  \]
+\end{frame}
+
+\end{document}

@@ -1,0 +1,5 @@
+\babel@toc {english}{}\relax 
+\beamer@sectionintoc {1}{What is a (solid oxide) fuel cell?}{3}{0}{1}
+\beamer@sectionintoc {2}{Intro to electrochemical impedance spectroscopy}{6}{0}{2}
+\beamer@sectionintoc {3}{Connection to formal grammars}{10}{0}{3}
+\beamer@sectionintoc {4}{Our implementation and results}{12}{0}{4}

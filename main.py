@@ -182,7 +182,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--final-filename-suffix", default=FILENAME_SUFFIX_REOPTIMIZED)
     parser.add_argument("--plot-title", default="Nyquist plot with stratified random starting values and normalized residuals")
     parser.add_argument("--final-plot-title", default="Top circuits after reoptimization")
-    ranking_choices = ("optimizer_value", "bic", "lp_bic", "lp_ebic", "ebic", "mse", "lp_error")
+    ranking_choices = (
+        "optimizer_value", "bic", "lp_bic", "scaled_lp_bic",
+        "lp_ebic", "ebic", "mse", "lp_error",
+    )
     parser.add_argument("--sort-first-round", default="optimizer_value", help="Metric for first-round ranking and refinement selection", choices=ranking_choices)
     parser.add_argument("--sort-second-round", default="bic", help="Metric for ranking refined circuits", choices=ranking_choices)
     return parser
@@ -392,6 +395,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"   EBIC: {result['ebic']:.6g}")
         print(f"   MSE: {result['mse']:.6g}")
         print(f"   Optimizer value: {result['optimizer_value']:.6g}")
+        print(f"   Scaled LP-BIC: {result['scaled_lp_bic']:.6g}")
         print(f"   RelMSE: {result['relative_mse']:.6g}")
         print(f"   Success: {result['success']}")
         print(f"   Parameters: {result['parameters']}")
@@ -407,6 +411,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"   RelMSE: {result['relative_mse']:.6g}")
         print(f"   MSE: {result['mse']:.6g}")
         print(f"   Optimizer value: {result['optimizer_value']:.6g}")
+        print(f"   Scaled LP-BIC: {result['scaled_lp_bic']:.6g}")
         print(f"   Success: {result['success']}")
         #print(f"   Parameters: {result['parameters']}")
         #print()

@@ -104,6 +104,12 @@ class MainEntrypointTests(unittest.TestCase):
             "--sort-second-round", "optimizer_value",
         ])
         self.assertEqual(options.sort_second_round, "optimizer_value")
+        scaled_options = main.build_parser().parse_args([
+            "--sort-first-round", "scaled_lp_bic",
+            "--sort-second-round", "scaled_lp_bic",
+        ])
+        self.assertEqual(scaled_options.sort_first_round, "scaled_lp_bic")
+        self.assertEqual(scaled_options.sort_second_round, "scaled_lp_bic")
 
     def test_direct_spectrum_mode_reaches_loader_and_report(self):
         import main

@@ -96,6 +96,7 @@ class FitReportingTests(unittest.TestCase):
                 "optimizer_value": rank * 0.05,
                 "aic": rank + 1.0,
                 "bic": rank + 2.0,
+                "scaled_lp_bic": rank + 3.0,
                 "success": rank != 10,
                 "rand_start": "False",
                 "optimizer_status": 1,
@@ -239,6 +240,7 @@ class FitReportingTests(unittest.TestCase):
                 coherence=None,
             )
             self.results[0].update({
+                "predicted_impedance": self.measured + (0.01 + 0.02j),
                 "relative_mse": 0.25,
                 "lp_error": 0.3,
                 "lp_bic": 1.2,
@@ -326,6 +328,9 @@ class FitReportingTests(unittest.TestCase):
             self.assertEqual(document["top_circuits"][0]["relative_mse"], 0.25)
             self.assertEqual(document["top_circuits"][0]["relative_rmse"], 0.5)
             self.assertEqual(document["top_circuits"][0]["lp_error"], 0.3)
+            self.assertEqual(len([row for row in document["circuit_metrics"] if "scaled_lp_bic" in row]), 12)
+            self.assertEqual(document["circuit_metrics"][0]["scaled_lp_bic"], 4.0)
+            self.assertEqual(document["top_circuits"][0]["scaled_lp_bic"], 4.0)
             self.assertEqual(document["top_circuits"][0]["optimizer_value"], 0.05)
             self.assertEqual(document["top_circuits"][0]["aic"], 2.0)
             self.assertEqual(document["top_circuits"][0]["ebic"], 4.5)
@@ -353,6 +358,10 @@ class FitReportingTests(unittest.TestCase):
             )
             document = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual([row["delta_bic"] for row in document["top_circuits"]], [2.0, 0.0])
+        self.assertEqual(
+            [row["scaled_lp_bic"] for row in document["top_circuits"]],
+            [4.0, 5.0],
+        )
 
 
 if __name__ == "__main__":

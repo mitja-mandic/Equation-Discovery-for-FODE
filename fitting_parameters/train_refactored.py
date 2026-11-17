@@ -15,6 +15,7 @@ from fitting_parameters.model_selection import (
     compute_ebic,
     compute_mse,
     compute_relative_mse,
+    compute_scaled_lp_bic,
     compute_weighted_lp,
     compute_weighted_mse,
 )
@@ -242,7 +243,7 @@ def finalize_fit(
 def _summarize_fit(
     circuit, optimization, frequency, measured_impedance,
     real_scatter, imag_scatter, number_circuit_per_size, rand_start,
-    *, gamma=1, manual=False,
+    *, scale_type=RESIDUAL_SCALE, gamma=1, manual=False,
 ):
     """Build the common scoring and optimizer metadata for a fitted circuit."""
     parameters = optimization["parameters"]
@@ -255,6 +256,9 @@ def _summarize_fit(
     )
     n = len(predicted - measured_impedance) * 2
     num_parameters = len(parameters)
+    real_divisor, imag_divisor = _residual_scales(
+        measured_impedance, real_scatter, imag_scatter, scale_type,
+    )
     parameter_bounds = {name: physical_bounds(name) for name in parameters}
     parameters_at_bounds = [
         name for name, value in parameters.items()
@@ -271,6 +275,10 @@ def _summarize_fit(
         "aic": compute_aic(n, mse, num_parameters),
         "bic": compute_bic(n, mse, num_parameters),
         "lp_bic": compute_bic(n, lp_error, num_parameters),
+        "scaled_lp_bic": compute_scaled_lp_bic(
+            measured_impedance, predicted,
+            real_divisor, imag_divisor, num_parameters,
+        ),
         "ebic": 0 if manual else compute_ebic(
             len(measured_impedance), mse, num_parameters,
             number_circuit_per_size[num_parameters], gamma=gamma,
@@ -334,6 +342,7 @@ def compare_circuits(
         return _summarize_fit(
             circuit, optimization, frequency, measured_impedance,
             real_scatter, imag_scatter, number_circuit_per_size, rand_start,
+            scale_type=scale_type,
             **options,
         )
 

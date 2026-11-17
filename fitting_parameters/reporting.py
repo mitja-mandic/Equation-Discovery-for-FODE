@@ -428,6 +428,7 @@ def _fit_metric_record(
         "aic": _optional_json_number(result.get("aic")),
         "bic": _json_number(result["bic"]),
         "lp_bic": _optional_json_number(result.get("lp_bic")),
+        "scaled_lp_bic": _optional_json_number(result.get("scaled_lp_bic")),
         "ebic": _optional_json_number(result.get("ebic")),
         "lp_ebic": _optional_json_number(result.get("lp_ebic")),
         "ebic_gamma": _optional_json_number(result.get("ebic_gamma")),

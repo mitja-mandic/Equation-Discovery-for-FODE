@@ -33,6 +33,17 @@ class RefinementSelectionTests(unittest.TestCase):
             select_refinement_candidates(results, 0.2, "optimizer_value"), results[:2]
         )
 
+    def test_scaled_lp_bic_uses_additive_bic_margin(self):
+        results = [
+            {"scaled_lp_bic": -100.},
+            {"scaled_lp_bic": -91.},
+            {"scaled_lp_bic": -89.},
+        ]
+        self.assertEqual(
+            select_refinement_candidates(results, 0.2, "scaled_lp_bic"),
+            results[:2],
+        )
+
     def test_circuit_refinement_uses_optimizer_value_when_mse_disagrees(self):
         circuits = [SeriesResistance("R0"), SeriesResistance("R1")]
         attempts = [

@@ -8,7 +8,10 @@ def select_refinement_candidates(results: list[dict], error_margin: float, sorti
     BIC-like metrics use an additive delta. A zero best error admits only exact
     zero-error fits; empty input returns an empty list.
     """
-    if sorting_metric not in ("optimizer_value", "mse", "lp_error", "bic", "ebic", "lp_bic", "lp_ebic"):
+    if sorting_metric not in (
+        "optimizer_value", "mse", "lp_error", "bic", "ebic",
+        "lp_bic", "scaled_lp_bic", "lp_ebic",
+    ):
         raise ValueError("Unknown sorting metric")
     if not np.isfinite(error_margin) or error_margin < 0:
         raise ValueError("error_margin must be finite and nonnegative")
@@ -66,6 +69,21 @@ def compute_weighted_lp(measured, predicted, weights_real, weights_imag, p=None)
     error = predicted - measured
 
     return np.mean((np.abs(error.real) / weights_real) ** p + (np.abs(error.imag) / weights_imag) ** p)
+
+
+def compute_scaled_lp_bic(
+    measured: np.ndarray,
+    predicted: np.ndarray,
+    real_divisor: np.ndarray | float,
+    imag_divisor: np.ndarray | float,
+    num_params: int,
+) -> float:
+    """Apply the existing LP-BIC formula to scaled real and imaginary residuals."""
+    scaled_lp_error = compute_weighted_lp(
+        measured, predicted, real_divisor, imag_divisor, p=0.5,
+    )
+    return float(compute_bic(2 * len(measured), scaled_lp_error, num_params))
+
 
 def normalize_sigma(sigma, percentage_floor=0.1):
     floor = percentage_floor * np.nanmedian(sigma)

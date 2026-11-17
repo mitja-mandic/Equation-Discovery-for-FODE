@@ -255,6 +255,12 @@ settings, circuit counts, and associated plots. `circuit_metrics` contains the
 best fit for every circuit, including its parameters, optimizer value, MSE, relative MSE, AIC,
 BIC, EBIC, LP metrics, bounds, optimizer status, and evaluation costs. The top
 ten also include predicted impedance arrays for frequency-domain comparisons.
+First-round and refined summaries include `scaled_lp_bic` for every circuit. It applies the
+existing LP-BIC formula to the real and imaginary residuals after division by
+the saved `fitting_residual_divisors`, using LP exponent 0.5. The score changes
+with the residual scaling mode, so compare it only among fits on the same data
+with the same scaling.
+It is also available to `--sort-first-round` and `--sort-second-round`.
 Aggregate evaluation counts and fit time include all starts without storing
 each start separately. `delta_bic` is measured from the lowest BIC in that
 stage, regardless of the ranking metric. Older saved summaries retain their

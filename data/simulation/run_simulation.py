@@ -27,8 +27,8 @@ CIRCUIT = Series(children=(
         children=(Resistor("R1"), 
                   CPE("Q1", "alpha1")
                   )),
-    Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
-    #Warburg("sigma"),
+    #Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
+    Warburg("sigma"),
 ))
 
 PARAMETERS = {
@@ -37,17 +37,17 @@ PARAMETERS = {
     "R1": 0.4,       # ohm
     "Q1": 0.02,      # S * s**alpha1
     "alpha1": 0.85,
-    #"sigma": 0.5,
-    "R2": 0.8,       # ohm
-    "Q2": 5,       # S * s**alpha2
-    "alpha2": 0.7,
+    "sigma": 0.5,
+    #"R2": 0.8,       # ohm
+    #"Q2": 5,       # S * s**alpha2
+    #"alpha2": 0.7,
 }
 
 # ---------------------------------------------------------------------------
 # CONFIGURATION: FREQUENCY, NOISE, AND OUTPUT
 # ---------------------------------------------------------------------------
-MIN_FREQUENCY_HZ = 1e-2
-MAX_FREQUENCY_HZ = 1e5
+MIN_FREQUENCY_HZ = 1e-3
+MAX_FREQUENCY_HZ = 1e4
 POINTS_PER_DECADE = 50  # logarithmic intervals per decade, plus both endpoints
 
 ADD_NOISE = True

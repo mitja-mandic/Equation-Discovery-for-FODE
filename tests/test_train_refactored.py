@@ -4,6 +4,7 @@ from unittest.mock import patch
 import numpy as np
 from Circuit_generation.circuit_class import Resistor, Series, SeriesResistance
 from fitting_parameters import train_refactored as train
+from fitting_parameters.model_selection import compute_bic, compute_weighted_lp
 
 
 class ResidualScalingTests(unittest.TestCase):
@@ -78,8 +79,35 @@ class ResidualScalingTests(unittest.TestCase):
                 self.assertIn("relative_mse", best[1])
                 self.assertIn("optimizer_value", results[0])
                 self.assertIn("optimizer_value", best[0])
-                self.assertEqual(scales.call_count, 3)
+                self.assertIn("scaled_lp_bic", results[0])
+                self.assertIn("scaled_lp_bic", best[0])
+                self.assertIn("scaled_lp_bic", best[1])
+                self.assertEqual(scales.call_count, 6)
                 self.assertTrue(all(call.args[-1] == mode for call in scales.call_args_list))
+
+    def test_scaled_lp_bic_uses_optimizer_residual_divisors(self):
+        circuit = SeriesResistance()
+        frequency = np.array([1., 2.])
+        measured = np.array([1. + 2j, 3. + 4j])
+        real_scatter = np.array([2., 4.])
+        imag_scatter = np.array([5., 10.])
+        optimization = train._make_fitter(
+            circuit, frequency, measured, ["Rs"],
+            {"loss": "linear", "method": "trf"},
+            real_scatter, imag_scatter, "scatter",
+        )({"Rs": 2.})
+        summary = train._summarize_fit(
+            circuit, optimization, frequency, measured,
+            real_scatter, imag_scatter, {1: 1}, "False",
+            scale_type="scatter",
+        )
+        expected_error = compute_weighted_lp(
+            measured, summary["predicted_impedance"],
+            real_scatter, imag_scatter, p=0.5,
+        )
+        self.assertAlmostEqual(
+            summary["scaled_lp_bic"], compute_bic(4, expected_error, 1)
+        )
 
     def test_effective_evaluation_limit_is_retained_with_each_fit(self):
         frequency = np.array([1., 2., 3.])
