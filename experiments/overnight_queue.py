@@ -40,7 +40,7 @@ from experiments import run_experiments  # noqa: E402
 # CONFIGURATION — edit this section to define an overnight queue.
 # =============================================================================
 
-QUEUE_NAME = "overnight"
+QUEUE_NAME = "simulated_no_G_relaxed_7"
 
 # Continue to later jobs if one job fails. Failed jobs are recorded, not retried.
 CONTINUE_AFTER_FAILURE = True
@@ -56,15 +56,16 @@ HEARTBEAT_SECONDS = 60
 # timeout_hours=None means no queue-imposed timeout.
 JOBS: list[dict[str, object]] = [
     {
-        "enabled": False,
-        "campaign_id": "replace_with_a_unique_campaign_id",
-        "plan_path": "experiments/local_plan.csv",
-        "settings_path": "experiments/settings.json",
-        "settings_overrides": {
-            "number_starts": 24,
-        },
+        "enabled": True,
+        "campaign_id": (
+            "simulated_008_sofc_009_battery_no_G_relaxed_7_relative_soft_l1_"
+            "fscale_0p001_optimizer_value_combinatorial_score_6starts_20261119"
+        ),
+        "plan_path": "experiments/simulated_sofc_battery_008_009_plan.csv",
+        "settings_path": "experiments/simulated_no_G_relaxed_7_settings.json",
+        "settings_overrides": {},
         "timeout_hours": None,
-        "notes": "Disabled example: enable only after --dry-run succeeds.",
+        "notes": "Seven-element no-G relaxed grammar on simulated SOFC 008 and battery 009.",
     },
 ]
 

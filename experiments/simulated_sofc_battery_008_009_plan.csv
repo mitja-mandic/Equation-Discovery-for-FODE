@@ -1,0 +1,3 @@
+dataset_id,format,path,channel,enabled,notes
+simulated_sofc_spectrum_008,simulated,data/simulation/generated/simulated_spectrum_008.npz,,1,SOFC simulation study dataset
+simulated_battery_spectrum_009,simulated,data/simulation/generated/simulated_spectrum_009.npz,,1,Battery simulation study dataset
