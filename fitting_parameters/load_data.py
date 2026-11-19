@@ -1,5 +1,6 @@
 from pathlib import Path
 import heapq
+import json
 import pickle
 import numpy as np
 
@@ -41,6 +42,41 @@ def load_spectrum(file_path: str | Path) -> tuple[np.ndarray, np.ndarray, np.nda
     """Load component-wise median impedance and repeat scatter from an EIS NPZ."""
     frequency, impedance, sigma_real, sigma_imag, _ = _load_spectrum(file_path)
     return frequency, impedance, sigma_real, sigma_imag
+
+
+def load_simulation_ground_truth(
+    file_path: str | Path,
+) -> tuple[np.ndarray, np.ndarray, str]:
+    """Load the noise-free impedance and generating circuit from a simulated NPZ."""
+    with np.load(Path(file_path), allow_pickle=False) as data:
+        missing = {"F", "Z_clean", "metadata_json"}.difference(data.files)
+        if missing:
+            raise ValueError(
+                "Simulated spectrum is missing ground-truth fields: "
+                + ", ".join(sorted(missing))
+            )
+        frequency = np.asarray(data["F"], dtype=float)
+        clean_impedance = np.asarray(data["Z_clean"], dtype=complex)
+        try:
+            metadata = json.loads(str(data["metadata_json"].item()))
+        except (AttributeError, json.JSONDecodeError, ValueError) as error:
+            raise ValueError("Simulated spectrum metadata_json must contain one JSON object") from error
+
+    if (
+        frequency.ndim != 1
+        or clean_impedance.ndim != 1
+        or frequency.shape != clean_impedance.shape
+        or frequency.size == 0
+    ):
+        raise ValueError("Simulation ground truth must contain matching nonempty 1D F and Z_clean arrays")
+    if not np.all(np.isfinite(frequency) & (frequency > 0)):
+        raise ValueError("Simulation ground-truth frequencies must be finite and positive")
+    if not np.all(np.isfinite(clean_impedance)):
+        raise ValueError("Simulation ground-truth impedance must be finite")
+    circuit = metadata.get("circuit") if isinstance(metadata, dict) else None
+    if not isinstance(circuit, str) or not circuit.strip():
+        raise ValueError("Simulation metadata_json must identify a nonempty circuit")
+    return frequency, clean_impedance, circuit
 
 
 def load_spectrum_direct(

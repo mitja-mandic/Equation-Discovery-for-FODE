@@ -113,6 +113,8 @@ def plot_circuit_fits(
     results: Sequence[Mapping[str, Any]],
     output_path: str | Path,
     *,
+    reference_impedance: np.ndarray | None = None,
+    reference_label: str | None = None,
     show: bool = True,
     save_output: bool,
     plot_title: str
@@ -138,6 +140,20 @@ def plot_circuit_fits(
         label="Measured data",
         zorder=10,
     )
+
+    if reference_impedance is not None:
+        reference_impedance = np.asarray(reference_impedance, dtype=complex)
+        if reference_impedance.shape != np.asarray(measured_impedance).shape:
+            raise ValueError("Reference impedance must match the measured array")
+        axis.plot(
+            reference_impedance.real,
+            -reference_impedance.imag,
+            color="black",
+            linestyle="-.",
+            linewidth=2.6,
+            label=_reference_plot_label(reference_label),
+            zorder=8,
+        )
 
     for index, result in enumerate(plotted_results, start=1):
         predicted = np.asarray(result["predicted_impedance"])
@@ -193,6 +209,8 @@ def plot_fit_residuals(
     results: Sequence[Mapping[str, Any]],
     output_path: str | Path,
     *,
+    reference_impedance: np.ndarray | None = None,
+    reference_label: str | None = None,
     real_scale: np.ndarray | float,
     imag_scale: np.ndarray | float,
     f_scale: float,
@@ -231,11 +249,32 @@ def plot_fit_residuals(
             raise ValueError("Predicted impedance must match the measured array")
         errors.append(predicted - measured_impedance)
 
+    reference_error = None
+    if reference_impedance is not None:
+        reference_impedance = np.asarray(reference_impedance, dtype=complex)
+        if reference_impedance.shape != measured_impedance.shape:
+            raise ValueError("Reference impedance must match the measured array")
+        reference_error = reference_impedance - measured_impedance
+
     order = np.argsort(frequency)
     figure, panels = plt.subplots(2, 2, figsize=(15, 9), sharex=True)
     raw_axes = panels[:, 0]
     axes = panels[:, 1]
     raw_axes[1].sharey(raw_axes[0])
+    if reference_error is not None:
+        for axis, component in zip(raw_axes, (reference_error.real, reference_error.imag)):
+            axis.plot(
+                frequency[order], component[order], color="black", linestyle="-.",
+                linewidth=2.2, label=_reference_plot_label(reference_label),
+            )
+        for axis, component, scale in zip(
+            axes, (reference_error.real, reference_error.imag), scales
+        ):
+            axis.plot(
+                frequency[order], (component / scale)[order], color="black",
+                linestyle="-.", linewidth=2.2,
+                label=_reference_plot_label(reference_label),
+            )
     for index, (result, error) in enumerate(zip(results[:5], errors), start=1):
         for axis, component in zip(raw_axes, (error.real, error.imag)):
             axis.plot(
@@ -408,6 +447,7 @@ def _fit_metric_record(
         "circuit": str(result["circuit"]),
         "rand_start": result["rand_start"],
         "element_count": _count_elements(result["circuit"]),
+        "arrangement_count": int(result["arrangement_count"]),
         "parameter_count": len(parameters),
         "parameters": parameters,
         "initial_values": {
@@ -427,6 +467,9 @@ def _fit_metric_record(
         "lp_error": _optional_json_number(result.get("lp_error")),
         "aic": _optional_json_number(result.get("aic")),
         "bic": _json_number(result["bic"]),
+        "combinatorial_score": _optional_json_number(
+            result.get("combinatorial_score")
+        ),
         "lp_bic": _optional_json_number(result.get("lp_bic")),
         "scaled_lp_bic": _optional_json_number(result.get("scaled_lp_bic")),
         "ebic": _optional_json_number(result.get("ebic")),
@@ -457,6 +500,11 @@ def _fit_metric_record(
 def _circuit_plot_label(rank: int, circuit: CircuitNode) -> str:
     """Return the ranked legend label, including the circuit expression."""
     return f"Circuit {rank}: {circuit}"
+
+
+def _reference_plot_label(circuit: str | None) -> str:
+    """Return the legend label for a known generating circuit."""
+    return "Correct circuit" if circuit is None else f"Correct circuit: {circuit}"
 
 
 def _json_number(value: Any) -> float | int | None:

@@ -4,12 +4,43 @@ from unittest.mock import patch
 
 import numpy as np
 
-from Circuit_generation.circuit_class import SeriesResistance
+from Circuit_generation.circuit_class import CPE, Inductor, Parallel, Resistor, Series, SeriesResistance, Warburg
 from fitting_parameters import train_refactored
-from fitting_parameters.model_selection import select_refinement_candidates
+from fitting_parameters.model_selection import count_circuit_arrangements, select_refinement_candidates
 
 
 class RefinementSelectionTests(unittest.TestCase):
+    def test_combinatorial_score_counts_distinct_arrangements(self):
+        rs, inductor, cpe, warburg = SeriesResistance(), Inductor(), CPE(), Warburg()
+        circuit = Series((rs, inductor, Parallel((cpe, warburg))))
+        swapped = Series((rs, inductor, Parallel((warburg, cpe))))
+        self.assertEqual(count_circuit_arrangements(circuit), 3)
+        self.assertEqual(count_circuit_arrangements(swapped), 3)
+        self.assertEqual(count_circuit_arrangements(Series((rs, inductor, cpe, warburg))), 1)
+        self.assertEqual(
+            count_circuit_arrangements(Series((rs, Parallel((Resistor(), Resistor(), cpe))))), 1,
+        )
+        self.assertEqual(
+            count_circuit_arrangements(Series((rs, Parallel((Resistor(), Series((Resistor(), cpe))))))), 1,
+        )
+        optimization = {
+            "parameters": {"Rs": 1., "L": 1e-6, "Q": 1., "alpha": .8, "sigma": .1},
+            "result": SimpleNamespace(success=True, status=1, message="test", nfev=1),
+            "score": .5,
+            "optimizer_value": .5,
+        }
+        summary = train_refactored._summarize_fit(
+            circuit, optimization, np.array([1., 2.]), np.ones(2, dtype=complex),
+            np.ones(2), np.ones(2), {}, "False", scale_type="unscaled", manual=True,
+        )
+        self.assertEqual(summary["arrangement_count"], 3)
+        self.assertAlmostEqual(
+            summary["combinatorial_score"],
+            4 * np.log(.5)
+            + train_refactored.COMBINATORIAL_ELEMENT_WEIGHT * 4
+            + train_refactored.COMBINATORIAL_ARRANGEMENT_WEIGHT * np.log(3),
+        )
+
     def test_inclusive_margin_and_nonfinite_errors(self):
         results = [{"mse": value} for value in [12., 10., 12.01, np.nan, np.inf]]
         self.assertEqual(select_refinement_candidates(results, .2), results[:2])

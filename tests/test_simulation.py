@@ -7,7 +7,7 @@ import numpy as np
 
 from Circuit_generation.circuit_class import CPE, Parallel, Resistor, Series
 from data.simulation.simulator import frequency_sweep, save_spectrum, simulate
-from fitting_parameters.load_data import load_spectrum
+from fitting_parameters.load_data import load_simulation_ground_truth, load_spectrum
 
 
 class SimulationTests(unittest.TestCase):
@@ -51,7 +51,13 @@ class SimulationTests(unittest.TestCase):
                 self.assertEqual(json.loads(str(data["metadata_json"]))["parameters"], {"R": 2.0})
                 np.testing.assert_array_equal(data["Z_clean"], spectrum.clean_impedance)
             frequency, impedance, real_sigma, imag_sigma = load_spectrum(path)
+            truth_frequency, clean_impedance, circuit_label = (
+                load_simulation_ground_truth(path)
+            )
         np.testing.assert_array_equal(frequency, spectrum.frequency_hz)
+        np.testing.assert_array_equal(truth_frequency, spectrum.frequency_hz)
+        np.testing.assert_array_equal(clean_impedance, spectrum.clean_impedance)
+        self.assertEqual(circuit_label, str(spectrum.metadata["circuit"]))
         expected = np.median(spectrum.measurements.real, axis=1) + 1j * np.median(
             spectrum.measurements.imag, axis=1
         )

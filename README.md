@@ -29,19 +29,63 @@ Then install the dependencies:
 python -m pip install -r requirements.txt
 ```
 
+## Set up a new Ubuntu 26.04 experiment PC
+
+After copying or cloning this repository onto the new PC's SSD, run this once
+from a terminal in the repository root (and rerun it after a new installation if
+needed). Do not copy an old `.venv` from another computer; the script creates
+one for the new PC:
+
+```bash
+bash setup_ubuntu_26_04.sh
+```
+
+The script updates Ubuntu packages; installs Git, build tools, Tk support for
+interactive plots, `rsync`, `tmux`, and `htop`; creates `.venv`; installs the
+pinned Python packages; and checks that they import. It asks for your password
+through `sudo` for the Ubuntu package steps. It does not format or mount drives.
+Ubuntu 26.04 includes Python 3.14, which meets this project's Python 3.11+
+requirement. Use `.venv/bin/python` for project commands so packages remain
+separate from Ubuntu's system Python.
+
+Finish these machine-specific steps:
+
+1. Reboot if Ubuntu's updates request it. Check **Software & Updates → Additional
+   Drivers** if the PC has an NVIDIA GPU or other hardware needing a driver.
+   The fitting code itself uses SciPy on the CPU; it does not require CUDA.
+2. In **Disks**, verify which drive is the 256 GB system SSD and which is the
+   separate 4 TB data drive. Mount the data-drive partitions from **Files**.
+   Check their contents and confirm you can create a test file before using
+   them for experiments. Do not change their format or partitions without
+   checking their contents first.
+3. Copy measurement files to the new PC. Git does not include local files under
+   `data/battery` and `data/spectrum`, the local campaign plan, or `Results`.
+   Keep a backup of measurements and results on another device.
+4. Check **Settings → Power** so the PC will not suspend during a long fit.
+5. Verify a small run from the repository root:
+
+   ```bash
+   .venv/bin/python main.py --data-mode simulated --data-path data/simulation/generated/simulated_spectrum.npz --circuit-path data/circuits/no_G_relaxed_elements_4.json --number-starts 1 --no-show-plots --no-show-residual-plots
+   ```
+
+   For repeatable measurement campaigns, follow the
+   [campaign workflow](experiments/README.md). Its default `Results` directory
+   is inside this repository on the SSD, so choose storage for large outputs
+   before running a large campaign.
+
 ## Quick start
 
 The repository includes a small simulated EIS dataset and a collection of 92
-circuits (all circuits with up to 4 elements), so a clean clone can run without external measurement files:
+circuits (all circuits with up to 4 elements), so a clean clone can run without external measurement files by selecting those inputs explicitly:
 
 ```bash
-python main.py
+python main.py --data-mode simulated --data-path data/simulation/generated/simulated_spectrum.npz --circuit-path data/circuits/no_G_relaxed_elements_4.json
 ```
 
 For a non-interactive or headless run:
 
 ```bash
-python main.py --no-show-plots --no-show-residual-plots
+python main.py --data-mode simulated --data-path data/simulation/generated/simulated_spectrum.npz --circuit-path data/circuits/no_G_relaxed_elements_4.json --no-show-plots --no-show-residual-plots
 ```
 
 The bundled inputs are:
@@ -49,7 +93,7 @@ The bundled inputs are:
 - `data/simulation/generated/simulated_spectrum.npz`
 - `data/circuits/no_G_relaxed_elements_4.json`
 
-The default run fits every bundled circuit from six reproducible starting
+This example fits every bundled circuit from six reproducible starting
 points, refines the best candidates, and prints the highest-ranked results. It
 does not save output files unless `--save-results` is supplied.
 
@@ -224,6 +268,19 @@ most the top five circuits.
 
 Use `--reoptimization-error-margin`, `--sort-first-round`, and
 `--sort-second-round` to override these defaults.
+
+`combinatorial_score` is also available for either ranking stage. It uses
+`n * log(MSE) + alpha * element_count + beta * log(arrangement_count)`, where
+`n` is twice the number of frequencies. `arrangement_count` is the number of
+distinct ways to place the same element types in the circuit's normalized
+series/parallel topology. `Rs` stays fixed; swapping series or parallel
+children, or swapping identical elements, does not create another arrangement.
+Placements that simplify to a different topology are excluded. The count is
+computed from each circuit, without looking up other generated circuits.
+The weights `COMBINATORIAL_ELEMENT_WEIGHT` (`alpha`) and
+`COMBINATORIAL_ARRANGEMENT_WEIGHT` (`beta`) are set in
+`fitting_parameters/train_refactored.py`; both default to 1. This is a custom
+ranking score, not BIC. Saved summaries include the score and arrangement count.
 
 ## Inserting a manual circuit
 

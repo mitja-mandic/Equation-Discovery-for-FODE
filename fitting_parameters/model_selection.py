@@ -1,4 +1,59 @@
 import numpy as np
+from collections.abc import Iterator
+from functools import lru_cache
+from itertools import permutations
+
+from Circuit_generation.circuit_class import (
+    CircuitNode, Element, Parallel, Series, SeriesResistance,
+)
+from Circuit_generation.circuit_from_grammar import normalize
+
+
+def _topology_shape(node: CircuitNode) -> tuple:
+    if isinstance(node, SeriesResistance):
+        return ("Rs",)
+    if isinstance(node, Element):
+        return ("E",)
+    operator = "S" if isinstance(node, Series) else "P"
+    return (operator, tuple(sorted(_topology_shape(child) for child in node.children)))
+
+
+def _element_types(node: CircuitNode) -> list[type[Element]]:
+    if isinstance(node, SeriesResistance):
+        return []
+    if isinstance(node, Element):
+        return [type(node)]
+    return [element_type for child in node.children for element_type in _element_types(child)]
+
+
+def _fill_topology(shape: tuple, elements: Iterator[type[Element]]) -> CircuitNode:
+    if shape[0] == "Rs":
+        return SeriesResistance()
+    if shape[0] == "E":
+        return next(elements)()
+    connection = Series if shape[0] == "S" else Parallel
+    return connection(tuple(_fill_topology(child, elements) for child in shape[1]))
+
+
+@lru_cache(maxsize=None)
+def _count_arrangements(shape: tuple, element_types: tuple[type[Element], ...]) -> int:
+    distinct_circuits = set()
+    for assignment in set(permutations(element_types)):
+        circuit = normalize(_fill_topology(shape, iter(assignment)))
+        if _topology_shape(circuit) == shape:
+            distinct_circuits.add(circuit)
+    return len(distinct_circuits)
+
+
+def count_circuit_arrangements(circuit: CircuitNode) -> int:
+    """Count distinct placements of the same element types in this topology.
+
+    Rs stays fixed. Series and parallel order is interchangeable, and placements
+    simplified into a different topology are excluded. No circuit catalog is used.
+    """
+    normalized = normalize(circuit)
+    types = tuple(sorted(_element_types(normalized), key=lambda element: element.__name__))
+    return _count_arrangements(_topology_shape(normalized), types)
 
 
 def select_refinement_candidates(results: list[dict], error_margin: float, sorting_metric="mse", bic_delta = 10) -> list[dict]:
@@ -10,7 +65,7 @@ def select_refinement_candidates(results: list[dict], error_margin: float, sorti
     """
     if sorting_metric not in (
         "optimizer_value", "mse", "lp_error", "bic", "ebic",
-        "lp_bic", "scaled_lp_bic", "lp_ebic",
+        "lp_bic", "scaled_lp_bic", "lp_ebic", "combinatorial_score",
     ):
         raise ValueError("Unknown sorting metric")
     if not np.isfinite(error_margin) or error_margin < 0:

@@ -96,6 +96,8 @@ class FitReportingTests(unittest.TestCase):
                 "optimizer_value": rank * 0.05,
                 "aic": rank + 1.0,
                 "bic": rank + 2.0,
+                "arrangement_count": rank,
+                "combinatorial_score": rank + 2.5,
                 "scaled_lp_bic": rank + 3.0,
                 "success": rank != 10,
                 "rand_start": "False",
@@ -201,6 +203,66 @@ class FitReportingTests(unittest.TestCase):
         circuit_one_label.set_fontweight.assert_called_once_with("bold")
         fake_figure.savefig.assert_called_once()
 
+    def test_plot_adds_labeled_correct_circuit_when_reference_is_supplied(self):
+        fake_matplotlib = types.ModuleType("matplotlib")
+        fake_pyplot = types.ModuleType("matplotlib.pyplot")
+        fake_figure = MagicMock()
+        fake_axis = MagicMock()
+        fake_axis.legend.return_value.get_texts.return_value = []
+        fake_pyplot.subplots = MagicMock(return_value=(fake_figure, fake_axis))
+        fake_pyplot.show = MagicMock()
+        fake_pyplot.close = MagicMock()
+        fake_matplotlib.pyplot = fake_pyplot
+
+        with patch.dict(
+            sys.modules,
+            {"matplotlib": fake_matplotlib, "matplotlib.pyplot": fake_pyplot},
+        ):
+            plot_circuit_fits(
+                measured_impedance=self.measured,
+                results=self.results,
+                output_path="best_5.png",
+                reference_impedance=self.measured - 0.02j,
+                reference_label="Rs + (R1 || CPE(Q1, alpha1))",
+                show=False,
+                save_output=False,
+                plot_title="Top five",
+            )
+
+        reference_options = fake_axis.plot.call_args_list[0].kwargs
+        self.assertEqual(
+            reference_options["label"],
+            "Correct circuit: Rs + (R1 || CPE(Q1, alpha1))",
+        )
+        self.assertEqual(reference_options["color"], "black")
+        self.assertEqual(reference_options["linestyle"], "-.")
+
+    @unittest.skipUnless(matplotlib is not None, "Matplotlib is not available")
+    def test_residual_plot_adds_correct_circuit_to_each_panel(self):
+        import matplotlib.pyplot as plt
+
+        with tempfile.TemporaryDirectory() as temporary_directory, patch.object(plt, "close"):
+            plot_fit_residuals(
+                self.frequency,
+                self.measured,
+                self.results,
+                Path(temporary_directory) / "residuals.png",
+                reference_impedance=self.measured - (0.01 + 0.02j),
+                reference_label="Rs",
+                real_scale=1.0,
+                imag_scale=1.0,
+                f_scale=0.001,
+                scale_type="relative",
+                plot_title="Residuals",
+                save_output=False,
+            )
+            figure = plt.gcf()
+        try:
+            for axis in figure.axes:
+                self.assertEqual(axis.lines[0].get_label(), "Correct circuit: Rs")
+        finally:
+            plt.close(figure)
+
     @unittest.skipUnless(matplotlib is not None, "Matplotlib is not available")
     def test_plot_writes_five_ranked_circuits(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -305,6 +367,8 @@ class FitReportingTests(unittest.TestCase):
             self.assertEqual(document["circuit_metrics"][11]["rank"], 12)
             self.assertEqual(document["circuit_metrics"][0]["relative_mse"], 0.25)
             self.assertEqual(document["circuit_metrics"][0]["optimizer_value"], 0.05)
+            self.assertEqual(document["circuit_metrics"][0]["arrangement_count"], 1)
+            self.assertEqual(document["circuit_metrics"][0]["combinatorial_score"], 3.5)
             self.assertEqual(document["circuits"]["total_attempts"], 17)
             self.assertEqual(document["circuits"]["total_function_evaluations"], 137)
             self.assertEqual(document["dataset_info"]["mode"], "pcl")

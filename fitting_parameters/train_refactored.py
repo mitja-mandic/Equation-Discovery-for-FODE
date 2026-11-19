@@ -10,6 +10,7 @@ from fitting_parameters.initialize_parameters import (
     generate_initial_values
 )
 from fitting_parameters.model_selection import (
+    count_circuit_arrangements,
     compute_aic,
     compute_bic,
     compute_ebic,
@@ -23,11 +24,16 @@ from fitting_parameters.model_selection import (
 from collections import Counter
 from collections.abc import Iterable
 
-from Circuit_generation.circuit_class import CircuitNode
+from Circuit_generation.circuit_class import CircuitNode, Element
 
 # Fitting configuration: "unscaled", "scatter", "relative", or "magnitude".
 # "magnitude" uses max(|Z|, 10% of median positive |Z|) for both components.
 RESIDUAL_SCALE = "relative"
+
+# Combinatorial ranking score: n*log(MSE) + element weight*elements
+# + arrangement weight*log(distinct arrangements).
+COMBINATORIAL_ELEMENT_WEIGHT = 1.0
+COMBINATORIAL_ARRANGEMENT_WEIGHT = 0.5
 
 NUMBER_INITIAL_STARTS = 6
 RANDOM_SEED = 42
@@ -77,6 +83,12 @@ def count_models_by_num_params(
             for circuit in set(circuits)
         )
     )
+
+
+def _count_elements(node: CircuitNode) -> int:
+    if isinstance(node, Element):
+        return 1
+    return sum(_count_elements(child) for child in node.children)
 
 def evaluate_impedance(circuit, frequency, parameters):
     omega = 2 * np.pi * frequency
@@ -256,6 +268,8 @@ def _summarize_fit(
     )
     n = len(predicted - measured_impedance) * 2
     num_parameters = len(parameters)
+    element_count = _count_elements(circuit)
+    arrangement_count = count_circuit_arrangements(circuit)
     real_divisor, imag_divisor = _residual_scales(
         measured_impedance, real_scatter, imag_scatter, scale_type,
     )
@@ -272,6 +286,12 @@ def _summarize_fit(
         "mse": mse,
         "optimizer_value": optimization["optimizer_value"],
         "relative_mse": compute_relative_mse(measured_impedance, predicted),
+        "arrangement_count": arrangement_count,
+        "combinatorial_score": float(
+            n * np.log(mse)
+            + COMBINATORIAL_ELEMENT_WEIGHT * element_count
+            + COMBINATORIAL_ARRANGEMENT_WEIGHT * np.log(arrangement_count)
+        ),
         "aic": compute_aic(n, mse, num_parameters),
         "bic": compute_bic(n, mse, num_parameters),
         "lp_bic": compute_bic(n, lp_error, num_parameters),

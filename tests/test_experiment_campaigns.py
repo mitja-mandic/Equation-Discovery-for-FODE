@@ -122,6 +122,15 @@ class ExperimentCampaignTests(unittest.TestCase):
         )
         self.assertEqual(command[command.index("--data-mode") + 1], "simulated")
 
+    def test_cli_accepts_explicit_plan_and_settings_paths(self):
+        with patch.object(campaign, "run_campaign", return_value=self.root / "output") as run:
+            result = campaign.main([
+                "run", "overnight", "--plan", str(self.plan_path),
+                "--settings", str(self.settings_path),
+            ])
+        self.assertEqual(result, 0)
+        run.assert_called_once_with("overnight", self.plan_path, self.settings_path)
+
 
 if __name__ == "__main__":
     unittest.main()

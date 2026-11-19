@@ -65,3 +65,7 @@ The fitter does not automatically select the latest file.
 The existing loader computes measurement medians and robust scatter. Noiseless
 data or a single repeat yields zero scatter; use the fitter's uncertainty floor
 when weighting those data.
+
+When fitted with `--data-mode simulated`, both fitted-circuit plots and residual
+plots automatically include the noise-free `Z_clean` response labeled with the
+generating circuit from `metadata_json`. Real-data plots are unchanged.

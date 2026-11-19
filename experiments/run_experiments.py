@@ -187,12 +187,23 @@ def main(argv: list[str] | None = None) -> int:
     actions.add_parser("prepare", help="Create an editable local_plan.csv from local measurements")
     run_parser = actions.add_parser("run", help="Fit enabled datasets into a new campaign folder")
     run_parser.add_argument("campaign_id", help="Unique name for this set of comparable fits")
+    run_parser.add_argument(
+        "--plan", type=Path, default=PLAN_PATH,
+        help="CSV dataset plan to snapshot and execute",
+    )
+    run_parser.add_argument(
+        "--settings", type=Path, default=SETTINGS_PATH,
+        help="JSON fitting settings to snapshot and execute",
+    )
     args = parser.parse_args(argv)
     try:
         if args.action == "prepare":
             print(f"Prepared {prepare_plan()}")
         else:
-            print(f"Saved campaign to {run_campaign(args.campaign_id)}")
+            print(
+                f"Saved campaign to "
+                f"{run_campaign(args.campaign_id, args.plan, args.settings)}"
+            )
     except (FileExistsError, FileNotFoundError, ValueError, RuntimeError) as error:
         parser.exit(1, f"Error: {error}\n")
     return 0

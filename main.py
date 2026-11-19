@@ -2,6 +2,8 @@ import argparse
 import math
 from pathlib import Path
 
+import numpy as np
+
 from fitting_parameters.reporting import (
     build_fit_dataset_info,
     build_fit_output_paths,
@@ -12,11 +14,19 @@ from fitting_parameters.reporting import (
 
 from fitting_parameters.train_refactored import LEAST_SQUARES_SETTINGS, FINAL_LEAST_SQUARES_SETTINGS, compare_circuits, count_models_by_num_params
 from fitting_parameters.train_refactored import (
+    COMBINATORIAL_ARRANGEMENT_WEIGHT, COMBINATORIAL_ELEMENT_WEIGHT,
     INITIAL_MAX_NFEV_PER_PARAMETER, NUMBER_INITIAL_STARTS, RANDOM_SEED,
     RESIDUAL_SCALE, _residual_scales,
 )
 from Circuit_generation.circuit_export import load_circuits
-from fitting_parameters.load_data import raw_impedance, load_spectrum, load_spectrum_direct, load_pcl_spectrum, uniform_frequency_indices
+from fitting_parameters.load_data import (
+    load_pcl_spectrum,
+    load_simulation_ground_truth,
+    load_spectrum,
+    load_spectrum_direct,
+    raw_impedance,
+    uniform_frequency_indices,
+)
 from fitting_parameters.model_selection import normalize_sigma
 from Circuit_generation.circuit_class import (
     CPE, Inductor, Parallel, Resistor, Series, SeriesResistance, Warburg,
@@ -184,7 +194,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--final-plot-title", default="Top circuits after reoptimization")
     ranking_choices = (
         "optimizer_value", "bic", "lp_bic", "scaled_lp_bic",
-        "lp_ebic", "ebic", "mse", "lp_error",
+        "lp_ebic", "ebic", "mse", "lp_error", "combinatorial_score",
     )
     parser.add_argument("--sort-first-round", default="optimizer_value", help="Metric for first-round ranking and refinement selection", choices=ranking_choices)
     parser.add_argument("--sort-second-round", default="bic", help="Metric for ranking refined circuits", choices=ranking_choices)
@@ -234,6 +244,8 @@ def main(argv: list[str] | None = None) -> None:
 
     selected_channel = None
     selected_spectrum_columns = None
+    reference_impedance = None
+    reference_circuit = None
     if DATA_MODE == "raw":
         # Raw time-domain data:
         # fs, curr, batt_1, batt_2, ...
@@ -265,6 +277,14 @@ def main(argv: list[str] | None = None) -> None:
         frequency, measured_impedance, real_scatter, imag_scatter = load_spectrum(
             selected_data_path
         )
+        if DATA_MODE == "simulated":
+            reference_frequency, reference_impedance, reference_circuit = (
+                load_simulation_ground_truth(selected_data_path)
+            )
+            if not np.array_equal(reference_frequency, frequency):
+                raise ValueError(
+                    "Simulation ground-truth frequencies do not match the fitted spectrum"
+                )
 
         # Coherence is not present in the F/Z files.
         coherence = None
@@ -390,6 +410,7 @@ def main(argv: list[str] | None = None) -> None:
     for rank, result in enumerate(results[:5], start=1):
         print(f"{rank}. {result['circuit']}")
         print(f"   BIC: {result['bic']:.4f}")
+        print(f"   Combinatorial score: {result['combinatorial_score']:.4f} (arrangements: {result['arrangement_count']})")
         #print(f"   lp_error: {result['lp_error']:.6g}")
         #print(f"   Random start: {result['rand_start']}")
         print(f"   EBIC: {result['ebic']:.6g}")
@@ -406,6 +427,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"{rank}. {result['circuit']}")
         print(f"   Parameters: {result['parameters']}")
         print(f"   BIC: {result['bic']:.4f}")
+        print(f"   Combinatorial score: {result['combinatorial_score']:.4f} (arrangements: {result['arrangement_count']})")
         print(f"   EBIC: {result['ebic']:.6g}")
         #print(f"   Random start: {result['rand_start']}")
         print(f"   RelMSE: {result['relative_mse']:.6g}")
@@ -445,6 +467,8 @@ def main(argv: list[str] | None = None) -> None:
         measured_impedance=measured_impedance,
         results=results,
         output_path=plot_path,
+        reference_impedance=reference_impedance,
+        reference_label=reference_circuit,
         save_output = SAVE_RESULTS, show=args.show_plots,
         plot_title=args.plot_title
     )
@@ -453,6 +477,8 @@ def main(argv: list[str] | None = None) -> None:
         measured_impedance=measured_impedance,
         results=besties,
         output_path=plot_path_converged,
+        reference_impedance=reference_impedance,
+        reference_label=reference_circuit,
         save_output = SAVE_RESULTS, show=args.show_plots,
         plot_title=args.final_plot_title
     )
@@ -468,6 +494,8 @@ def main(argv: list[str] | None = None) -> None:
         residual_paths[stage_name] = residual_path
         plot_fit_residuals(
             frequency, measured_impedance, stage_results, residual_path,
+            reference_impedance=reference_impedance,
+            reference_label=reference_circuit,
             real_scale=real_residual_scale, imag_scale=imag_residual_scale,
             f_scale=stage_settings["f_scale"], scale_type=RESIDUAL_SCALE,
             plot_title=stage_title, save_output=SAVE_RESULTS, show=args.show_residual_plots,
@@ -487,6 +515,8 @@ def main(argv: list[str] | None = None) -> None:
             "initial_max_nfev_per_parameter": INITIAL_MAX_NFEV_PER_PARAMETER,
             "first_round_ranking_metric": sort_first_round,
             "second_round_ranking_metric": sort_second_round,
+            "combinatorial_element_weight": COMBINATORIAL_ELEMENT_WEIGHT,
+            "combinatorial_arrangement_weight": COMBINATORIAL_ARRANGEMENT_WEIGHT,
             "reoptimization_error_margin": args.reoptimization_error_margin,
         }
         export_fit_summary(

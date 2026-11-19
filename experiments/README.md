@@ -109,3 +109,36 @@ disabled rows too, so you can see the selection made for that campaign.
 The script does not start fits during `prepare`; the `run` action is required.
 Fitting every local measurement can take a long time. Select a small first set
 in the plan to check the intended data and settings.
+
+## Overnight queue
+
+Edit the configuration section at the top of `overnight_queue.py` to list
+campaigns that should run sequentially without an interactive session. Each job
+points to a dataset plan and settings file and may provide small overrides such
+as `{"number_starts": 24}` for a longer run. The example job is disabled so the
+file cannot accidentally launch work before it has been edited.
+
+Validate the complete queue without creating anything:
+
+```bash
+.venv/bin/python experiments/overnight_queue.py --dry-run
+```
+
+Once validation passes, start it independently of the terminal:
+
+```bash
+nohup .venv/bin/python -u experiments/overnight_queue.py --run >/dev/null 2>&1 &
+```
+
+Progress and persistent state are written under
+`Results/overnight_queues/<QUEUE_NAME>/`. Inspect the summary or follow its log:
+
+```bash
+.venv/bin/python experiments/overnight_queue.py --status
+tail -f Results/overnight_queues/overnight/queue.log
+```
+
+Inputs are snapshotted before the first campaign starts. Completed, failed,
+timed-out, interrupted, and blocked jobs are never retried automatically; use a
+new campaign ID for a corrected retry. Set `timeout_hours` to `None` for no
+queue-imposed limit.

@@ -140,6 +140,49 @@ class MainEntrypointTests(unittest.TestCase):
             self.assertEqual(call.kwargs["run_settings"]["spectrum_column_index"], 2)
             self.assertIn("spectrum_direct_", call.kwargs["output_path"].name)
 
+    def test_simulated_mode_adds_ground_truth_to_all_plots(self):
+        import main
+        import numpy as np
+        from contextlib import ExitStack
+
+        frequency = np.array([1.0, 10.0])
+        measured = np.array([2.0 + 1j, 3.0 + 2j])
+        clean = np.array([1.9 + 0.9j, 2.9 + 1.9j])
+        with ExitStack() as stack:
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            stack.enter_context(patch.object(main, "load_circuits", return_value=[]))
+            stack.enter_context(patch.object(
+                main, "load_spectrum",
+                return_value=(frequency, measured, np.ones(2), np.ones(2)),
+            ))
+            truth_loader = stack.enter_context(patch.object(
+                main, "load_simulation_ground_truth",
+                return_value=(frequency, clean, "Rs + (R1 || CPE(Q1, alpha1))"),
+            ))
+            stack.enter_context(patch.object(main, "compare_circuits", return_value=([], {}, [])))
+            fit_plot = stack.enter_context(patch.object(main, "plot_circuit_fits"))
+            residual_plot = stack.enter_context(patch.object(main, "plot_fit_residuals"))
+            stack.enter_context(patch.object(main, "export_fit_summary"))
+            main.main([
+                "--data-mode", "simulated",
+                "--data-path", str(SCRIPT.parent / "simulated.npz"),
+                "--save-results", "--no-show-plots",
+            ])
+
+        truth_loader.assert_called_once()
+        for call in fit_plot.call_args_list:
+            np.testing.assert_array_equal(call.kwargs["reference_impedance"], clean)
+            self.assertEqual(
+                call.kwargs["reference_label"],
+                "Rs + (R1 || CPE(Q1, alpha1))",
+            )
+        for call in residual_plot.call_args_list:
+            np.testing.assert_array_equal(call.kwargs["reference_impedance"], clean)
+            self.assertEqual(
+                call.kwargs["reference_label"],
+                "Rs + (R1 || CPE(Q1, alpha1))",
+            )
+
     def test_other_least_squares_options_are_not_exposed(self):
         import main
         for flag in ("--final-f-scale", "--method", "--x-scale", "--ftol", "--xtol", "--gtol", "--max-nfev"):
