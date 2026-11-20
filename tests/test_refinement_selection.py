@@ -33,12 +33,25 @@ class RefinementSelectionTests(unittest.TestCase):
             circuit, optimization, np.array([1., 2.]), np.ones(2, dtype=complex),
             np.ones(2), np.ones(2), {}, "False", scale_type="unscaled", manual=True,
         )
+        scaled_lp = train_refactored.compute_weighted_lp(
+            np.ones(2, dtype=complex), summary["predicted_impedance"], 1, 1, p=.5,
+        )
         self.assertEqual(summary["arrangement_count"], 3)
         self.assertAlmostEqual(
             summary["combinatorial_score"],
-            4 * np.log(.5)
+            4 * np.log(scaled_lp)
             + train_refactored.COMBINATORIAL_ELEMENT_WEIGHT * 4
             + train_refactored.COMBINATORIAL_ARRANGEMENT_WEIGHT * np.log(3),
+        )
+        harsher = train_refactored._summarize_fit(
+            circuit, optimization, np.array([1., 2.]), np.ones(2, dtype=complex),
+            np.ones(2), np.ones(2), {}, "False", scale_type="unscaled", manual=True,
+            combinatorial_element_weight=18,
+            combinatorial_arrangement_weight=.5,
+        )
+        self.assertAlmostEqual(
+            harsher["combinatorial_score"],
+            4 * np.log(scaled_lp) + 18 * 4 + .5 * np.log(3),
         )
 
     def test_inclusive_margin_and_nonfinite_errors(self):

@@ -11,6 +11,11 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from fitting_parameters.train_refactored import (
+    COMBINATORIAL_ARRANGEMENT_WEIGHT,
+    COMBINATORIAL_ELEMENT_WEIGHT,
+)
+
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 PLAN_PATH = PROJECT_DIR / "experiments" / "local_plan.csv"
@@ -29,6 +34,8 @@ SETTINGS_FLAGS = {
     "number_starts": "--number-starts",
     "random_seed": "--random-seed",
     "reoptimization_error_margin": "--reoptimization-error-margin",
+    "combinatorial_element_weight": "--combinatorial-element-weight",
+    "combinatorial_arrangement_weight": "--combinatorial-arrangement-weight",
     "sort_first_round": "--sort-first-round",
     "sort_second_round": "--sort-second-round",
 }
@@ -105,14 +112,23 @@ def selected_datasets(path: Path) -> list[dict[str, str]]:
 def load_settings(path: Path) -> dict[str, object]:
     """Load only settings that the main fitting CLI can reproduce."""
     settings = json.loads(path.read_text(encoding="utf-8"))
-    required = set(SETTINGS_FLAGS) - {"loss", "spectrum_column_index"}
+    optional = {
+        "loss", "spectrum_column_index", "combinatorial_element_weight",
+        "combinatorial_arrangement_weight",
+    }
+    required = set(SETTINGS_FLAGS) - optional
     if not isinstance(settings, dict) or not required <= set(settings) <= set(SETTINGS_FLAGS):
         raise ValueError(
             f"Settings must contain: {', '.join(sorted(required))}; "
-            "loss and spectrum_column_index are optional for older campaigns"
+            "loss, spectrum_column_index, and combinatorial weights are optional "
+            "for older campaigns"
         )
     settings.setdefault("loss", "soft_l1")
     settings.setdefault("spectrum_column_index", None)
+    settings.setdefault("combinatorial_element_weight", COMBINATORIAL_ELEMENT_WEIGHT)
+    settings.setdefault(
+        "combinatorial_arrangement_weight", COMBINATORIAL_ARRANGEMENT_WEIGHT,
+    )
     circuit_path = (PROJECT_DIR / str(settings["circuit_path"])).resolve()
     if not circuit_path.is_file():
         raise ValueError(f"Circuit collection not found: {circuit_path}")

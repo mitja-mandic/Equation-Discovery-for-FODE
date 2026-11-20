@@ -40,7 +40,7 @@ from experiments import run_experiments  # noqa: E402
 # CONFIGURATION — edit this section to define an overnight queue.
 # =============================================================================
 
-QUEUE_NAME = "simulated_no_G_relaxed_7"
+QUEUE_NAME = "weekend_simulated_comparison_and_real_7_20261120"
 
 # Continue to later jobs if one job fails. Failed jobs are recorded, not retried.
 CONTINUE_AFTER_FAILURE = True
@@ -57,15 +57,120 @@ HEARTBEAT_SECONDS = 60
 JOBS: list[dict[str, object]] = [
     {
         "enabled": True,
-        "campaign_id": (
-            "simulated_008_sofc_009_battery_no_G_relaxed_7_relative_soft_l1_"
-            "fscale_0p001_optimizer_value_combinatorial_score_6starts_20261119"
-        ),
-        "plan_path": "experiments/simulated_sofc_battery_008_009_plan.csv",
-        "settings_path": "experiments/simulated_no_G_relaxed_7_settings.json",
+        "campaign_id": "simulated_012_013_no_G_relaxed_5_magnitude_soft_l1_fscale_0p001_optimizer_value_lp_bic_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_5_lp_bic.json",
         "settings_overrides": {},
         "timeout_hours": None,
-        "notes": "Seven-element no-G relaxed grammar on simulated SOFC 008 and battery 009.",
+        "notes": "Five-element LP-BIC reference on simulated spectra 012 and 013.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_5_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e9_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_5_combinatorial_standard.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Five-element combinatorial selection with element weight 9.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_5_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e18_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_5_combinatorial_harsh.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Five-element combinatorial selection with harsh element weight 18.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_6_magnitude_soft_l1_fscale_0p001_optimizer_value_lp_bic_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_6_lp_bic.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Six-element LP-BIC reference on simulated spectra 012 and 013.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_6_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e9_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_6_combinatorial_standard.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Six-element combinatorial selection with element weight 9.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_6_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e18_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_6_combinatorial_harsh.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Six-element combinatorial selection with harsh element weight 18.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_7_magnitude_soft_l1_fscale_0p001_optimizer_value_lp_bic_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_7_lp_bic.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Seven-element LP-BIC reference on simulated spectra 012 and 013.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_7_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e9_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_7_combinatorial_standard.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Seven-element combinatorial selection with element weight 9.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "simulated_012_013_no_G_relaxed_7_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e18_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_simulated_012_013.csv",
+        "settings_path": "experiments/weekend_20261120/settings_no_G_7_combinatorial_harsh.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Seven-element combinatorial selection with harsh element weight 18.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "real_battery_sofc_no_G_relaxed_5_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e18_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_real_battery_sofc.csv",
+        "settings_path": "experiments/weekend_20261120/settings_real_no_G_5_combinatorial_harsh.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Harsh-penalty rerun of the existing five-element real-data campaign.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "real_battery_sofc_no_G_relaxed_6_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e18_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_real_battery_sofc.csv",
+        "settings_path": "experiments/weekend_20261120/settings_real_no_G_6_combinatorial_harsh.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Harsh-penalty rerun of the existing six-element real-data campaign.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "real_battery_sofc_no_G_relaxed_7_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e9_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_real_battery_sofc.csv",
+        "settings_path": "experiments/weekend_20261120/settings_real_no_G_7_combinatorial_standard.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Seven-element match to the existing real-data five- and six-element magnitude-scaling campaigns.",
+    },
+    {
+        "enabled": True,
+        "campaign_id": "real_battery_sofc_no_G_relaxed_7_magnitude_soft_l1_fscale_0p001_optimizer_value_combinatorial_score_e18_a0p5_6starts_20261120",
+        "plan_path": "experiments/weekend_20261120/plan_real_battery_sofc.csv",
+        "settings_path": "experiments/weekend_20261120/settings_real_no_G_7_combinatorial_harsh.json",
+        "settings_overrides": {},
+        "timeout_hours": None,
+        "notes": "Seven-element real-data campaign with harsh element weight 18.",
     },
 ]
 

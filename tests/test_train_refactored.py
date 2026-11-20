@@ -112,16 +112,19 @@ class ResidualScalingTests(unittest.TestCase):
     def test_effective_evaluation_limit_is_retained_with_each_fit(self):
         frequency = np.array([1., 2., 3.])
         measured = np.array([1.+0j, 1.+0j, 1.+0j])
-        for circuit, expected_limit in (
-            (SeriesResistance(), 7),
-            (Series((SeriesResistance(), Resistor("R1"))), 14),
+        for circuit, parameter_count in (
+            (SeriesResistance(), 1),
+            (Series((SeriesResistance(), Resistor("R1"))), 2),
         ):
             with self.subTest(circuit=str(circuit)):
                 initial = train.fit_circuit_parameters_random_start(
                     circuit, frequency, measured, np.ones(3), np.ones(3),
                     number_starts=1,
                 )
-                self.assertEqual(initial["optimizer_max_nfev"], expected_limit)
+                self.assertEqual(
+                    initial["optimizer_max_nfev"],
+                    parameter_count * train.INITIAL_MAX_NFEV_PER_PARAMETER,
+                )
         refined = train.finalize_fit(
             frequency, measured, SeriesResistance(), {"Rs": 1.},
             np.ones(3), np.ones(3),

@@ -1,12 +1,12 @@
 # Fdb version 4
-["biber report"] 0 "report.bcf" "report.bbl" "report" 1794585962.03169 -1
+["biber report"] 1795182321.86641 "report.bcf" "report.bbl" "report" 1795184492.24402 0
   "references.bib" 1794490819.57839 9699 016ff77204052c0eb04620aac1826374 ""
-  "report.bcf" 1794585961.88601 108167 f6d002e6367419793ffb0183d56022e0 "pdflatex"
+  "report.bcf" 1795184492.09294 108167 f6d002e6367419793ffb0183d56022e0 "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1794585955.15616 "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" "report.pdf" "report" 1794585962.032 0
+["pdflatex"] 1795184485.15637 "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" "report.pdf" "report" 1795184492.2444 0
   "../../Results/campaigns/real_pcl_sofc_no_G_relaxed_5_soft_l1_scatter_fscale_0p001_optimizer_value_lp_bic_6starts_20261113/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_5_best_5_refined.png" 1794562826.08241 387538 3493bdcfc18cfdd77b835b4a6ad7fc7d ""
   "../../Results/campaigns/real_pcl_spectrum_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_6starts_20261112/runs/pcl_eis_bank1_20251016-084621_batt_1/Results/Plots/Nyquists/eis_bank1_20251016-084621_batt_1_no_G_relaxed_5_best_5_refined.png" 1794486687.80249 208689 25e561f1b29493a28f244e7361127fbd ""
   "../../Results/campaigns/real_pcl_spectrum_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_6starts_20261112/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_5_best_5_refined.png" 1794486830.49235 516311 b089658c262e0cbc7fc5d713f1bfb382 ""
@@ -15,9 +15,9 @@
   "../../Results/campaigns/unified_no_G_relaxed_5_elements_relative_soft_l1_fscale_0p01/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/eis_20200226_230006_no_G_relaxed_5_best_5_refined.png" 1794386007.46337 452365 ff425688812f180a436e052b4b5ec6f0 ""
   "../../Results/campaigns/unified_no_G_relaxed_5_elements_unscaled/runs/spectrum_eis_20200226_230006/Results/Plots/Nyquists/refined_scaled_lp_bic.png" 1794576738.43406 392370 63e030e27ca90488d0d70e31d55e0378 ""
   "/etc/texmf/web2c/texmf.cnf" 1793282983.1144 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" 1794585954.81853 38520 c5c2b718ae869dc9ca10601e81730661 ""
+  "/home/mitek/Work/Equation-Discovery-for-FODE/Reports/report/report.tex" 1795184490.17553 41831 a97c9f987ff7807cba6ec68aae366735 ""
   "/home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_006/Results/Plots/Nyquists/Fits of simulated battery data.png" 1794476899.82129 424429 9343275202d00ae9c341fa431b38078f ""
-  "/home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png" 1794476900.64529 496953 0b3868f90cbfa9397df9c27e355529e1 ""
+  "/home/mitek/Work/Equation-Discovery-for-FODE/Results/campaigns/simulated_006_007_no_G_relaxed_5_relative_soft_l1_fscale_0p001_optimizer_value_lp_bic_1start/runs/simulated_simulated_spectrum_007/Results/Plots/Nyquists/Fits of simulated SOFC data.png" 1794832477.62661 533529 9b8207379b0887ecf6d4604ef49ff9b9 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/ecrm1095.tfm" 1136768653 3584 929cdff2b7a8c11bd4d49fd68cb0ae70 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1246382020 916 f87d7c45f9c908e672703b83b72241a3 ""
@@ -286,11 +286,11 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1769369718 41603 27f93b3067076450172040dcd57ca8b3 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1793282999 165211 6b08d096f3d0fe5ff6b266061a2b45e0 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1793283026 2265762 8a99365332350f84a42eb10a0c5a364d ""
-  "report.aux" 1794585961.88176 11785 2995ad53547da654e8f081a373a857e1 "pdflatex"
-  "report.bbl" 1794490839.992 40578 3678b2349a3a8c351f099725025ddffe "biber report"
-  "report.out" 1794585961.88452 3010 478f2141e3d2d1d6c232686619b8b280 "pdflatex"
-  "report.run.xml" 1794585961.88811 2360 15e519fbd8c5620b53dc38bef756a42e "pdflatex"
-  "report.tex" 1794585954.81853 38520 c5c2b718ae869dc9ca10601e81730661 ""
+  "report.aux" 1795184492.08962 12506 0796bd520ef9492b1ab282d615c7e369 "pdflatex"
+  "report.bbl" 1795182323.13598 40578 3678b2349a3a8c351f099725025ddffe "biber report"
+  "report.out" 1795184492.09094 3496 7893f089567d2e32333b5d48913f313a "pdflatex"
+  "report.run.xml" 1795184492.09492 2360 15e519fbd8c5620b53dc38bef756a42e "pdflatex"
+  "report.tex" 1795184490.17553 41831 a97c9f987ff7807cba6ec68aae366735 ""
   (generated)
   "report.aux"
   "report.bcf"

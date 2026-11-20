@@ -1,0 +1,3 @@
+dataset_id,format,path,channel,enabled,notes
+pcl_eis_bank1_20251016-084621_batt_1,pcl,data/battery/EIS_mitja/eis_bank1_20251016-084621.pcl,batt_1,1,Real battery dataset used by the existing five- and six-element campaigns
+spectrum_eis_20200226_230006,spectrum,data/spectrum/eis_20200226_230006.npz,,1,Real SOFC dataset used by the existing five- and six-element campaigns

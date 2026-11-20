@@ -28,16 +28,16 @@ from Circuit_generation.circuit_class import CircuitNode, Element
 
 # Fitting configuration: "unscaled", "scatter", "relative", or "magnitude".
 # "magnitude" uses max(|Z|, 10% of median positive |Z|) for both components.
-RESIDUAL_SCALE = "relative"
+RESIDUAL_SCALE = "magnitude"
 
 # Combinatorial ranking score: n*log(MSE) + element weight*elements
 # + arrangement weight*log(distinct arrangements).
-COMBINATORIAL_ELEMENT_WEIGHT = 6.5
-COMBINATORIAL_ARRANGEMENT_WEIGHT = 1.5
+COMBINATORIAL_ELEMENT_WEIGHT = 9
+COMBINATORIAL_ARRANGEMENT_WEIGHT = 0.5
 
 NUMBER_INITIAL_STARTS = 6
 RANDOM_SEED = 42
-INITIAL_MAX_NFEV_PER_PARAMETER = 7
+INITIAL_MAX_NFEV_PER_PARAMETER = 15
 
 LEAST_SQUARES_SETTINGS = {
     "x_scale": "jac",
@@ -256,6 +256,8 @@ def _summarize_fit(
     circuit, optimization, frequency, measured_impedance,
     real_scatter, imag_scatter, number_circuit_per_size, rand_start,
     *, scale_type=RESIDUAL_SCALE, gamma=1, manual=False,
+    combinatorial_element_weight=COMBINATORIAL_ELEMENT_WEIGHT,
+    combinatorial_arrangement_weight=COMBINATORIAL_ARRANGEMENT_WEIGHT,
 ):
     """Build the common scoring and optimizer metadata for a fitted circuit."""
     parameters = optimization["parameters"]
@@ -279,6 +281,7 @@ def _summarize_fit(
         if any(np.isclose(value, bound, rtol=1e-6, atol=0) for bound in parameter_bounds[name])
     ]
     scaled_lp = compute_weighted_lp(measured_impedance, predicted, real_divisor, imag_divisor, p=0.5)
+    scaled_mse = compute_weighted_lp(measured_impedance, predicted, real_divisor, imag_divisor, p=2)
     summary = {
         "circuit": circuit,
         "parameters": parameters,
@@ -291,8 +294,8 @@ def _summarize_fit(
         "arrangement_count": arrangement_count,
         "combinatorial_score": float(
             n * np.log(scaled_lp)
-            + COMBINATORIAL_ELEMENT_WEIGHT * (element_count)
-            + COMBINATORIAL_ARRANGEMENT_WEIGHT * np.log(arrangement_count)
+            + combinatorial_element_weight * element_count
+            + combinatorial_arrangement_weight * np.log(arrangement_count)
         ),
         "aic": compute_aic(n, mse, num_parameters),
         "bic": compute_bic(n, mse, num_parameters),
@@ -343,7 +346,9 @@ def compare_circuits(
     least_squares_settings=LEAST_SQUARES_SETTINGS,
     final_least_squares_settings=FINAL_LEAST_SQUARES_SETTINGS,
     number_starts=NUMBER_INITIAL_STARTS, random_seed=RANDOM_SEED,
-    sort_first = "optimizer_value", sort_second = "bic"
+    sort_first="optimizer_value", sort_second="bic",
+    combinatorial_element_weight=COMBINATORIAL_ELEMENT_WEIGHT,
+    combinatorial_arrangement_weight=COMBINATORIAL_ARRANGEMENT_WEIGHT,
 ):
     """Rank and refine candidates within a margin of the chosen first-round metric.
 
@@ -365,6 +370,8 @@ def compare_circuits(
             circuit, optimization, frequency, measured_impedance,
             real_scatter, imag_scatter, number_circuit_per_size, rand_start,
             scale_type=scale_type,
+            combinatorial_element_weight=combinatorial_element_weight,
+            combinatorial_arrangement_weight=combinatorial_arrangement_weight,
             **options,
         )
 

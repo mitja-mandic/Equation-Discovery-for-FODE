@@ -481,15 +481,36 @@ on the cost function - parameter $C$ intuitively presents a cutoff between quadr
 The parameter estimations were obtained via two-stage optimization procedure.
 We tested all candidate circuits in the first stage until they either stopped improving or
 they were evaluated 100 times. For the second stage we kept those, that were within 20\%
-of best performing one according to either MSE or optimizer cost function value at stopping point, depending on 
-the experiment. We continue evaluating these circuits until they they reach a plateau and
+of best performing one according optimizer cost function value at stopping point. We continue evaluating these circuits until they they reach a plateau and
 perform final sorting via a measure, that takes model complexity into account.
 
+
+\subsection{Model selection}
+
+We attempted model selection in our experiments in two distinct ways. Firstly, we
+robustified the well known BIC approach by remodelling the way quality of fit was
+calculated. We call this approach \texttt{lp\_BIC}.
+
+Our \texttt{combinatorial score} is an alternative approach to ranking models 
+which takes into account circuit's structural complexity, not only the number
+of parameters like in the \texttt{lp\_BIC} case.
+
+\subsubsection{BIC based approaches}
+
+%Residual scaling was used during parameter estimation but not in the final model-selection score. 
+%These two stages serve different purposes: scaling improves the numerical robustness of the optimization 
+%and balances contributions from different parts of the spectrum, whereas evaluating the fitted models in the 
+%original impedance units provides a common criterion across normalization methods. 
+%Using scaled residuals in the final score would make its value dependent on the chosen 
+%normalization and would therefore complicate comparisons between scaling approaches. 
+%To limit the influence of large raw residuals, we nevertheless replaced the 
+%squared-error term with an Lₚ-type error using p=0.
+
 Standard definition of BIC includes the MSE. Since we we normalise the residuals as
-we fit the parameters we decided to use the \texttt{weighted\_BIC}, where instead of raw 
+we fit the parameters, we decided to consistently alter the error 
+
+use the \texttt{lp\_BIC}, where instead of raw 
 we use weighted residuals to compute BIC.
-
-
 
 Let \(N\) be the number of measured frequencies and \(k\) the number of
 fitted circuit parameters. For each frequency \(i\), define
@@ -506,6 +527,54 @@ We rank circuits using
 \[
 \mathrm{lp\_BIC}=2N\log(E_{0.5})+k\log(2N).
 \]
+
+\subsubsection{Combinatorial penalty}
+
+The parameter-count penalty in BIC does not distinguish between circuits with
+the same number of fitted parameters but different numbers of possible element
+arrangements. The motivation behind this metric is that some circuit topologies
+are simpler than others even if they contain the same number of elements.
+
+To account for this additional structural flexibility, we define
+the scaled post-fit error of a candidate circuit \(\mathcal{C}\) as
+
+\begin{equation}\label{eq:scaled_lp_error}
+\widetilde E_{0.5}(\mathcal{C})
+=\frac{1}{N}\sum_{i=1}^{N}
+\left(
+\left|\widetilde r_{i,\mathrm{Re}}
+    (\widehat{\boldsymbol{\theta}}_{\mathcal{C}})\right|^{0.5}
++
+\left|\widetilde r_{i,\mathrm{Im}}
+    (\widehat{\boldsymbol{\theta}}_{\mathcal{C}})\right|^{0.5}
+\right),
+\end{equation}
+where \(\widehat{\boldsymbol{\theta}}_{\mathcal{C}}\) denotes the fitted
+parameter vector for \(\mathcal{C}\). The combinatorial ranking score is
+\begin{equation}\label{eq:combinatorial_score}
+S_{\mathrm{comb}}(\mathcal{C})
+=2N\log\!\left(\widetilde E_{0.5}(\mathcal{C})\right)
++\lambda_E e_{\mathcal{C}}
++\lambda_A\log M_{\mathcal{C}},
+\end{equation}
+where \(e_{\mathcal{C}}\) is the total number of circuit elements,
+including \(R_s\), and \(M_{\mathcal{C}}\) is the number of distinct ways to
+place these element types in the normalised series--parallel
+topology of \(\mathcal{C}\). The series resistance remains fixed when
+\(M_{\mathcal{C}}\) is counted. Permutations of identical elements and changes
+in the order of series or parallel children do not produce new arrangements,
+and assignments that simplify to a different topology are excluded.
+
+The weights \(\lambda_E\) and \(\lambda_A\) control the penalties for adding
+elements and for increasing the number of admissible arrangements,
+respectively. In the current implementation, \(\lambda_E=9\) and
+\(\lambda_A=0.5\). Circuits are ordered from the smallest to the largest value
+of \(S_{\mathrm{comb}}\). 
+
+%This is a custom ranking criterion and is not a BIC,
+%because its structural penalties are chosen independently of a likelihood
+%derivation.
+
 %\subsection{}
 
 

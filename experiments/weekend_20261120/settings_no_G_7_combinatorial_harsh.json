@@ -1,0 +1,17 @@
+{
+  "circuit_path": "data/circuits/no_G_relaxed_elements_7.json",
+  "grammar": "no_G_relaxed",
+  "elements": 7,
+  "residual_scale": "magnitude",
+  "scatter_floor": 0.0,
+  "f_scale": 0.001,
+  "loss": "soft_l1",
+  "spectrum_column_index": null,
+  "number_starts": 6,
+  "random_seed": 42,
+  "reoptimization_error_margin": 0.2,
+  "combinatorial_element_weight": 18.0,
+  "combinatorial_arrangement_weight": 0.5,
+  "sort_first_round": "optimizer_value",
+  "sort_second_round": "combinatorial_score"
+}

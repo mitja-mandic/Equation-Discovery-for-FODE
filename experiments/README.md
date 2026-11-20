@@ -38,7 +38,10 @@ pickle loader.
 Edit [settings.json](settings.json) before the campaign. It records the circuit
 collection, grammar, maximum element count, residual scale, scatter floor,
 `f_scale`, loss function, number of starts, random seed, refinement margin, and
-both ranking metrics. `spectrum_column_index` is optional: `null` uses the
+both ranking metrics. The optional `combinatorial_element_weight` and
+`combinatorial_arrangement_weight` fields override the score penalties and are
+saved in every result summary; older settings files use the current code defaults.
+`spectrum_column_index` is optional: `null` uses the
 middle column of each block in `spectrum_direct` mode; a nonnegative integer
 chooses that column in every block. To use direct data, change a spectrum row's
 `format` to `spectrum_direct` in the plan. Saved summaries record the selected

@@ -1,0 +1,3 @@
+dataset_id,format,path,channel,enabled,notes
+simulated_spectrum_012,simulated,data/simulation/generated/simulated_spectrum_012.npz,,1,Three-element R-CPE ground-truth circuit with 15 percent relative noise
+simulated_spectrum_013,simulated,data/simulation/generated/simulated_spectrum_013.npz,,1,Four-element R-CPE-W ground-truth circuit with 15 percent relative noise

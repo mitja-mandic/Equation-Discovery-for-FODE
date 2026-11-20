@@ -172,6 +172,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--random-seed", type=nonnegative_int, default=RANDOM_SEED, metavar="SEED")
     parser.add_argument("--reoptimization-error-margin", type=nonnegative_float, help = "Fractional margin for first-round error metrics when selecting circuits for refinement",default=REOPTIMIZATION_ERROR_MARGIN)
     parser.add_argument(
+        "--combinatorial-element-weight", type=nonnegative_float,
+        default=COMBINATORIAL_ELEMENT_WEIGHT,
+        help="Penalty per primitive circuit element in the combinatorial score",
+    )
+    parser.add_argument(
+        "--combinatorial-arrangement-weight", type=nonnegative_float,
+        default=COMBINATORIAL_ARRANGEMENT_WEIGHT,
+        help="Weight on log(distinct arrangements) in the combinatorial score",
+    )
+    parser.add_argument(
         "--f-scale",
         type=positive_float,
         default=LEAST_SQUARES_SETTINGS["f_scale"],
@@ -398,7 +408,9 @@ def main(argv: list[str] | None = None) -> None:
         least_squares_settings=initial_settings,
         final_least_squares_settings=final_settings,
         number_starts=args.number_starts, random_seed=args.random_seed,
-        sort_first = sort_first_round, sort_second = sort_second_round
+        sort_first=sort_first_round, sort_second=sort_second_round,
+        combinatorial_element_weight=args.combinatorial_element_weight,
+        combinatorial_arrangement_weight=args.combinatorial_arrangement_weight,
     )
 
     # ---------------------------------------------------------------------------
@@ -410,7 +422,12 @@ def main(argv: list[str] | None = None) -> None:
     for rank, result in enumerate(results[:5], start=1):
         print(f"{rank}. {result['circuit']}")
         print(f"   BIC: {result['bic']:.4f}")
-        print(f"   Combinatorial score: {result['combinatorial_score']:.4f} (arrangements: {result['arrangement_count']})")
+        print(
+            f"   Combinatorial score: {result['combinatorial_score']:.4f} "
+            f"(arrangements: {result['arrangement_count']}, "
+            f"W_E: {args.combinatorial_element_weight}, "
+            f"W_Arr: {args.combinatorial_arrangement_weight})"
+        )
         #print(f"   lp_error: {result['lp_error']:.6g}")
         #print(f"   Random start: {result['rand_start']}")
         print(f"   EBIC: {result['ebic']:.6g}")
@@ -515,8 +532,8 @@ def main(argv: list[str] | None = None) -> None:
             "initial_max_nfev_per_parameter": INITIAL_MAX_NFEV_PER_PARAMETER,
             "first_round_ranking_metric": sort_first_round,
             "second_round_ranking_metric": sort_second_round,
-            "combinatorial_element_weight": COMBINATORIAL_ELEMENT_WEIGHT,
-            "combinatorial_arrangement_weight": COMBINATORIAL_ARRANGEMENT_WEIGHT,
+            "combinatorial_element_weight": args.combinatorial_element_weight,
+            "combinatorial_arrangement_weight": args.combinatorial_arrangement_weight,
             "reoptimization_error_margin": args.reoptimization_error_margin,
         }
         export_fit_summary(

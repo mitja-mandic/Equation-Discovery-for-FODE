@@ -79,9 +79,20 @@ class ExperimentCampaignTests(unittest.TestCase):
         settings = json.loads(self.settings_path.read_text(encoding="utf-8"))
         del settings["loss"]
         del settings["spectrum_column_index"]
+        del settings["combinatorial_element_weight"]
+        del settings["combinatorial_arrangement_weight"]
         self.settings_path.write_text(json.dumps(settings), encoding="utf-8")
-        self.assertEqual(campaign.load_settings(self.settings_path)["loss"], "soft_l1")
-        self.assertIsNone(campaign.load_settings(self.settings_path)["spectrum_column_index"])
+        loaded = campaign.load_settings(self.settings_path)
+        self.assertEqual(loaded["loss"], "soft_l1")
+        self.assertIsNone(loaded["spectrum_column_index"])
+        self.assertEqual(
+            loaded["combinatorial_element_weight"],
+            campaign.COMBINATORIAL_ELEMENT_WEIGHT,
+        )
+        self.assertEqual(
+            loaded["combinatorial_arrangement_weight"],
+            campaign.COMBINATORIAL_ARRANGEMENT_WEIGHT,
+        )
 
     def test_direct_spectrum_plan_passes_column_selection(self):
         campaign.prepare_plan(self.plan_path)
