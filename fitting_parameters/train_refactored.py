@@ -32,8 +32,8 @@ RESIDUAL_SCALE = "relative"
 
 # Combinatorial ranking score: n*log(MSE) + element weight*elements
 # + arrangement weight*log(distinct arrangements).
-COMBINATORIAL_ELEMENT_WEIGHT = 1.0
-COMBINATORIAL_ARRANGEMENT_WEIGHT = 0.5
+COMBINATORIAL_ELEMENT_WEIGHT = 6.5
+COMBINATORIAL_ARRANGEMENT_WEIGHT = 1.5
 
 NUMBER_INITIAL_STARTS = 6
 RANDOM_SEED = 42
@@ -278,18 +278,20 @@ def _summarize_fit(
         name for name, value in parameters.items()
         if any(np.isclose(value, bound, rtol=1e-6, atol=0) for bound in parameter_bounds[name])
     ]
+    scaled_lp = compute_weighted_lp(measured_impedance, predicted, real_divisor, imag_divisor, p=0.5)
     summary = {
         "circuit": circuit,
         "parameters": parameters,
         "predicted_impedance": predicted,
         "lp_error": lp_error,
         "mse": mse,
+        "scaled_lp_error" : scaled_lp,
         "optimizer_value": optimization["optimizer_value"],
         "relative_mse": compute_relative_mse(measured_impedance, predicted),
         "arrangement_count": arrangement_count,
         "combinatorial_score": float(
-            n * np.log(mse)
-            + COMBINATORIAL_ELEMENT_WEIGHT * element_count
+            n * np.log(scaled_lp)
+            + COMBINATORIAL_ELEMENT_WEIGHT * (element_count)
             + COMBINATORIAL_ARRANGEMENT_WEIGHT * np.log(arrangement_count)
         ),
         "aic": compute_aic(n, mse, num_parameters),

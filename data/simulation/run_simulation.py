@@ -24,20 +24,20 @@ CIRCUIT = Series(children=(
     SeriesResistance("Rs"),
     #Inductor("L"),
     Parallel(
-        children=(Resistor("R1"), 
-                  CPE("Q1", "alpha1")
+        children=(CPE("Q1", "alpha1"), 
+                  Series(children=(Resistor("R1"), Warburg("sigma"))
                   )),
-    #Parallel(children=(Resistor("R2"), CPE("Q2", "alpha2"))),
-    Warburg("sigma"),
-))
+    #Parallel(children=(Warburg("sigma"), CPE("Q1", "alpha1"))),
+    #Warburg("sigma"),
+)))
 
 PARAMETERS = {
-    "Rs": 0.1,       # ohm
+    "Rs": 0.2,       # ohm
     #"L": 1e-6,       # H
     "R1": 0.4,       # ohm
     "Q1": 0.02,      # S * s**alpha1
-    "alpha1": 0.85,
-    "sigma": 0.5,
+    "alpha1": 0.85   ,
+    "sigma": 0.12,
     #"R2": 0.8,       # ohm
     #"Q2": 5,       # S * s**alpha2
     #"alpha2": 0.7,
@@ -52,7 +52,7 @@ POINTS_PER_DECADE = 50  # logarithmic intervals per decade, plus both endpoints
 
 ADD_NOISE = True
 RELATIVE_NOISE = 0.15  # 5% of |Z|, standard deviation of EACH complex component
-ABSOLUTE_NOISE_OHM = 0.05  # optional independent noise floor, combined in quadrature
+ABSOLUTE_NOISE_OHM = 0  # optional independent noise floor, combined in quadrature
 REPEATS = 20             # fitter takes the median over these measurements
 RANDOM_SEED = 42         # integer for reproducibility; None for a fresh draw
 

@@ -95,7 +95,7 @@ SIMULATED_DATA_PATH = (
     / "data"
     / "simulation"
     / "generated"
-    / "simulated_spectrum_007.npz"
+    / "simulated_spectrum_012.npz"
 )
 
 
